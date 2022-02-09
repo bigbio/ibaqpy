@@ -14,7 +14,8 @@ def print_help_msg(command):
 @click.command()
 @click.option("-f", "--fasta", help="Protein database to compute IBAQ values")
 @click.option("-p", "--peptides", help="Peptide identifications with intensities following the triqler output")
-def ibaq_compute( fasta, peptides):
+@click.option("-e", "--enzyme", help="Enzyme used during the analysis of the dataset (default: Trypsin)", default="Trypsin")
+def ibaq_compute( fasta, peptides, enzyme):
   if peptides is None or fasta is None:
     print_help_msg(ibaq_compute)
     exit(-1)
@@ -24,11 +25,11 @@ def ibaq_compute( fasta, peptides):
   uniquepepcounts = dict()  # type: dict[str, int]
   MINLEN = 6
   MAXLEN = 30
-  ENZYMENAME = "Trypsin"
+  ENZYMENAME = enzyme
   digestor = ProteaseDigestion()
   digestor.setEnzyme(ENZYMENAME)
 
-  def getAverageNrUniqPepsForIndistGrp(pdrow):
+  def get_average_nr_peptides_unique_bygroup(pdrow):
     proteins = pdrow.name.split(';')
     summ = 0
     for prot in proteins:
@@ -45,10 +46,8 @@ def ibaq_compute( fasta, peptides):
   data = pd.read_csv(peptides, sep="\t")
   print(data.head())
   ## next line assumes unique peptides only (at least per indistinguishable group)
-  res = pd.DataFrame(data.groupby('proteins')['intensity'].sum()).apply(getAverageNrUniqPepsForIndistGrp, 1)
+  res = pd.DataFrame(data.groupby('proteins')['intensity'].sum()).apply(get_average_nr_peptides_unique_bygroup, 1)
   res.to_csv("res.csv")
-
-
 
 if __name__ == '__main__':
 
