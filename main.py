@@ -6,16 +6,26 @@ import click
 import pandas as pd
 from pyopenms import *
 
-
 def print_help_msg(command):
   with click.Context(command) as ctx:
     click.echo(command.get_help(ctx))
+
+def remove_contaminants_abundant_proteins(res, contaminants):
+  contaminants.append('CONTAMINANT')
+  contaminants.append('DECOY')
+  res = res.replace([np.inf, -np.inf], np.nan).dropna(axis=0)
+  for contaminant in contaminants:
+    res.drop(index=res[res['protein'].str.contains(contaminant)].index, inplace=True)
+  return res
 
 @click.command()
 @click.option("-f", "--fasta", help="Protein database to compute IBAQ values")
 @click.option("-p", "--peptides", help="Peptide identifications with intensities following the triqler output")
 @click.option("-e", "--enzyme", help="Enzyme used during the analysis of the dataset (default: Trypsin)", default="Trypsin")
-def ibaq_compute( fasta, peptides, enzyme):
+@click.option("-n", "--normalize", help="Normalize IBAQ values using by using the total IBAQ of the experiment", is_flag=True)
+@click.option("--contaminants_file", help = "Contaminants protein accession", default = "contaminants_ids.tsv")
+def ibaq_compute( fasta, peptides, enzyme, normalize, contaminants_file):
+
   if peptides is None or fasta is None:
     print_help_msg(ibaq_compute)
     exit(-1)
@@ -47,7 +57,19 @@ def ibaq_compute( fasta, peptides, enzyme):
   print(data.head())
   ## next line assumes unique peptides only (at least per indistinguishable group)
   res = pd.DataFrame(data.groupby('proteins')['intensity'].sum()).apply(get_average_nr_peptides_unique_bygroup, 1)
-  res.to_csv("res.csv")
+  res = res.sort_values(ascending=False)
+  res = res.to_frame()
+  res['protein'] = res.index
+  res = res.rename(columns={0: "ibaq"})
+
+  contaminants_reader = open(contaminants_file, 'r')
+  contaminants = contaminants_reader.read().split("\n")
+  contaminants = [cont for cont in contaminants if cont.strip()]
+  if(normalize):
+    res = remove_contaminants_abundant_proteins(res, contaminants)
+
+
+  res.to_csv("res.csv", index=False)
 
 if __name__ == '__main__':
 
