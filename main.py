@@ -1,13 +1,16 @@
 from math import log10
+from typing import List
+
 import click
 import pandas as pd
+from pandas import DataFrame, Series
 from pyopenms import *
 
 def print_help_msg(command):
   with click.Context(command) as ctx:
     click.echo(command.get_help(ctx))
 
-def normalize_ibaq(res, contaminants):
+def normalize_ibaq(res : DataFrame, contaminants: List[str]) -> DataFrame:
   """
   Normalize the ibaq values using the total ibaq of the sample. The resulted
   ibaq values are then multiplied by 100'000'000 (PRIDE database noramalization)
@@ -39,7 +42,7 @@ def normalize_ibaq(res, contaminants):
 @click.option("-n", "--normalize", help="Normalize IBAQ values using by using the total IBAQ of the experiment", is_flag=True)
 @click.option("--contaminants_file", help = "Contaminants protein accession", default = "contaminants_ids.tsv")
 @click.option("-o", "--output", help = "Output file with the proteins and ibaq values")
-def ibaq_compute( fasta, peptides, enzyme, normalize, contaminants_file, output):
+def ibaq_compute( fasta: str, peptides: str, enzyme: str, normalize: bool, contaminants_file: str, output: str) -> None:
 
   if peptides is None or fasta is None:
     print_help_msg(ibaq_compute)
@@ -54,12 +57,11 @@ def ibaq_compute( fasta, peptides, enzyme, normalize, contaminants_file, output)
   digestor = ProteaseDigestion()
   digestor.setEnzyme(ENZYMENAME)
 
-  def get_average_nr_peptides_unique_bygroup(pdrow):
+  def get_average_nr_peptides_unique_bygroup(pdrow: Series) -> Series:
     proteins = pdrow.name.split(';')
     summ = 0
     for prot in proteins:
       summ += uniquepepcounts[prot]
-
     return pdrow.intensity / (summ / len(proteins))
 
   for entry in fasta_proteins:
@@ -83,7 +85,6 @@ def ibaq_compute( fasta, peptides, enzyme, normalize, contaminants_file, output)
   contaminants = [cont for cont in contaminants if cont.strip()]
   if(normalize):
     res = normalize_ibaq(res, contaminants)
-
 
   res.to_csv(output, index=False)
 
