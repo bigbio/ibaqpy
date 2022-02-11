@@ -1,9 +1,4 @@
-# This is a sample Python script.
-
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
 from math import log10
-
 import click
 import pandas as pd
 from pyopenms import *
@@ -12,12 +7,24 @@ def print_help_msg(command):
   with click.Context(command) as ctx:
     click.echo(command.get_help(ctx))
 
-def remove_contaminants_abundant_proteins(res, contaminants):
+def normalize_ibaq(res, contaminants):
+  """
+  Normalize the ibaq values using the total ibaq of the sample. The resulted
+  ibaq values are then multiplied by 100'000'000 (PRIDE database noramalization)
+  for the ibaq ppb and log10 shifted by 10 (ProteomicsDB)
+  :param res:
+  :param contaminants:
+  :return:
+  """
+
+  # First step is to remove contaminants, decoys and contaminant proteins
   contaminants.append('CONTAMINANT')
   contaminants.append('DECOY')
   res = res.replace([np.inf, -np.inf], np.nan).dropna(axis=0)
   for contaminant in contaminants:
     res.drop(index=res[res['protein'].str.contains(contaminant)].index, inplace=True)
+
+  # Get the total intensity for the sample.
   total_ibaq = res['ibaq'].sum()
   # Normalization method used by Proteomics DB 10 + log10(ibaq/sum(ibaq))
   res['ibaq_log'] = res['ibaq'].apply(lambda x: 10 + log10(x/total_ibaq))
@@ -75,14 +82,10 @@ def ibaq_compute( fasta, peptides, enzyme, normalize, contaminants_file, output)
   contaminants = contaminants_reader.read().split("\n")
   contaminants = [cont for cont in contaminants if cont.strip()]
   if(normalize):
-    res = remove_contaminants_abundant_proteins(res, contaminants)
+    res = normalize_ibaq(res, contaminants)
 
 
   res.to_csv(output, index=False)
 
 if __name__ == '__main__':
-
   ibaq_compute()
-
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
