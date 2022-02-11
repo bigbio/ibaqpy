@@ -2,6 +2,8 @@
 
 # Press ⌃R to execute it or replace it with your code.
 # Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+from math import log10
+
 import click
 import pandas as pd
 from pyopenms import *
@@ -16,6 +18,11 @@ def remove_contaminants_abundant_proteins(res, contaminants):
   res = res.replace([np.inf, -np.inf], np.nan).dropna(axis=0)
   for contaminant in contaminants:
     res.drop(index=res[res['protein'].str.contains(contaminant)].index, inplace=True)
+  total_ibaq = res['ibaq'].sum()
+  # Normalization method used by Proteomics DB 10 + log10(ibaq/sum(ibaq))
+  res['ibaq_log'] = res['ibaq'].apply(lambda x: 10 + log10(x/total_ibaq))
+  # Normalization used by PRIDE Team (no log transformation) (ibaq/total_ibaq) * 100'000'000
+  res['ibaq_ppb'] = res['ibaq'].apply(lambda x: (x/total_ibaq) * 100000000)
   return res
 
 @click.command()
@@ -24,7 +31,8 @@ def remove_contaminants_abundant_proteins(res, contaminants):
 @click.option("-e", "--enzyme", help="Enzyme used during the analysis of the dataset (default: Trypsin)", default="Trypsin")
 @click.option("-n", "--normalize", help="Normalize IBAQ values using by using the total IBAQ of the experiment", is_flag=True)
 @click.option("--contaminants_file", help = "Contaminants protein accession", default = "contaminants_ids.tsv")
-def ibaq_compute( fasta, peptides, enzyme, normalize, contaminants_file):
+@click.option("-o", "--output", help = "Output file with the proteins and ibaq values")
+def ibaq_compute( fasta, peptides, enzyme, normalize, contaminants_file, output):
 
   if peptides is None or fasta is None:
     print_help_msg(ibaq_compute)
@@ -61,6 +69,7 @@ def ibaq_compute( fasta, peptides, enzyme, normalize, contaminants_file):
   res = res.to_frame()
   res['protein'] = res.index
   res = res.rename(columns={0: "ibaq"})
+  res = res[['protein', 'ibaq']]
 
   contaminants_reader = open(contaminants_file, 'r')
   contaminants = contaminants_reader.read().split("\n")
@@ -69,7 +78,7 @@ def ibaq_compute( fasta, peptides, enzyme, normalize, contaminants_file):
     res = remove_contaminants_abundant_proteins(res, contaminants)
 
 
-  res.to_csv("res.csv", index=False)
+  res.to_csv(output, index=False)
 
 if __name__ == '__main__':
 
