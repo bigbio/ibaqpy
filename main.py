@@ -23,6 +23,8 @@ def normalize_ibaq(res : DataFrame, contaminants: List[str]) -> DataFrame:
   # First step is to remove contaminants, decoys and contaminant proteins
   contaminants.append('CONTAMINANT')
   contaminants.append('DECOY')
+
+  # Remove inf values (proteins with no tryptic peptides within 6-30 AA)
   res = res.replace([np.inf, -np.inf], np.nan).dropna(axis=0)
   for contaminant in contaminants:
     res.drop(index=res[res['protein'].str.contains(contaminant)].index, inplace=True)
