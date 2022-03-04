@@ -1,10 +1,11 @@
-from math import log10
+import math
 from typing import List
 
 import click
 import pandas as pd
 from pandas import DataFrame, Series
 from pyopenms import *
+
 
 def print_help_msg(command):
   with click.Context(command) as ctx:
@@ -32,7 +33,7 @@ def normalize_ibaq(res : DataFrame, contaminants: List[str]) -> DataFrame:
   # Get the total intensity for the sample.
   total_ibaq = res['ibaq'].sum()
   # Normalization method used by Proteomics DB 10 + log10(ibaq/sum(ibaq))
-  res['ibaq_log'] = res['ibaq'].apply(lambda x: 10 + log10(x/total_ibaq))
+  res['ibaq_log'] = res['ibaq'].apply(lambda x: 100 + math.log2(x/total_ibaq))
   # Normalization used by PRIDE Team (no log transformation) (ibaq/total_ibaq) * 100'000'000
   res['ibaq_ppb'] = res['ibaq'].apply(lambda x: (x/total_ibaq) * 100000000)
   return res
@@ -75,6 +76,7 @@ def ibaq_compute( fasta: str, peptides: str, enzyme: str, normalize: bool, conta
   data = pd.read_csv(peptides, sep="\t")
   print(data.head())
   ## next line assumes unique peptides only (at least per indistinguishable group)
+
   res = pd.DataFrame(data.groupby('proteins')['intensity'].sum()).apply(get_average_nr_peptides_unique_bygroup, 1)
   res = res.sort_values(ascending=False)
   res = res.to_frame()
@@ -87,6 +89,10 @@ def ibaq_compute( fasta: str, peptides: str, enzyme: str, normalize: bool, conta
   contaminants = [cont for cont in contaminants if cont.strip()]
   if(normalize):
     res = normalize_ibaq(res, contaminants)
+
+  # For absolute expression the relation is one sample + one condition
+  condition = data['condition'].unique()[0]
+  res['condition'] = condition.lower()
 
   res.to_csv(output, index=False)
 
