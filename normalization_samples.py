@@ -1,11 +1,14 @@
-from pandas import DataFrame
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, QuantileTransformer
-from sklearn.preprocessing import RobustScaler
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import seaborn as sns
-import numpy as np
-import matplotlib.pyplot as plt
+from pandas import DataFrame
 from scipy import stats
+from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, QuantileTransformer
+from sklearn.preprocessing import RobustScaler
+
+from ibaqpy_commons import remove_contaminants_decoys
+
 
 def remove_outliers(dataset: DataFrame):
   """
@@ -17,12 +20,11 @@ def remove_outliers(dataset: DataFrame):
   Q3 = dataset['Intensity'].quantile(0.75)
   IQR = Q3 - Q1
 
-  # Filtering Values between Q1-1.5IQR and Q3+1.5IQR
   dataset = dataset.query('(@Q1 - 1.5 * @IQR) <= Intensity <= (@Q3 + 1.5 * @IQR)')
   return dataset
 
 
-def plot_quantification_box_plot(dataset, method = None, log2 = True, weigth =10, rotation = 45):
+def plot_quantification_box_plot(dataset: DataFrame, method: str = None, log2: bool = True, weigth: int= 10, rotation: int = 45) -> DataFrame:
   """
   Normalize using different sklearn normalizers
   :param dataset: dataframe
@@ -54,32 +56,26 @@ def plot_quantification_box_plot(dataset, method = None, log2 = True, weigth =10
   else:
     normalized['logE'] = normalized['normalized']
 
-  plt.figure(figsize=(weigth , 10))
+  plt.figure(figsize=(weigth, 10))
   chart = sns.boxplot(x="SampleID", y="logE", data=normalized, palette="Set2")
   chart.set_xticklabels(chart.get_xticklabels(), rotation=rotation)
   plt.show()
   return dataset
 
+
 dataset = pd.read_csv("data/PXD008934-Peptide-Intensities.tsv", sep="\t")
 
-contaminants_reader = open("contaminants_ids.tsv", 'r')
-contaminants = contaminants_reader.read().split("\n")
-contaminants = [cont for cont in contaminants if cont.strip()]
-contaminants.append('CONTAMINANTS')
-
-for contaminant in contaminants:
-  dataset.drop(index=dataset[dataset['ProteinName'].str.contains(contaminant)].index, inplace=True)
-
-IQR = stats.iqr(dataset['Intensity'], interpolation = 'midpoint')
+dataset = remove_contaminants_decoys(dataset, "contaminants_ids.tsv")
+IQR = stats.iqr(dataset['Intensity'], interpolation='midpoint')
 print(IQR)
 
 dataset = dataset[['ProteinName', 'PeptideSequence', 'Intensity', 'SampleID']]
 
-plot_quantification_box_plot(dataset, weigth = 10, method=None, log2 = True)
+plot_quantification_box_plot(dataset, weigth=10, method=None, log2=True)
 
 dataset = remove_outliers(dataset)
-IQR = stats.iqr(dataset['Intensity'], interpolation = 'midpoint')
+IQR = stats.iqr(dataset['Intensity'], interpolation='midpoint')
 print(IQR)
 
-plot_quantification_box_plot(dataset, weigth = 10, method=None, log2 = True)
-plot_quantification_box_plot(dataset, weigth = 10, method="quantile", log2 = False)
+plot_quantification_box_plot(dataset, weigth=10, method=None, log2=True)
+plot_quantification_box_plot(dataset, weigth=10, method="quantile", log2=False)
