@@ -12,57 +12,57 @@ from ibaqpy_commons import *
 
 
 def get_mbr_hit(scan: str):
-  return 1 if pd.isna(scan) else 0
+    return 1 if pd.isna(scan) else 0
 
 
 def remove_extension_file(filename: str):
-  """
-  The filename can have
-  :param filename:
-  :return:
-  """
-  return filename.replace('.raw', '').replace('.RAW', '').replace('.mzML', '')
+    """
+    The filename can have
+    :param filename:
+    :return:
+    """
+    return filename.replace('.raw', '').replace('.RAW', '').replace('.mzML', '')
 
 
 def get_study_accession(sample_id: str):
-  return sample_id.split('-')[0]
+    return sample_id.split('-')[0]
 
 
 def get_run_mztab(ms_run: str, metadata: OrderedDict):
-  """
-  Convert the ms_run into a reference file for merging with msstats output
-  :param ms_run: ms_run index in mztab
-  :param metadata:  metadata information in mztab
-  :return: file name
-  """
-  m = re.search(r"\[([A-Za-z0-9_]+)\]", ms_run)
-  file_location = metadata['ms_run[' + str(m.group(1)) + "]-location"]
-  file_location = remove_extension_file(file_location)
-  return os.path.basename(file_location)
+    """
+    Convert the ms_run into a reference file for merging with msstats output
+    :param ms_run: ms_run index in mztab
+    :param metadata:  metadata information in mztab
+    :return: file name
+    """
+    m = re.search(r"\[([A-Za-z0-9_]+)\]", ms_run)
+    file_location = metadata['ms_run[' + str(m.group(1)) + "]-location"]
+    file_location = remove_extension_file(file_location)
+    return os.path.basename(file_location)
 
 
 def get_scan_mztab(ms_run: str):
-  l = ms_run.split()
-  return l[-1]
+    l = ms_run.split()
+    return l[-1]
 
 
 def best_probability_error_bestsearch_engine(probability: float):
-  """
-  Convert probability to a Best search engine score
-  :param probability: probability
-  :return:
-  """
-  return 1 - probability
+    """
+    Convert probability to a Best search engine score
+    :param probability: probability
+    :return:
+    """
+    return 1 - probability
 
 
 def print_help_msg(command):
-  """
-  Print help information
-  :param command: command to print helps
-  :return: print help
-  """
-  with click.Context(command) as ctx:
-    click.echo(command.get_help(ctx))
+    """
+    Print help information
+    :param command: command to print helps
+    :return: print help
+    """
+    with click.Context(command) as ctx:
+        click.echo(command.get_help(ctx))
 
 
 @click.command()
@@ -73,70 +73,70 @@ def print_help_msg(command):
 @click.option("--compression", help="Read all files compress", is_flag=True)
 @click.option("-o", "--output", help="Peptide intensity file including other all properties for normalization")
 def peptide_file_generation(triqler: str, msstats: str, mztab: str, sdrf: str, compression: bool, output: str) -> None:
-  if triqler is None or msstats is None or mztab is None or sdrf is None or output is None:
-    print_help_msg(peptide_file_generation)
-    exit(1)
+    if triqler is None or msstats is None or mztab is None or sdrf is None or output is None:
+        print_help_msg(peptide_file_generation)
+        exit(1)
 
-  compression_method = 'gzip' if compression else None
+    compression_method = 'gzip' if compression else None
 
-  # Read the triqler file
-  triqler_df = pd.read_csv(triqler, sep='\t', compression=compression_method)
-  print(triqler_df.head())
+    # Read the triqler file
+    triqler_df = pd.read_csv(triqler, sep='\t', compression=compression_method)
+    print(triqler_df.head())
 
-  triqler_df.rename(
-    columns={'proteins': PROTEIN_NAME, 'peptide': PEPTIDE_SEQUENCE, 'charge': PEPTIDE_CHARGE, 'run': RUN,
-             'condition': CONDITION, 'intensity': INTENSITY}, inplace=True)
+    triqler_df.rename(
+        columns={'proteins': PROTEIN_NAME, 'peptide': PEPTIDE_SEQUENCE, 'charge': PEPTIDE_CHARGE, 'run': RUN,
+                 'condition': CONDITION, 'intensity': INTENSITY}, inplace=True)
 
-  # Read the msstats file
-  msstats_df = pd.read_csv(msstats, sep=',', compression=compression_method)
-  msstats_df[REFERENCE] = msstats_df[REFERENCE].apply(remove_extension_file)
-  print(msstats_df)
+    # Read the msstats file
+    msstats_df = pd.read_csv(msstats, sep=',', compression=compression_method)
+    msstats_df[REFERENCE] = msstats_df[REFERENCE].apply(remove_extension_file)
+    print(msstats_df)
 
-  result_df = pd.merge(msstats_df, triqler_df, how='left',
-                       on=[RUN, PROTEIN_NAME, PEPTIDE_CHARGE, PEPTIDE_SEQUENCE, INTENSITY, CONDITION])
+    result_df = pd.merge(msstats_df, triqler_df, how='left',
+                         on=[RUN, PROTEIN_NAME, PEPTIDE_CHARGE, PEPTIDE_SEQUENCE, INTENSITY, CONDITION])
 
-  # Read the sdrf file
-  sdrf_df = pd.read_csv(sdrf, sep='\t', compression=compression_method)
-  sdrf_df[REFERENCE] = sdrf_df['comment[data file]'].apply(remove_extension_file)
-  print(sdrf_df)
+    # Read the sdrf file
+    sdrf_df = pd.read_csv(sdrf, sep='\t', compression=compression_method)
+    sdrf_df[REFERENCE] = sdrf_df['comment[data file]'].apply(remove_extension_file)
+    print(sdrf_df)
 
-  # Read the mztab file
-  if compression_method is None:
-    mztab_df = mztab_reader.MzTab(mztab)
-  else:
-    with gzip.open(mztab, 'rb') as f_in:
-      with open('file.mzTab', 'wb') as f_out:
-        shutil.copyfileobj(f_in, f_out)
-      mztab_df = mztab_reader.MzTab('file.mzTab')
-      os.remove('file.mzTab')
+    # Read the mztab file
+    if compression_method is None:
+        mztab_df = mztab_reader.MzTab(mztab)
+    else:
+        with gzip.open(mztab, 'rb') as f_in:
+            with open('file.mzTab', 'wb') as f_out:
+                shutil.copyfileobj(f_in, f_out)
+            mztab_df = mztab_reader.MzTab('file.mzTab')
+            os.remove('file.mzTab')
 
-  psms_df = mztab_df.spectrum_match_table
-  psms_df[REFERENCE] = psms_df['spectra_ref'].apply(get_run_mztab, metadata=mztab_df.metadata)
+    psms_df = mztab_df.spectrum_match_table
+    psms_df[REFERENCE] = psms_df['spectra_ref'].apply(get_run_mztab, metadata=mztab_df.metadata)
 
-  psms_df['psmSearchScore'] = psms_df['opt_global_Posterior_Error_Probability_score'].apply(
-    best_probability_error_bestsearch_engine)
-  psms_df[SCAN] = psms_df['spectra_ref'].apply(get_scan_mztab)
-  psms_df.rename(columns={'opt_global_cv_MS:1000889_peptidoform_sequence': PEPTIDE_SEQUENCE, 'charge': PEPTIDE_CHARGE,
-                          'retention_time': RT}, inplace=True)
+    psms_df['psmSearchScore'] = psms_df['opt_global_Posterior_Error_Probability_score'].apply(
+        best_probability_error_bestsearch_engine)
+    psms_df[SCAN] = psms_df['spectra_ref'].apply(get_scan_mztab)
+    psms_df.rename(columns={'opt_global_cv_MS:1000889_peptidoform_sequence': PEPTIDE_SEQUENCE, 'charge': PEPTIDE_CHARGE,
+                            'retention_time': RT}, inplace=True)
 
-  result_df = pd.merge(result_df, psms_df, how='left', on=[PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, REFERENCE])
+    result_df = pd.merge(result_df, psms_df, how='left', on=[PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, REFERENCE])
 
-  if FRACTION not in result_df.columns:
-    result_df[FRACTION] = 1
-  result_df = result_df[
-    [PROTEIN_NAME, PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, INTENSITY, RT, REFERENCE, SEARCH_ENGINE, CONDITION, RUN,
-     BIOREPLICATE, FRACTION, FRAGMENT_ION, ISOTOPE_LABEL_TYPE, SCAN]]
+    if FRACTION not in result_df.columns:
+        result_df[FRACTION] = 1
+    result_df = result_df[
+        [PROTEIN_NAME, PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, INTENSITY, RT, REFERENCE, SEARCH_ENGINE, CONDITION, RUN,
+         BIOREPLICATE, FRACTION, FRAGMENT_ION, ISOTOPE_LABEL_TYPE, SCAN]]
 
-  # Merged the SDRF with Resultded file
-  result_df = pd.merge(result_df, sdrf_df[['source name', REFERENCE]], how='left', on=[REFERENCE])
-  result_df.rename(columns={'source name': SAMPLE_ID}, inplace=True)
+    # Merged the SDRF with Resultded file
+    result_df = pd.merge(result_df, sdrf_df[['source name', REFERENCE]], how='left', on=[REFERENCE])
+    result_df.rename(columns={'source name': SAMPLE_ID}, inplace=True)
 
-  result_df[STUDY_ID] = result_df[SAMPLE_ID].apply(get_study_accession)
-  result_df[MBR] = result_df[SCAN].apply(get_mbr_hit)
+    result_df[STUDY_ID] = result_df[SAMPLE_ID].apply(get_study_accession)
+    result_df[MBR] = result_df[SCAN].apply(get_mbr_hit)
 
-  result_df.to_csv(output, index=False, sep='\t')
-  print(result_df)
+    result_df.to_csv(output, index=False, sep='\t')
+    print(result_df)
 
 
 if __name__ == '__main__':
-  peptide_file_generation()
+    peptide_file_generation()

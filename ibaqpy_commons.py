@@ -21,20 +21,20 @@ MBR = 'MatchBetweenRuns'
 
 
 def remove_contaminants_decoys(dataset: DataFrame, contaminants_file: str, protein_field=PROTEIN_NAME) -> DataFrame:
-  """
-  This method reads a file with a list of contaminants and high abudant proteins and
-  remove them from the dataset.
-  :param dataset: Peptide intensity DataFrame
-  :param contaminants_file: contaminants file
-  :param protein_field: protein field
-  :return: dataset with the filtered proteins
-  """
-  contaminants_reader = open(contaminants_file, 'r')
-  contaminants = contaminants_reader.read().split("\n")
-  contaminants = [cont for cont in contaminants if cont.strip()]
+    """
+    This method reads a file with a list of contaminants and high abudant proteins and
+    remove them from the dataset.
+    :param dataset: Peptide intensity DataFrame
+    :param contaminants_file: contaminants file
+    :param protein_field: protein field
+    :return: dataset with the filtered proteins
+    """
+    contaminants_reader = open(contaminants_file, 'r')
+    contaminants = contaminants_reader.read().split("\n")
+    contaminants = [cont for cont in contaminants if cont.strip()]
 
-  contaminants.append('CONTAMINANTS')
-  contaminants.append('DECOY')
-  for contaminant in contaminants:
-    dataset.drop(index=dataset[dataset[protein_field].str.contains(contaminant)].index, inplace=True)
-  return dataset
+    contaminants.append('CONTAMINANTS')
+    contaminants.append('DECOY')
+    for contaminant in contaminants:
+        dataset.drop(index=dataset[dataset[protein_field].str.contains(contaminant)].index, inplace=True)
+    return dataset
