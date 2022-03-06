@@ -5,7 +5,7 @@ import pandas as pd
 from pandas import DataFrame, Series
 from pyopenms import *
 
-from ibaqpy_commons import remove_contaminants_decoys
+from ibaqpy_commons import remove_contaminants_decoys, PROTEIN_NAME, INTENSITY, CONDITION, IBAQ, IBAQ_LOG, IBAQ_PPB
 
 
 def print_help_msg(command):
@@ -23,17 +23,17 @@ def normalize_ibaq(res: DataFrame) -> DataFrame:
     """
 
     # Get the total intensity for the sample.
-    total_ibaq = res['ibaq'].sum()
+    total_ibaq = res[IBAQ].sum()
     # Normalization method used by Proteomics DB 10 + log10(ibaq/sum(ibaq))
-    res['ibaq_log'] = res['ibaq'].apply(lambda x: 100 + math.log2(x / total_ibaq))
+    res[IBAQ_LOG] = res[IBAQ].apply(lambda x: 100 + math.log2(x / total_ibaq))
     # Normalization used by PRIDE Team (no log transformation) (ibaq/total_ibaq) * 100'000'000
-    res['ibaq_ppb'] = res['ibaq'].apply(lambda x: (x / total_ibaq) * 100000000)
+    res[IBAQ_PPB] = res[IBAQ].apply(lambda x: (x / total_ibaq) * 100000000)
     return res
 
 
 @click.command()
 @click.option("-f", "--fasta", help="Protein database to compute IBAQ values")
-@click.option("-p", "--peptides", help="Peptide identifications with intensities following the triqler output")
+@click.option("-p", "--peptides", help="Peptide identifications with intensities following the peptide intensity output")
 @click.option("-e", "--enzyme", help="Enzyme used during the analysis of the dataset (default: Trypsin)",
               default="Trypsin")
 @click.option("-n", "--normalize", help="Normalize IBAQ values using by using the total IBAQ of the experiment",
@@ -71,20 +71,20 @@ def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, contam
     print(data.head())
     # next line assumes unique peptides only (at least per indistinguishable group)
 
-    res = pd.DataFrame(data.groupby('proteins')['intensity'].sum()).apply(get_average_nr_peptides_unique_bygroup, 1)
+    res = pd.DataFrame(data.groupby(PROTEIN_NAME)[INTENSITY].sum()).apply(get_average_nr_peptides_unique_bygroup, 1)
     res = res.sort_values(ascending=False)
     res = res.to_frame()
-    res['protein'] = res.index
-    res = res.rename(columns={0: "ibaq"})
-    res = res[['protein', 'ibaq']]
+    res[PROTEIN_NAME] = res.index
+    res = res.rename(columns={0: IBAQ})
+    res = res[[PROTEIN_NAME, IBAQ]]
 
-    res = remove_contaminants_decoys(res, contaminants_file, protein_field='proteins')
+    res = remove_contaminants_decoys(res, contaminants_file, protein_field=PROTEIN_NAME)
     if normalize:
         res = normalize_ibaq(res)
 
     # For absolute expression the relation is one sample + one condition
-    condition = data['condition'].unique()[0]
-    res['condition'] = condition.lower()
+    condition = data[CONDITION].unique()[0]
+    res[CONDITION] = condition.lower()
 
     res.to_csv(output, index=False)
 
