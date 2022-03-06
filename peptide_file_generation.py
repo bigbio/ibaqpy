@@ -57,7 +57,7 @@ def get_run_mztab(ms_run: str, metadata: OrderedDict):
 
 def get_scan_mztab(ms_run: str):
   l = ms_run.split()
-  return l[len(l)-1]
+  return l[-1]
 
 def best_probability_error_bestsearch_engine(probability: float):
   """
