@@ -139,8 +139,6 @@ def peptide_file_generation( triqler: str, msstats: str, mztab: str, sdrf: str, 
   result_df[STUDY_ID] = result_df[SAMPLE_ID].apply(get_study_accession)
   result_df[MBR] = result_df[SCAN].apply(get_mbr_hit)
 
-  #result_df = result_df[result_df['database'].notna()]
-
   result_df.to_csv(output, index=False, sep ='\t')
   print(result_df)
 

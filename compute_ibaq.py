@@ -49,7 +49,7 @@ def ibaq_compute( fasta: str, peptides: str, enzyme: str, normalize: bool, conta
 
   if peptides is None or fasta is None:
     print_help_msg(ibaq_compute)
-    exit(-1)
+    exit(1)
 
   fasta_proteins = list()  # type: list[FASTAEntry]
   FASTAFile().load(fasta, fasta_proteins)

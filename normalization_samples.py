@@ -1,63 +1,52 @@
 from pandas import DataFrame
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, QuantileTransformer
 from sklearn.preprocessing import RobustScaler
-import re
 import pandas as pd
 import seaborn as sns
-import re
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy import stats
 
-def get_sample(abundance: str):
-  m = re.search(r"\[([A-Za-z0-9_]+)\]", abundance)
-  sample = m.group(1)
-
-  return sample
-
 def remove_outliers(dataset: DataFrame):
-  Q1 = np.percentile(dataset['Intensity'], 25, interpolation='midpoint')
-
-  Q3 = np.percentile(dataset['Intensity'], 75, interpolation='midpoint')
+  """
+  Outliers removal
+  :param dataset:
+  :return:
+  """
+  Q1 = dataset['Intensity'].quantile(0.25)
+  Q3 = dataset['Intensity'].quantile(0.75)
   IQR = Q3 - Q1
 
-  print("Old Shape: ", dataset.shape)
-
-  # Upper bound
-  upper = np.where(dataset['Intensity'] >= (Q3 + 1.5 * IQR))
-  # Lower bound
-  lower = np.where(dataset['Intensity'] <= (Q1 - 1.5 * IQR))
-
-  ''' Removing the Outliers '''
-  dataset.drop(upper[-1], inplace=True)
-  dataset.drop(lower[-1], inplace=True)
+  # Filtering Values between Q1-1.5IQR and Q3+1.5IQR
+  dataset = dataset.query('(@Q1 - 1.5 * @IQR) <= Intensity <= (@Q3 + 1.5 * @IQR)')
   return dataset
 
 
 def plot_quantification_box_plot(dataset, method = None, log2 = True, weigth =10, rotation = 45):
-
+  """
+  Normalize using different sklearn normalizers
+  :param dataset: dataframe
+  :param method: method to be used
+  :param log2: scale or not the results
+  :param weigth: size of plot
+  :param rotation: rotation of the plot
+  :return:
+  """
   normalized = dataset.copy()
 
   if method is None:
     normalized['normalized'] = normalized['Intensity']
-  if method is "robusts":
-    scaler = RobustScaler()
-    normalized['normalized'] = scaler.fit_transform(normalized[['Intensity']])
-  if method is "minmax":
-    scaler = MinMaxScaler()
-    normalized['normalized'] = scaler.fit_transform(normalized[['Intensity']])
-  if method is "standard":
-    scaler = StandardScaler()
-    normalized['normalized'] = scaler.fit_transform(normalized[['Intensity']])
-
-  if method is 'maxabs':
-    scaler = MaxAbsScaler()
-    normalized['normalized'] = scaler.fit_transform(normalized[['Intensity']])
-
-  if method is 'quantile':
+  else:
     scaler = QuantileTransformer(output_distribution="normal")
+    if method is "robusts":
+      scaler = RobustScaler()
+    if method is "minmax":
+      scaler = MinMaxScaler()
+    if method is "standard":
+      scaler = StandardScaler()
+    if method is 'maxabs':
+      scaler = MaxAbsScaler()
     normalized['normalized'] = scaler.fit_transform(normalized[['Intensity']])
-
 
   np.seterr(divide='ignore')
   if log2:
