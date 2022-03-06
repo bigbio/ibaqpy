@@ -29,8 +29,8 @@ def remove_outliers(dataset: DataFrame):
   lower = np.where(dataset['Intensity'] <= (Q1 - 1.5 * IQR))
 
   ''' Removing the Outliers '''
-  dataset.drop(upper[0], inplace=True)
-  dataset.drop(lower[0], inplace=True)
+  dataset.drop(upper[-1], inplace=True)
+  dataset.drop(lower[-1], inplace=True)
   return dataset
 
 
@@ -69,8 +69,18 @@ def plot_quantification_box_plot(dataset, method = None, log2 = True, weigth =10
   chart = sns.boxplot(x="SampleID", y="logE", data=normalized, palette="Set2")
   chart.set_xticklabels(chart.get_xticklabels(), rotation=rotation)
   plt.show()
+  return dataset
 
-dataset = pd.read_csv("data/PXD004682-Peptide-Intensities.tsv", sep="\t")
+dataset = pd.read_csv("data/PXD008934-Peptide-Intensities.tsv", sep="\t")
+
+contaminants_reader = open("contaminants_ids.tsv", 'r')
+contaminants = contaminants_reader.read().split("\n")
+contaminants = [cont for cont in contaminants if cont.strip()]
+contaminants.append('CONTAMINANTS')
+
+for contaminant in contaminants:
+  dataset.drop(index=dataset[dataset['ProteinName'].str.contains(contaminant)].index, inplace=True)
+
 IQR = stats.iqr(dataset['Intensity'], interpolation = 'midpoint')
 print(IQR)
 
