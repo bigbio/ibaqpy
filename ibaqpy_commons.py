@@ -18,6 +18,9 @@ STUDY_ID = 'StudyID'
 SEARCH_ENGINE = 'searchScore'
 SCAN = 'Scan'
 MBR = 'MatchBetweenRuns'
+IBAQ = 'Ibaq'
+IBAQ_LOG = 'IbaqLog'
+IBAQ_PPB = 'IbaqPpb'
 
 
 def remove_contaminants_decoys(dataset: DataFrame, contaminants_file: str, protein_field=PROTEIN_NAME) -> DataFrame:
