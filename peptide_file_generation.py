@@ -23,7 +23,7 @@ SAMPLE_ID = 'SampleID'
 STUDY_ID = 'StudyID'
 SEARCH_ENGINE = 'searchScore'
 SCAN = 'Scan'
-MBR = "MatchBetweenRuns"
+MBR = 'MatchBetweenRuns'
 
 from typing_extensions import OrderedDict
 
@@ -37,10 +37,10 @@ def remove_extension_file(filename: str):
   :param filename:
   :return:
   """
-  return filename.replace(".raw", "").replace(".RAW", "").replace(".mzML", "")
+  return filename.replace('.raw', '').replace('.RAW', '').replace('.mzML', '')
 
 def get_study_accession(sample_id: str):
-  return sample_id.split("-")[0]
+  return sample_id.split('-')[0]
 
 
 def get_run_mztab(ms_run: str, metadata: OrderedDict):
@@ -87,26 +87,26 @@ def peptide_file_generation( triqler: str, msstats: str, mztab: str, sdrf: str, 
 
   if triqler is None or msstats is None or mztab is None or sdrf is None or output is None:
     print_help_msg(peptide_file_generation)
-    exit(-1)
+    exit(1)
 
   compression_method = 'gzip' if compression else None
 
   # Read the triqler file
-  triqler_df = pd.read_csv(triqler, sep="\t", compression = compression_method)
+  triqler_df = pd.read_csv(triqler, sep='\t', compression = compression_method)
   print(triqler_df.head())
 
   triqler_df.rename(columns={'proteins': PROTEIN_NAME, 'peptide': PEPTIDE_SEQUENCE,'charge': PEPTIDE_CHARGE,'run': RUN, 'condition': CONDITION, 'intensity':INTENSITY} , inplace=True)
 
   # Read the msstats file
-  msstats_df = pd.read_csv(msstats, sep=",", compression = compression_method)
+  msstats_df = pd.read_csv(msstats, sep=',', compression = compression_method)
   msstats_df[REFERENCE] = msstats_df[REFERENCE].apply(remove_extension_file)
   print(msstats_df)
 
   result_df = pd.merge(msstats_df, triqler_df, how='left', on=[RUN, PROTEIN_NAME, PEPTIDE_CHARGE, PEPTIDE_SEQUENCE, INTENSITY, CONDITION])
 
   # Read the sdrf file
-  sdrf_df = pd.read_csv(sdrf, sep="\t", compression = compression_method)
-  sdrf_df[REFERENCE] = sdrf_df["comment[data file]"].apply(remove_extension_file)
+  sdrf_df = pd.read_csv(sdrf, sep='\t', compression = compression_method)
+  sdrf_df[REFERENCE] = sdrf_df['comment[data file]'].apply(remove_extension_file)
   print(sdrf_df)
 
   # Read the mztab file
@@ -127,10 +127,13 @@ def peptide_file_generation( triqler: str, msstats: str, mztab: str, sdrf: str, 
   psms_df.rename(columns={'opt_global_cv_MS:1000889_peptidoform_sequence':PEPTIDE_SEQUENCE, 'charge':PEPTIDE_CHARGE, 'retention_time': RT}, inplace=True)
 
   result_df = pd.merge(result_df, psms_df, how='left', on=[PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, REFERENCE])
+
+  if FRACTION not in result_df.columns:
+    result_df[FRACTION] = 1
   result_df = result_df[[PROTEIN_NAME, PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, INTENSITY, RT, REFERENCE, SEARCH_ENGINE, CONDITION, RUN, BIOREPLICATE, FRACTION, FRAGMENT_ION, ISOTOPE_LABEL_TYPE, SCAN]]
 
   # Merged the SDRF with Resultded file
-  result_df = pd.merge(result_df, sdrf_df[['source name', REFERENCE]], how="left", on=[REFERENCE])
+  result_df = pd.merge(result_df, sdrf_df[['source name', REFERENCE]], how='left', on=[REFERENCE])
   result_df.rename(columns={'source name': SAMPLE_ID}, inplace=True)
 
   result_df[STUDY_ID] = result_df[SAMPLE_ID].apply(get_study_accession)
