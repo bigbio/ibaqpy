@@ -12,10 +12,16 @@ from ibaqpy_commons import *
 
 
 def get_mbr_hit(scan: str):
+    """
+    This function annotates if the peptide is infered or not by Match between Runs algorithm (1), 0 if the peptide is
+    identified in the corresponding file.
+    :param scan: scan value
+    :return:
+    """
     return 1 if pd.isna(scan) else 0
 
 
-def remove_extension_file(filename: str):
+def remove_extension_file(filename: str) -> str:
     """
     The filename can have
     :param filename:
@@ -24,11 +30,17 @@ def remove_extension_file(filename: str):
     return filename.replace('.raw', '').replace('.RAW', '').replace('.mzML', '')
 
 
-def get_study_accession(sample_id: str):
+def get_study_accession(sample_id: str) -> str:
+    """
+    Get the project accession from the Sample accession. The function expected a sample accession in the following
+    format PROJECT-SAMPLEID
+    :param sample_id: Sample Accession
+    :return: project accessions
+    """
     return sample_id.split('-')[0]
 
 
-def get_run_mztab(ms_run: str, metadata: OrderedDict):
+def get_run_mztab(ms_run: str, metadata: OrderedDict) -> str:
     """
     Convert the ms_run into a reference file for merging with msstats output
     :param ms_run: ms_run index in mztab
@@ -41,12 +53,18 @@ def get_run_mztab(ms_run: str, metadata: OrderedDict):
     return os.path.basename(file_location)
 
 
-def get_scan_mztab(ms_run: str):
-    l = ms_run.split()
-    return l[-1]
+def get_scan_mztab(ms_run: str) -> str:
+    """
+    Get the scan number for an mzML spectrum in mzTab. The format of the reference
+    must be controllerType=0 controllerNumber=1 scan=30121
+    :param ms_run: the original ms_run reference in mzTab
+    :return: the scan index
+    """
+    reference_parts = ms_run.split()
+    return reference_parts[-1]
 
 
-def best_probability_error_bestsearch_engine(probability: float):
+def best_probability_error_bestsearch_engine(probability: float) -> float:
     """
     Convert probability to a Best search engine score
     :param probability: probability
@@ -55,7 +73,7 @@ def best_probability_error_bestsearch_engine(probability: float):
     return 1 - probability
 
 
-def print_help_msg(command):
+def print_help_msg(command) -> None:
     """
     Print help information
     :param command: command to print helps
@@ -130,7 +148,7 @@ def peptide_file_generation(triqler: str, msstats: str, mztab: str, sdrf: str, c
     # Compute the RT for MBR peptides as the mean of all RT for the following combination Peptide + Charge + Condition
     result_df[RT] = result_df[RT].fillna(result_df.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, CONDITION])[RT].transform('mean'))
 
-    # Merged the SDRF with Resultded file
+    # Merged the SDRF with Resulted file
     result_df = pd.merge(result_df, sdrf_df[['source name', REFERENCE]], how='left', on=[REFERENCE])
     result_df.rename(columns={'source name': SAMPLE_ID}, inplace=True)
 

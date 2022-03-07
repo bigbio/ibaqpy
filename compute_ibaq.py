@@ -9,6 +9,11 @@ from ibaqpy_commons import remove_contaminants_decoys, PROTEIN_NAME, INTENSITY, 
 
 
 def print_help_msg(command):
+    """
+    Print the help of the command
+    :param command: command
+    :return:
+    """
     with click.Context(command) as ctx:
         click.echo(command.get_help(ctx))
 
@@ -41,6 +46,17 @@ def normalize_ibaq(res: DataFrame) -> DataFrame:
 @click.option("--contaminants_file", help="Contaminants protein accession", default="contaminants_ids.tsv")
 @click.option("-o", "--output", help="Output file with the proteins and ibaq values")
 def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, contaminants_file: str, output: str) -> None:
+    """
+    This command computes the IBAQ values for a file output of peptides with the format described in
+    peptide_contaminants_file_generation.py.
+    :param fasta: Fasta file used to perform the peptide identification
+    :param peptides: Peptide intensity file
+    :param enzyme: Enzyme used to digest the protein sample
+    :param normalize: use some basic normalization steps.
+    :param contaminants_file: Contaminant data file
+    :param output: output format containing the ibaq values.
+    :return:
+    """
     if peptides is None or fasta is None:
         print_help_msg(ibaq_compute)
         exit(1)
@@ -55,6 +71,11 @@ def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, contam
     digestor.setEnzyme(ENZYMENAME)
 
     def get_average_nr_peptides_unique_bygroup(pdrow: Series) -> Series:
+        """
+        Get the average intensity for protein gorups
+        :param pdrow: peptide row
+        :return: average intensity
+        """
         proteins = pdrow.name.split(';')
         summ = 0
         for prot in proteins:

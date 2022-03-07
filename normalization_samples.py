@@ -7,17 +7,17 @@ from scipy import stats
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, QuantileTransformer
 from sklearn.preprocessing import RobustScaler
 
-from ibaqpy_commons import remove_contaminants_decoys
+from ibaqpy_commons import remove_contaminants_decoys, INTENSITY
 
 
-def remove_outliers(dataset: DataFrame):
+def remove_outliers(dataset: DataFrame) -> DataFrame:
     """
-    Outliers removal
-    :param dataset:
+    This method removes outliers from the dataframe, the variable use for the outliers removal is Intesity
+    :param dataset: Peptide dataframe
     :return:
     """
-    Q1 = dataset['Intensity'].quantile(0.25)
-    Q3 = dataset['Intensity'].quantile(0.75)
+    Q1 = dataset[INTENSITY].quantile(0.25)
+    Q3 = dataset[INTENSITY].quantile(0.75)
     IQR = Q3 - Q1
 
     dataset = dataset.query('(@Q1 - 1.5 * @IQR) <= Intensity <= (@Q3 + 1.5 * @IQR)')
