@@ -127,6 +127,9 @@ def peptide_file_generation(triqler: str, msstats: str, mztab: str, sdrf: str, c
         [PROTEIN_NAME, PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, INTENSITY, RT, REFERENCE, SEARCH_ENGINE, CONDITION, RUN,
          BIOREPLICATE, FRACTION, FRAGMENT_ION, ISOTOPE_LABEL_TYPE, SCAN]]
 
+    # Compute the RT for MBR peptides as the mean of all RT for the following combination Peptide + Charge + Condition
+    result_df[RT] = result_df[RT].fillna(result_df.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, CONDITION])[RT].transform('mean'))
+
     # Merged the SDRF with Resultded file
     result_df = pd.merge(result_df, sdrf_df[['source name', REFERENCE]], how='left', on=[REFERENCE])
     result_df.rename(columns={'source name': SAMPLE_ID}, inplace=True)
