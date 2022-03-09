@@ -1,7 +1,6 @@
 .idea
 res.csv
 /data/PXD004682-Peptide-Intensities.tsv
-/data/PXD004682-Peptide-Intensities.tsv.gz
 /data/PXD008934.sdrf.tsv.gz
 /data/PXD008934-out.mzTab.gz
 /data/PXD008934-out_msstats.csv.gz
