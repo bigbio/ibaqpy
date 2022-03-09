@@ -1,15 +1,16 @@
+import click
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from pandas import DataFrame
+from sklearn.impute import KNNImputer, SimpleImputer
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, QuantileTransformer, Normalizer
 from sklearn.preprocessing import RobustScaler
-from sklearn.impute import KNNImputer, SimpleImputer
 
 from ibaqpy_commons import remove_contaminants_decoys, INTENSITY, SAMPLE_ID, NORM_INTENSITY, \
     PEPTIDE_SEQUENCE, CONDITION
-import click
+
 
 def print_dataset_size(dataset: DataFrame, message: str, verbose: bool) -> None:
     if verbose:
@@ -40,25 +41,28 @@ def remove_outliers_iqr(dataset: DataFrame) -> DataFrame:
     return dataset
 
 
-def plot_distributions(dataset: DataFrame, field: str, class_field: str, log2: bool = True, weigth : int = 10) -> None:
+def plot_distributions(dataset: DataFrame, field: str, class_field: str, log2: bool = True) -> None:
     """
     Print the quantile plot for the dataset
     :param dataset: DataFrame
     :param field: Field that would be use in the dataframe to plot the quantile
     :param class_field: Field to group the quantile into classes
     :param weigth: size of the plot
+    :param log2: Log the intensity values
     :return:
     """
     normalize = dataset[[field, class_field]]
-    normalize.dropna(subset = [field], inplace=True)
+    normalize.dropna(subset=[field], inplace=True)
     if log2:
         normalize[field] = np.log2(normalize[field])
     data_wide = normalize.pivot(columns=class_field,
-                         values=field)
+                                values=field)
     # plotting multiple density plot
-    data_wide.plot.kde(figsize=(8, 6),linewidth=4, legend=False)
+    data_wide.plot.kde(figsize=(8, 6), linewidth=4, legend=False)
 
-def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool = False, weigth: int = 10, rotation: int = 45, title: str = "") -> None:
+
+def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool = False, weigth: int = 10,
+                  rotation: int = 45, title: str = "") -> None:
     """
     Plot a box plot of two values field and classes field
     :param dataset: Dataframe with peptide intensities
@@ -67,6 +71,7 @@ def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool =
     :param log2: transform peptide intensities to log scale
     :param weigth: size of the plot
     :param rotation: rotation of the x-axis
+    :param title: Title of the box plot
     :return:
     """
     normalized = dataset[[field, class_field]]
@@ -81,9 +86,9 @@ def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool =
     plt.show()
 
 
-def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "all", scaling_method: str = "standard", imputation: bool = False,
-                            imputation_method: str ="simple", remove_peptides: bool = False) -> DataFrame:
-
+def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "all", scaling_method: str = "standard",
+                            imputation: bool = False,
+                            imputation_method: str = "simple", remove_peptides: bool = False) -> DataFrame:
     # Scaler selection
     scaler = StandardScaler(with_mean=False)
     if scaling_method == "quantile":
@@ -102,8 +107,9 @@ def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "
         dataset[NORM_INTENSITY] = scaler.fit_transform(normalize_df)
     else:
         normalize_df = dataset[[PEPTIDE_SEQUENCE, CONDITION, field, class_field]]
-        normalize_df = pd.pivot_table(normalize_df, values=field, index=[PEPTIDE_SEQUENCE, CONDITION], columns=class_field,
-                       aggfunc={field: np.mean})
+        normalize_df = pd.pivot_table(normalize_df, values=field, index=[PEPTIDE_SEQUENCE, CONDITION],
+                                      columns=class_field,
+                                      aggfunc={field: np.mean})
 
         # Remove all peptides in less than 30% of the samples.
         if remove_peptides:
@@ -115,12 +121,13 @@ def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "
 
         # Imputation of the values using KNNImputer (https://scikit-learn.org/0.16/modules/generated/sklearn.preprocessing.Imputer.html)
         if imputation:
-           imputer = SimpleImputer()
-           if imputation_method != "simple":
-               imputer = KNNImputer(n_neighbors=2, weights="uniform")
-           normalized_matrix = imputer.fit_transform(normalize_df)
-
-        normalized_matrix = scaler.fit_transform(normalized_matrix)
+            imputer = SimpleImputer()
+            if imputation_method != "simple":
+                imputer = KNNImputer(n_neighbors=2, weights="uniform")
+            normalized_matrix = imputer.fit_transform(normalize_df)
+            normalized_matrix = scaler.fit_transform(normalized_matrix)
+        else:
+            normalized_matrix = scaler.fit_transform(normalize_df)
 
         normalize_df[:] = normalized_matrix
         normalize_df = normalize_df.reset_index()
@@ -140,9 +147,11 @@ def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "
 @click.option("-l", "--routliers", help="Remove outliers from the peptide table", is_flag=True)
 @click.option("-o", "--output", help="Peptide intensity file including other all properties for normalization")
 @click.option("--log2", help="Transform to log2 the peptide intensity values before normalization", is_flag=True)
-@click.option("-v", "--verbose", help="Print addition information about the distributions of the intensities, number of peptides remove after normalization, etc.", is_flag=True)
-def peptide_normalization(peptides: str, contaminants: str, routliers: bool, output: str, log2: bool, verbose: bool) -> None:
-
+@click.option("-v", "--verbose",
+              help="Print addition information about the distributions of the intensities, number of peptides remove after normalization, etc.",
+              is_flag=True)
+def peptide_normalization(peptides: str, contaminants: str, routliers: bool, output: str, log2: bool,
+                          verbose: bool) -> None:
     if peptides is None or output is None:
         print_help_msg(peptide_normalization)
         exit(1)
@@ -154,8 +163,9 @@ def peptide_normalization(peptides: str, contaminants: str, routliers: bool, out
 
     # Print the distribution of the original peptide intensities from quantms analysis
     if verbose:
-        plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID)
-        plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=False, title="Original peptide intensity distribution (no normalization)")
+        plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=not(log2))
+        plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=not(log2),
+                      title="Original peptide intensity distribution (no normalization)")
 
     # Remove high abundant and contaminants proteins and the outliers
     if contaminants is not None:
@@ -163,14 +173,17 @@ def peptide_normalization(peptides: str, contaminants: str, routliers: bool, out
     print_dataset_size(dataset_df, "Peptides after contaminants removal: ", verbose)
 
     if verbose:
-        plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID)
-        plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=False, title="Peptide intensity distribution after contaminants removal")
+        plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID,log2=not(log2))
+        plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=not(log2),
+                      title="Peptide intensity distribution after contaminants removal")
 
     dataset_df = intensity_normalization(dataset_df, field=NORM_INTENSITY, class_field=SAMPLE_ID,
-                                         imputation=True, remove_peptides=True, scaling_method="quantile")
+                                         imputation=True, remove_peptides=routliers, scaling_method="robusts")
     if verbose:
-        plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=False)
-        plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=False, title = "Peptide intensity distribution after imputation, normalization")
+        plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=not(log2))
+        plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=not(log2),
+                      title="Peptide intensity distribution after imputation, normalization")
+
 
 if __name__ == '__main__':
     peptide_normalization()
