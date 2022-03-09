@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import click
 import glob
 import numpy as np
+import seaborn as sns
 
 # # prepare data
 # # the datasets are dataframes where:
@@ -48,12 +49,15 @@ def print_help_msg(command) -> None:
     with click.Context(command) as ctx:
         click.echo(command.get_help(ctx))
 
-def read_peptides_datasets(file_list: List, group: bool) -> DataFrame:
+def read_peptides_datasets(file_list: List, group: bool, compression_method: str) -> DataFrame:
 
     dataframes = []
     if group:
         for file in file_list:
-            df = pd.read_csv(file, sep="\t")
+            if compression_method is None:
+                df = pd.read_csv(file, sep="\t")
+            else:
+                df = pd.read_csv(file, sep="\t", compression=compression_method)
             normalize_df = df[[PEPTIDE_SEQUENCE, CONDITION, INTENSITY, SAMPLE_ID]]
             # group peptide + charge into a single peptide intensity using the mean.
             normalize_df = pd.pivot_table(normalize_df, values=INTENSITY, index=[PEPTIDE_SEQUENCE],
@@ -69,19 +73,21 @@ def read_peptides_datasets(file_list: List, group: bool) -> DataFrame:
 @click.option("--folder", help="Folder with all the peptide tables")
 @click.option("--pattern", help="Pattern extension of the file *.tsv, *Intensities.tsv")
 @click.option("--group", help="Group peptides condition for each dataset", is_flag=True)
+@click.option("--compress", help="Peptide data compress", is_flag=True)
 @click.option("--verbose",
               help="Print addition information about the distributions of the intensities, number of peptides remove after normalization, etc.",
               is_flag=True)
-def peptide_combat_normalization(folder: str, pattern: str, group: bool, verbose: str) -> None:
+def peptide_combat_normalization(folder: str, pattern: str, group: bool, compress: bool, verbose: str) -> None:
 
     if pattern is None:
         print_help_msg(peptide_combat_normalization)
         exit(1)
     if folder is None:
         folder = "."
+    compression_method = 'gzip' if compress else None
 
     file_list = glob.glob(folder + "/" + pattern)
-    dataframes = read_peptides_datasets(file_list, group)
+    dataframes = read_peptides_datasets(file_list, group, compression_method)
 
     batch = []
     for j in range(len(file_list)):
@@ -90,13 +96,15 @@ def peptide_combat_normalization(folder: str, pattern: str, group: bool, verbose
     datasets = pd.concat(dataframes,join="inner",axis=1)
     datasets = datasets.fillna(25)
     df_corrected = pycombat(datasets, batch)
-    plt.boxplot(df_corrected.transpose())
+    plt.figure(figsize=(15, 10))
+    melted = df_corrected.melt()
+    melted["value"] = np.log2(melted["value"])
+    chart = sns.boxplot(x=SAMPLE_ID, y="value", data=melted, boxprops=dict(alpha=.3), palette="muted")
+
+    chart.set_xticklabels(chart.get_xticklabels(), rotation=45)
     plt.show()
 
     print(file_list)
-
-
-
 
 
 
