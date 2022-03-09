@@ -1,8 +1,11 @@
-pyteomics
-pandas
-click
 pyopenms
-typing_extensions
-seaborn-qqplot
-qnorm
+numpy
+click
+pandas
+pyteomics
 combat
+matplotlib
+qnorm
+scikit_learn
+seaborn
+typing_extensions
