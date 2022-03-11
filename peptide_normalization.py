@@ -150,22 +150,27 @@ def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "
 
 
 @click.command()
-@click.option("-p", "--peptides", help="Peptides files from the peptide file generation tool")
-@click.option("-c", "--contaminants", help="Contaminants and high abundant proteins to be removed")
-@click.option("-l", "--routliers", help="Remove outliers from the peptide table", is_flag=True)
-@click.option("-o", "--output", help="Peptide intensity file including other all properties for normalization")
-@click.option("-n", '--nmethod', help="Normalization method used to normalize intensities for all samples (options: quantile, robusts, standard)", default="quantile")
+@click.option("--peptides", help="Peptides files from the peptide file generation tool")
+@click.option("--contaminants", help="Contaminants and high abundant proteins to be removed")
+@click.option("--routliers", help="Remove outliers from the peptide table", is_flag=True)
+@click.option("--output", help="Peptide intensity file including other all properties for normalization")
+@click.option('--nmethod', help="Normalization method used to normalize intensities for all samples (options: quantile, robusts, standard)", default="quantile")
+@click.option("--compress", help="Read the input peptides file in compress gzip file", is_flag= True)
 @click.option("--log2", help="Transform to log2 the peptide intensity values before normalization", is_flag=True)
-@click.option("-v", "--verbose",
+@click.option("--verbose",
               help="Print addition information about the distributions of the intensities, number of peptides remove after normalization, etc.",
               is_flag=True)
-def peptide_normalization(peptides: str, contaminants: str, routliers: bool, output: str, nmethod: str, log2: bool,
+def peptide_normalization(peptides: str, contaminants: str, routliers: bool, output: str, nmethod: str, compress: bool, log2: bool,
                           verbose: bool) -> None:
     if peptides is None or output is None:
         print_help_msg(peptide_normalization)
         exit(1)
 
-    dataset_df = pd.read_csv(peptides, sep="\t")
+    compression_method = 'gzip' if compress else None
+    if compress:
+        dataset_df = pd.read_csv(peptides, sep="\t", compression=compression_method)
+    else:
+        dataset_df = pd.read_csv(peptides, sep="\t")
     print_dataset_size(dataset_df, "Number of peptides: ", verbose)
 
     dataset_df[NORM_INTENSITY] = np.log2(dataset_df[INTENSITY]) if log2 else dataset_df[INTENSITY]
