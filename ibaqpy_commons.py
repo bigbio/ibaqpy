@@ -39,6 +39,9 @@ def remove_contaminants_decoys(dataset: DataFrame, contaminants_file: str, prote
 
     contaminants.append('CONTAMINANTS')
     contaminants.append('DECOY')
-    for contaminant in contaminants:
-        dataset.drop(index=dataset[dataset[protein_field].str.contains(contaminant)].index, inplace=True)
-    return dataset
+    #cregex = ".*(" + '|'.join(contaminants) + ").*"
+    cregex = '|'.join(contaminants)
+    #for contaminant in contaminants:
+        #dataset.drop(index=dataset[dataset[protein_field].str.contains(contaminant)].index, inplace=True)
+
+    return dataset[~dataset[protein_field].str.contains(cregex)]

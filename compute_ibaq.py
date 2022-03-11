@@ -43,7 +43,7 @@ def normalize_ibaq(res: DataFrame) -> DataFrame:
               default="Trypsin")
 @click.option("-n", "--normalize", help="Normalize IBAQ values using by using the total IBAQ of the experiment",
               is_flag=True)
-@click.option("--contaminants_file", help="Contaminants protein accession", default="contaminants_ids.tsv")
+@click.option("-c", "--contaminants", help="Contaminants protein accession", default="contaminants_ids.tsv")
 @click.option("-o", "--output", help="Output file with the proteins and ibaq values")
 def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, contaminants_file: str, output: str) -> None:
     """

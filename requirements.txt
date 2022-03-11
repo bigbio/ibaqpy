@@ -1,5 +1,5 @@
 pyopenms
-numpy
+numpy == 1.21
 click
 pandas
 pyteomics
@@ -7,5 +7,5 @@ combat
 matplotlib
 qnorm
 scikit_learn
-seaborn
+seaborn == 0.10
 typing_extensions
