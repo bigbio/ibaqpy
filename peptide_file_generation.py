@@ -143,8 +143,17 @@ def peptide_file_generation(triqler: str, msstats: str, mztab: str, sdrf: str, c
   psms_df = mztab_df.spectrum_match_table
   psms_df[REFERENCE] = psms_df['spectra_ref'].apply(get_run_mztab, metadata=mztab_df.metadata)
 
-  psms_df['psmSearchScore'] = psms_df['opt_global_Posterior_Error_Probability_score'].apply(
+  psms_df['psmSearchScore'] = None
+
+  if("opt_global_Posterior_Error_Probability_score" in psms_df.columns):
+    psms_df['psmSearchScore'] = psms_df['opt_global_Posterior_Error_Probability_score'].apply(
     best_probability_error_bestsearch_engine)
+  elif("opt_global_q-value"):
+    psms_df['psmSearchScore'] = psms_df['opt_global_q-value'].apply(
+      best_probability_error_bestsearch_engine)
+  else:
+    raise Exception('The peptide quality score is not present in the mzTab')
+
   psms_df[SCAN] = psms_df['spectra_ref'].apply(get_scan_mztab)
   psms_df.rename(columns={'opt_global_cv_MS:1000889_peptidoform_sequence': PEPTIDE_SEQUENCE, 'charge': PEPTIDE_CHARGE,
                           'retention_time': RT}, inplace=True)
