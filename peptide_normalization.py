@@ -4,9 +4,6 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from pandas import DataFrame
-from sklearn.impute import KNNImputer, SimpleImputer
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, QuantileTransformer, Normalizer
-from sklearn.preprocessing import RobustScaler
 import qnorm
 
 from ibaqpy_commons import remove_contaminants_decoys, INTENSITY, SAMPLE_ID, NORM_INTENSITY, \
@@ -93,6 +90,16 @@ def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool =
     plt.show()
     pd.set_option('mode.chained_assignment', 'warn')
 
+def remove_missing_values(normalize_df: DataFrame, ratio: float = 0.3) -> DataFrame:
+    """
+    Remove missing values if the peptide do not have values in the most of the samples
+    :param normalize_df: data frame with the data
+    :param ratio: ratio of samples without intensity values.
+    :return:
+    """
+    n_samples = len(normalize_df.columns)
+    normalize_df = normalize_df.dropna(thresh=round(n_samples * ratio))
+    return normalize_df
 
 def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "all", scaling_method: str = "msstats",
                             imputation: bool = False,
@@ -114,66 +121,63 @@ def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "
         normalize_df = pd.pivot_table(dataset, index=[PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE, RT],
                                       columns=class_field, values=field, aggfunc={field: np.mean})
         normalize_df = qnorm.quantile_normalize(normalize_df, axis=1)
+        # Remove all peptides in less than 30% of the samples.
         print(normalize_df.head())
         dataset = normalize_df.melt(value_name=NORM_INTENSITY)
         print(dataset.head())
         return dataset
 
-    # Scaler selection
-    elif scaling_method == "standard":
-        scaler = StandardScaler(with_mean=False)
-    elif scaling_method == "quantile":
-        scaler = QuantileTransformer(output_distribution="normal")
-    elif scaling_method == "normalizer":
-        scaler = Normalizer()
-    elif scaling_method == "robust":
-        scaler = RobustScaler()
-    elif scaling_method == "minmax":
-        scaler = MinMaxScaler()
-    elif scaling_method == 'maxabs':
-        scaler = MaxAbsScaler()
+    #
+    # # normalize the intensities across all samples
+    # if class_field == "all":
+    #     normalize_df = dataset[[field]]
+    #     dataset[NORM_INTENSITY] = scaler.fit_transform(normalize_df)
+    # else:
+    #     # normalize taking into account samples
+    #     normalize_df = dataset[[PEPTIDE_SEQUENCE, CONDITION, field, class_field]]
+    #     # group peptide + charge into a single peptide intensity using the mean.
+    #     normalize_df = pd.pivot_table(normalize_df, values=field, index=[PEPTIDE_SEQUENCE, CONDITION],
+    #                                   columns=class_field,
+    #                                   aggfunc={field: np.mean})
+    #
+    #     print(normalize_df.head())
+    #
+    #     # Remove all peptides in less than 30% of the samples.
+    #     if remove_peptides:
+    #         normalize_df = remove_missing_values(normalize_df=normalize_df, ratio = 0.3)
+    #
+    #     # Imputation of the values using KNNImputer
+    #     # (https://scikit-learn.org/0.16/modules/generated/sklearn.preprocessing.Imputer.html)
+    #     if imputation:
+    #         imputer = SimpleImputer()
+    #         if imputation_method != "simple":
+    #             imputer = KNNImputer(n_neighbors=2, weights="uniform")
+    #         normalized_matrix = imputer.fit_transform(normalize_df)
+    #         if scaling_method != "quantile":
+    #             normalized_matrix = scaler.fit_transform(normalized_matrix)
+    #         else:
+    #             normalized_matrix = qnorm.quantile_normalize(normalized_matrix)
+    #     else:
+    #         normalized_matrix = scaler.fit_transform(normalize_df)
+    #
+    #     normalize_df[:] = normalized_matrix
+    #     normalize_df = normalize_df.reset_index()
+    #     normalize_df = normalize_df.melt(id_vars=[PEPTIDE_SEQUENCE, CONDITION])
+    #     normalize_df.rename(columns={'value': NORM_INTENSITY}, inplace=True)
+    #     dataset = pd.merge(dataset, normalize_df, how='left', on=[PEPTIDE_SEQUENCE, CONDITION, class_field])
+    #     dataset.pop(NORM_INTENSITY + "_x")
+    #     dataset.rename(
+    #         columns={NORM_INTENSITY + "_y": NORM_INTENSITY}, inplace=True)
 
-    # normalize the intensities across all samples
-    if class_field == "all":
-        normalize_df = dataset[[field]]
-        dataset[NORM_INTENSITY] = scaler.fit_transform(normalize_df)
-    else:
-        # normalize taking into account samples
-        normalize_df = dataset[[PEPTIDE_SEQUENCE, CONDITION, field, class_field]]
-        # group peptide + charge into a single peptide intensity using the mean.
-        normalize_df = pd.pivot_table(normalize_df, values=field, index=[PEPTIDE_SEQUENCE, CONDITION],
-                                      columns=class_field,
-                                      aggfunc={field: np.mean})
+    return dataset
 
-        print(normalize_df.head())
-
-        # Remove all peptides in less than 30% of the samples.
-        if remove_peptides:
-            n_samples = len(normalize_df.columns)
-            normalize_df = normalize_df.dropna(thresh=round(n_samples * 0.3))
-
-        # Imputation of the values using KNNImputer
-        # (https://scikit-learn.org/0.16/modules/generated/sklearn.preprocessing.Imputer.html)
-        if imputation:
-            imputer = SimpleImputer()
-            if imputation_method != "simple":
-                imputer = KNNImputer(n_neighbors=2, weights="uniform")
-            normalized_matrix = imputer.fit_transform(normalize_df)
-            if scaling_method != "quantile":
-                normalized_matrix = scaler.fit_transform(normalized_matrix)
-            else:
-                normalized_matrix = qnorm.quantile_normalize(normalized_matrix)
-        else:
-            normalized_matrix = scaler.fit_transform(normalize_df)
-
-        normalize_df[:] = normalized_matrix
-        normalize_df = normalize_df.reset_index()
-        normalize_df = normalize_df.melt(id_vars=[PEPTIDE_SEQUENCE, CONDITION])
-        normalize_df.rename(columns={'value': NORM_INTENSITY}, inplace=True)
-        dataset = pd.merge(dataset, normalize_df, how='left', on=[PEPTIDE_SEQUENCE, CONDITION, class_field])
-        dataset.pop(NORM_INTENSITY + "_x")
-        dataset.rename(
-            columns={NORM_INTENSITY + "_y": NORM_INTENSITY}, inplace=True)
+def get_peptide_selection(dataset: DataFrame) -> DataFrame:
+    # Precursors median summarize
+    g = dataset.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE])[INTENSITY].apply(np.median)
+    g.name = 'PrecursorMedian'
+    dataset = dataset.join(g, on=[PEPTIDE_SEQUENCE, PEPTIDE_CHARGE])
+    dataset['PrecursorMedian'] = dataset['PrecursorMedian'].groupby(dataset['Fraction']).transform('median')
+    dataset[NORM_INTENSITY] = dataset[INTENSITY] - dataset['RunMedian'] + dataset['FractionMedian']
 
     return dataset
 
@@ -232,7 +236,7 @@ def peptide_normalization(peptides: str, contaminants: str, routliers: bool, out
         log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or ((nmethod == "quantile" or nmethod == "robust") and not log2)
         plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm)
         plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
-                      title="Peptide intensity distribution after imputation, normalization", violin=violin)
+                      title="Peptide intensity distribution after imputation, normalization method: " + nmethod, violin=violin)
 
 
 if __name__ == '__main__':
