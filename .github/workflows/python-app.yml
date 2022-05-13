@@ -36,5 +36,5 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with normalization
       run: |
-        python --log2 --peptides ./data/heart-grouped-Intensities.tsv --contaminants contaminants_ids.tsv --routliers --output data/heart-grouped-Intensities-Norm.tsv --verbose --nmethod qnorm
+        python peptide_normalization.py --log2 --peptides ./data/heart-grouped-Intensities.tsv --contaminants contaminants_ids.tsv --routliers --output data/heart-grouped-Intensities-Norm.tsv --verbose --nmethod qnorm
 
