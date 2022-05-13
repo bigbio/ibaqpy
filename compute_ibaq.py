@@ -7,7 +7,6 @@ from pyopenms import *
 
 from ibaqpy_commons import remove_contaminants_decoys, PROTEIN_NAME, INTENSITY, CONDITION, IBAQ, IBAQ_LOG, IBAQ_PPB
 
-
 def print_help_msg(command):
     """
     Print the help of the command
@@ -16,7 +15,6 @@ def print_help_msg(command):
     """
     with click.Context(command) as ctx:
         click.echo(command.get_help(ctx))
-
 
 def normalize_ibaq(res: DataFrame) -> DataFrame:
     """
@@ -34,7 +32,6 @@ def normalize_ibaq(res: DataFrame) -> DataFrame:
     # Normalization used by PRIDE Team (no log transformation) (ibaq/total_ibaq) * 100'000'000
     res[IBAQ_PPB] = res[IBAQ].apply(lambda x: (x / total_ibaq) * 100000000)
     return res
-
 
 @click.command()
 @click.option("-f", "--fasta", help="Protein database to compute IBAQ values")
@@ -108,7 +105,6 @@ def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, contam
     res[CONDITION] = condition.lower()
 
     res.to_csv(output, index=False)
-
 
 if __name__ == '__main__':
     ibaq_compute()

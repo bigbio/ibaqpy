@@ -4,13 +4,11 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from pandas import DataFrame
-from sklearn.impute import KNNImputer, SimpleImputer
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, MaxAbsScaler, QuantileTransformer, Normalizer
-from sklearn.preprocessing import RobustScaler
 import qnorm
+import re
 
 from ibaqpy_commons import remove_contaminants_decoys, INTENSITY, SAMPLE_ID, NORM_INTENSITY, \
-    PEPTIDE_SEQUENCE, CONDITION, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE, RT
+    PEPTIDE_SEQUENCE, CONDITION, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE, RT, PEPTIDE_CANONICAL, SEARCH_ENGINE
 
 
 def print_dataset_size(dataset: DataFrame, message: str, verbose: bool) -> None:
@@ -27,7 +25,6 @@ def print_help_msg(command) -> None:
     with click.Context(command) as ctx:
         click.echo(command.get_help(ctx))
 
-
 def remove_outliers_iqr(dataset: DataFrame):
     """
     This method removes outliers from the dataframe inplace, the variable used for the outlier removal is Intensity
@@ -39,7 +36,6 @@ def remove_outliers_iqr(dataset: DataFrame):
     IQR = Q3 - Q1
 
     dataset.query('(@Q1 - 1.5 * @IQR) <= Intensity <= (@Q3 + 1.5 * @IQR)', inplace=True)
-
 
 def plot_distributions(dataset: DataFrame, field: str, class_field: str, log2: bool = True) -> None:
     """
@@ -60,7 +56,6 @@ def plot_distributions(dataset: DataFrame, field: str, class_field: str, log2: b
     # plotting multiple density plot
     data_wide.plot.kde(figsize=(8, 6), linewidth=2, legend=False)
     pd.set_option('mode.chained_assignment', 'warn')
-
 
 def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool = False, weigth: int = 10,
                   rotation: int = 45, title: str = "", violin: bool = False) -> None:
@@ -93,10 +88,28 @@ def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool =
     plt.show()
     pd.set_option('mode.chained_assignment', 'warn')
 
+def remove_missing_values(normalize_df: DataFrame, ratio: float = 0.3) -> DataFrame:
+    """
+    Remove missing values if the peptide do not have values in the most of the samples
+    :param normalize_df: data frame with the data
+    :param ratio: ratio of samples without intensity values.
+    :return:
+    """
+    n_samples = len(normalize_df.columns)
+    normalize_df = normalize_df.dropna(thresh=round(n_samples * ratio))
+    return normalize_df
 
-def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "all", scaling_method: str = "msstats",
-                            imputation: bool = False,
-                            imputation_method: str = "simple", remove_peptides: bool = False) -> DataFrame:
+def get_canonical_peptide(peptide_sequence: str)-> str:
+    """
+    This function returns a peptide sequence without the modification information
+    :param peptide_sequence: peptide sequence with mods
+    :return: peptide sequence
+    """
+    clean_peptide = re.sub("[\(\[].*?[\)\]]", "", peptide_sequence)
+    clean_peptide = clean_peptide.replace(".","")
+    return clean_peptide
+
+def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "all", scaling_method: str = "msstats") -> DataFrame:
 
     ## TODO add imputation and/or removal to those two norm strategies
     if scaling_method == 'msstats':
@@ -111,72 +124,96 @@ def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "
 
     elif scaling_method == 'qnorm':
         # pivot to have one col per sample
-        normalize_df = pd.pivot_table(dataset, index=[PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE, RT],
+        normalize_df = pd.pivot_table(dataset, index=[PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE, RT, SEARCH_ENGINE],
                                       columns=class_field, values=field, aggfunc={field: np.mean})
         normalize_df = qnorm.quantile_normalize(normalize_df, axis=1)
-        print(normalize_df.head())
-        dataset = normalize_df.melt(value_name=NORM_INTENSITY)
-        print(dataset.head())
-        return dataset
-
-    # Scaler selection
-    elif scaling_method == "standard":
-        scaler = StandardScaler(with_mean=False)
-    elif scaling_method == "quantile":
-        scaler = QuantileTransformer(output_distribution="normal")
-    elif scaling_method == "normalizer":
-        scaler = Normalizer()
-    elif scaling_method == "robust":
-        scaler = RobustScaler()
-    elif scaling_method == "minmax":
-        scaler = MinMaxScaler()
-    elif scaling_method == 'maxabs':
-        scaler = MaxAbsScaler()
-
-    # normalize the intensities across all samples
-    if class_field == "all":
-        normalize_df = dataset[[field]]
-        dataset[NORM_INTENSITY] = scaler.fit_transform(normalize_df)
-    else:
-        # normalize taking into account samples
-        normalize_df = dataset[[PEPTIDE_SEQUENCE, CONDITION, field, class_field]]
-        # group peptide + charge into a single peptide intensity using the mean.
-        normalize_df = pd.pivot_table(normalize_df, values=field, index=[PEPTIDE_SEQUENCE, CONDITION],
-                                      columns=class_field,
-                                      aggfunc={field: np.mean})
-
-        print(normalize_df.head())
-
-        # Remove all peptides in less than 30% of the samples.
-        if remove_peptides:
-            n_samples = len(normalize_df.columns)
-            normalize_df = normalize_df.dropna(thresh=round(n_samples * 0.3))
-
-        # Imputation of the values using KNNImputer
-        # (https://scikit-learn.org/0.16/modules/generated/sklearn.preprocessing.Imputer.html)
-        if imputation:
-            imputer = SimpleImputer()
-            if imputation_method != "simple":
-                imputer = KNNImputer(n_neighbors=2, weights="uniform")
-            normalized_matrix = imputer.fit_transform(normalize_df)
-            if scaling_method != "quantile":
-                normalized_matrix = scaler.fit_transform(normalized_matrix)
-            else:
-                normalized_matrix = qnorm.quantile_normalize(normalized_matrix)
-        else:
-            normalized_matrix = scaler.fit_transform(normalize_df)
-
-        normalize_df[:] = normalized_matrix
         normalize_df = normalize_df.reset_index()
-        normalize_df = normalize_df.melt(id_vars=[PEPTIDE_SEQUENCE, CONDITION])
+        normalize_df = normalize_df.melt(id_vars=[PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE, RT, SEARCH_ENGINE])
         normalize_df.rename(columns={'value': NORM_INTENSITY}, inplace=True)
-        dataset = pd.merge(dataset, normalize_df, how='left', on=[PEPTIDE_SEQUENCE, CONDITION, class_field])
-        dataset.pop(NORM_INTENSITY + "_x")
-        dataset.rename(
-            columns={NORM_INTENSITY + "_y": NORM_INTENSITY}, inplace=True)
+        print(dataset.head())
+        return normalize_df
+
+    #
+    # # normalize the intensities across all samples
+    # if class_field == "all":
+    #     normalize_df = dataset[[field]]
+    #     dataset[NORM_INTENSITY] = scaler.fit_transform(normalize_df)
+    # else:
+    #     # normalize taking into account samples
+    #     normalize_df = dataset[[PEPTIDE_SEQUENCE, CONDITION, field, class_field]]
+    #     # group peptide + charge into a single peptide intensity using the mean.
+    #     normalize_df = pd.pivot_table(normalize_df, values=field, index=[PEPTIDE_SEQUENCE, CONDITION],
+    #                                   columns=class_field,
+    #                                   aggfunc={field: np.mean})
+    #
+    #     print(normalize_df.head())
+    #
+    #     # Remove all peptides in less than 30% of the samples.
+    #     if remove_peptides:
+    #         normalize_df = remove_missing_values(normalize_df=normalize_df, ratio = 0.3)
+    #
+    #     # Imputation of the values using KNNImputer
+    #     # (https://scikit-learn.org/0.16/modules/generated/sklearn.preprocessing.Imputer.html)
+    #     if imputation:
+    #         imputer = SimpleImputer()
+    #         if imputation_method != "simple":
+    #             imputer = KNNImputer(n_neighbors=2, weights="uniform")
+    #         normalized_matrix = imputer.fit_transform(normalize_df)
+    #         if scaling_method != "quantile":
+    #             normalized_matrix = scaler.fit_transform(normalized_matrix)
+    #         else:
+    #             normalized_matrix = qnorm.quantile_normalize(normalized_matrix)
+    #     else:
+    #         normalized_matrix = scaler.fit_transform(normalize_df)
+    #
+    #     normalize_df[:] = normalized_matrix
+    #     normalize_df = normalize_df.reset_index()
+    #     normalize_df = normalize_df.melt(id_vars=[PEPTIDE_SEQUENCE, CONDITION])
+    #     normalize_df.rename(columns={'value': NORM_INTENSITY}, inplace=True)
+    #     dataset = pd.merge(dataset, normalize_df, how='left', on=[PEPTIDE_SEQUENCE, CONDITION, class_field])
+    #     dataset.pop(NORM_INTENSITY + "_x")
+    #     dataset.rename(
+    #         columns={NORM_INTENSITY + "_y": NORM_INTENSITY}, inplace=True)
 
     return dataset
 
+def get_peptidoform_normalize_intensities(dataset: DataFrame, higher_intensity: bool = True) -> DataFrame:
+    """
+    Select the best peptidoform for the same sample and the same replicates. A peptidoform is the combination of
+    a (PeptideSequence + Modifications) + Charge state.
+    :param dataset: dataset including all properties
+    :param higher_intensity: select based on normalize intensity, if false based on best scored peptide
+    :return:
+    """
+    dataset = dataset[dataset[NORM_INTENSITY].notna()]
+    if higher_intensity:
+        dataset = dataset.loc[dataset.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, BIOREPLICATE])[NORM_INTENSITY].idxmax()].reset_index(drop=True)
+    else:
+        dataset = dataset.loc[dataset.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, BIOREPLICATE])[
+            SEARCH_ENGINE].idxmax()].reset_index(drop=True)
+    return dataset
+
+def sum_peptidoform_intensities(dataset: DataFrame) -> DataFrame:
+    """
+    Sum the peptidoform intensities for all peptidofrom across replicates of the same sample.
+
+    :param dataset: Dataframe to be analyzed
+    :return: dataframe with the intensities
+    """
+    dataset = dataset[dataset[NORM_INTENSITY].notna()]
+    dataset = dataset.groupby([PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE])[NORM_INTENSITY].sum()
+    dataset = dataset.reset_index()
+    return dataset
+
+def average_peptide_intensities(dataset: DataFrame) -> DataFrame:
+    """
+    Median the intensities of all the peptidoforms for an specific peptide sample combination.
+    :param dataset: Dataframe containing all the peptidoforms
+    :return: New dataframe
+    """
+    dataset = dataset.groupby([PEPTIDE_CANONICAL, SAMPLE_ID])[NORM_INTENSITY].median()
+    dataset = dataset.reset_index()
+    return dataset
 
 @click.command()
 @click.option("--peptides", help="Peptides files from the peptide file generation tool")
@@ -192,6 +229,7 @@ def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "
               is_flag=True)
 def peptide_normalization(peptides: str, contaminants: str, routliers: bool, output: str, nmethod: str, compress: bool, log2: bool,
                           violin: bool, verbose: bool) -> None:
+
     if peptides is None or output is None:
         print_help_msg(peptide_normalization)
         exit(1)
@@ -226,13 +264,40 @@ def peptide_normalization(peptides: str, contaminants: str, routliers: bool, out
         plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=not log2,
                       title="Peptide intensity distribution after contaminants removal", violin=violin)
 
-    dataset_df = intensity_normalization(dataset_df, field=NORM_INTENSITY, class_field=SAMPLE_ID,
-                                         imputation=True, remove_peptides=routliers, scaling_method=nmethod)
+    print("Normalize intensities.. ")
+    dataset_df = intensity_normalization(dataset_df, field=NORM_INTENSITY, class_field=SAMPLE_ID, scaling_method=nmethod)
+
     if verbose:
         log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or ((nmethod == "quantile" or nmethod == "robust") and not log2)
         plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm)
         plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
-                      title="Peptide intensity distribution after imputation, normalization", violin=violin)
+                      title="Peptide intensity distribution after imputation, normalization method: " + nmethod, violin=violin)
+
+    print("Select the best peptidoform across fractions...")
+    print("Number of peptides before peptidofrom selection: " + str(len(dataset_df.index)))
+    dataset_df = get_peptidoform_normalize_intensities(dataset_df)
+    print("Number of peptides after peptidofrom selection: " + str(len(dataset_df.index)))
+
+    # Add the peptide sequence canonical without the modifications
+    print("Add Canonical peptides to the dataframe...")
+    dataset_df[PEPTIDE_CANONICAL] = dataset_df[PEPTIDE_SEQUENCE].apply(lambda x: get_canonical_peptide(x))
+
+    print("Sum all peptidoforms per Sample...")
+    print("Number of peptides before sum selection: " + str(len(dataset_df.index)))
+    dataset_df = sum_peptidoform_intensities(dataset_df)
+    print("Number of peptides after sum: " + str(len(dataset_df.index)))
+
+    print("Average all peptidoforms per Peptide/Sample...")
+    print("Number of peptides before average: " + str(len(dataset_df.index)))
+    dataset_df = average_peptide_intensities(dataset_df)
+    print("Number of peptides after average: " + str(len(dataset_df.index)))
+
+    if verbose:
+        log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or ((nmethod == "quantile" or nmethod == "robust") and not log2)
+        plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm)
+        plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
+                      title="Peptide intensity distribution after imputation, normalization method: " + nmethod, violin=True)
+
 
 
 if __name__ == '__main__':

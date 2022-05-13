@@ -2,6 +2,7 @@ from pandas import DataFrame
 
 PROTEIN_NAME = 'ProteinName'
 PEPTIDE_SEQUENCE = 'PeptideSequence'
+PEPTIDE_CANONICAL = "PeptideCanonical"
 PEPTIDE_CHARGE = 'PrecursorCharge'
 FRAGMENT_ION = 'FragmentIon'
 PRODUCT_CHARGE = 'ProductCharge'
