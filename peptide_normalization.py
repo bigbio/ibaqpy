@@ -184,6 +184,7 @@ def get_peptidoform_selected(dataset: DataFrame, higher_intensity = True) -> Dat
     :param higher_intensity: select based on normalize intensity, if false based on best scored peptide
     :return:
     """
+    dataset = dataset[dataset[NORM_INTENSITY].notna()]
     if higher_intensity:
         dataset = dataset.loc[dataset.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, BIOREPLICATE])[NORM_INTENSITY].idxmax()].reset_index(drop=True)
     else:
@@ -251,7 +252,9 @@ def peptide_normalization(peptides: str, contaminants: str, routliers: bool, out
                       title="Peptide intensity distribution after imputation, normalization method: " + nmethod, violin=violin)
 
     print("Select the best peptidoform across fractions...")
+    print("Number of peptides before peptidofrom selection: " + str(len(dataset_df.index)))
     dataset_df = get_peptidoform_selected(dataset_df)
+    print("Number of peptides after peptidofrom selection: " + str(len(dataset_df.index)))
 
     # Add the peptide sequence canonical without the modifications
     print("Add Canonical peptides to the dataframe...")
