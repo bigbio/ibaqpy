@@ -201,7 +201,7 @@ def sum_peptidoform_intensities(dataset: DataFrame) -> DataFrame:
     :return: dataframe with the intensities
     """
     dataset = dataset[dataset[NORM_INTENSITY].notna()]
-    dataset = dataset.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID])[NORM_INTENSITY].sum()
+    dataset = dataset.groupby([PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE])[NORM_INTENSITY].sum()
     dataset = dataset.reset_index()
     return dataset
 
@@ -278,14 +278,14 @@ def peptide_normalization(peptides: str, contaminants: str, routliers: bool, out
     dataset_df = get_peptidoform_normalize_intensities(dataset_df)
     print("Number of peptides after peptidofrom selection: " + str(len(dataset_df.index)))
 
+    # Add the peptide sequence canonical without the modifications
+    print("Add Canonical peptides to the dataframe...")
+    dataset_df[PEPTIDE_CANONICAL] = dataset_df[PEPTIDE_SEQUENCE].apply(lambda x: get_canonical_peptide(x))
+
     print("Sum all peptidoforms per Sample...")
     print("Number of peptides before sum selection: " + str(len(dataset_df.index)))
     dataset_df = sum_peptidoform_intensities(dataset_df)
     print("Number of peptides after sum: " + str(len(dataset_df.index)))
-
-    # Add the peptide sequence canonical without the modifications
-    print("Add Canonical peptides to the dataframe...")
-    dataset_df[PEPTIDE_CANONICAL] = dataset_df[PEPTIDE_SEQUENCE].apply(lambda x: get_canonical_peptide(x))
 
     print("Average all peptidoforms per Peptide/Sample...")
     print("Number of peptides before average: " + str(len(dataset_df.index)))
@@ -296,7 +296,7 @@ def peptide_normalization(peptides: str, contaminants: str, routliers: bool, out
         log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or ((nmethod == "quantile" or nmethod == "robust") and not log2)
         plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm)
         plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
-                      title="Peptide intensity distribution after imputation, normalization method: " + nmethod, violin=violin)
+                      title="Peptide intensity distribution after imputation, normalization method: " + nmethod, violin=True)
 
 
 if __name__ == '__main__':
