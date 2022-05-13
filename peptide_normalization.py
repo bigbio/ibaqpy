@@ -177,9 +177,10 @@ def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "
 
     return dataset
 
-def get_peptidoform_selected(dataset: DataFrame, higher_intensity = True) -> DataFrame:
+def get_peptidoform_normalize_intensities(dataset: DataFrame, higher_intensity = True) -> DataFrame:
     """
-    Select the best peptidoform for the same sample and the same replicates
+    Select the best peptidoform for the same sample and the same replicates. A peptidoform is the combination of
+    a (PeptideSequence + Modifications) + Charge state.
     :param dataset: dataset including all properties
     :param higher_intensity: select based on normalize intensity, if false based on best scored peptide
     :return:
@@ -192,6 +193,27 @@ def get_peptidoform_selected(dataset: DataFrame, higher_intensity = True) -> Dat
             SEARCH_ENGINE].idxmax()].reset_index(drop=True)
     return dataset
 
+def sum_peptidoform_intensities(dataset: DataFrame) -> DataFrame:
+    """
+    Sum the peptidoform intensities for all peptidofrom across replicates of the same sample.
+
+    :param dataset: Dataframe to be analyzed
+    :return: dataframe with the intensities
+    """
+    dataset = dataset[dataset[NORM_INTENSITY].notna()]
+    dataset = dataset.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID])[NORM_INTENSITY].sum()
+    dataset = dataset.reset_index()
+    return dataset
+
+def average_peptide_intensities(dataset: DataFrame) -> DataFrame:
+    """
+    Median the intensities of all the peptidoforms for an specific peptide sample combination.
+    :param dataset: Dataframe containing all the peptidoforms
+    :return: New dataframe
+    """
+    dataset = dataset.groupby([PEPTIDE_CANONICAL, SAMPLE_ID])[NORM_INTENSITY].median()
+    dataset = dataset.reset_index()
+    return dataset
 
 @click.command()
 @click.option("--peptides", help="Peptides files from the peptide file generation tool")
@@ -253,12 +275,22 @@ def peptide_normalization(peptides: str, contaminants: str, routliers: bool, out
 
     print("Select the best peptidoform across fractions...")
     print("Number of peptides before peptidofrom selection: " + str(len(dataset_df.index)))
-    dataset_df = get_peptidoform_selected(dataset_df)
+    dataset_df = get_peptidoform_normalize_intensities(dataset_df)
     print("Number of peptides after peptidofrom selection: " + str(len(dataset_df.index)))
+
+    print("Sum all peptidoforms per Sample...")
+    print("Number of peptides before sum selection: " + str(len(dataset_df.index)))
+    dataset_df = sum_peptidoform_intensities(dataset_df)
+    print("Number of peptides after sum: " + str(len(dataset_df.index)))
 
     # Add the peptide sequence canonical without the modifications
     print("Add Canonical peptides to the dataframe...")
-    # dataset_df[PEPTIDE_CANONICAL] = dataset_df[PEPTIDE_SEQUENCE].apply(lambda x: get_canonical_peptide(x))
+    dataset_df[PEPTIDE_CANONICAL] = dataset_df[PEPTIDE_SEQUENCE].apply(lambda x: get_canonical_peptide(x))
+
+    print("Average all peptidoforms per Peptide/Sample...")
+    print("Number of peptides before average: " + str(len(dataset_df.index)))
+    dataset_df = average_peptide_intensities(dataset_df)
+    print("Number of peptides after average: " + str(len(dataset_df.index)))
 
     if verbose:
         log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or ((nmethod == "quantile" or nmethod == "robust") and not log2)
