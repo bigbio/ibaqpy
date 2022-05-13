@@ -177,7 +177,7 @@ def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "
 
     return dataset
 
-def get_peptidoform_normalize_intensities(dataset: DataFrame, higher_intensity = True) -> DataFrame:
+def get_peptidoform_normalize_intensities(dataset: DataFrame, higher_intensity: bool = True) -> DataFrame:
     """
     Select the best peptidoform for the same sample and the same replicates. A peptidoform is the combination of
     a (PeptideSequence + Modifications) + Charge state.
