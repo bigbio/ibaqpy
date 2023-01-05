@@ -1,9 +1,12 @@
 # ibaqpy
 
-IBAQPy compute IBAQ values for Triqler outputs of Sample specific datasets. Additional tasks:
+ibaqpy compute IBAQ values for proteins starting from an msstats input file and a SDRF experimental design file. This package provides multiple tools: 
 
-- Remove contaminants, decoy and proteins with non-tryptic peptides
-- Normalize IBAQ values for each protein.
+- `peptide_file_generation.py`: generate a peptide file from a msstats input file and a SDRF experimental design file. 
+
+- `peptide_normalization.py`: Normalize the input output file from script `peptide_file_generation.py`. It includes multiple steps such as peptidoform normalization, peptidorom to peptide summarization, peptide intesity normalization, and imputation. 
+
+- `compute_ibaq.py`: Compute IBAQ values from the output file from script `peptide_normalization.py`.
 
 ### Collecting intensity files 
 

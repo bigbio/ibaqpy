@@ -244,20 +244,19 @@ def peptide_intensity_normalization(dataset_df: DataFrame, field: str, class_fie
     return dataset_df
 
 
-def impute_peptide_intensities(dataset_df, field, class_field, verbose):
+def impute_peptide_intensities(dataset_df, field, class_field):
     """
     Impute the missing values using different methods.
     :param dataset_df: dataframe with the data
     :param field: field to impute
     :param class_field: field to use as class
-    :param verbose: verbose
     :return:
     """
     # pivot to have one col per sample
     normalize_df = pd.pivot_table(dataset_df, index=[PEPTIDE_CANONICAL, PROTEIN_NAME],
                                   columns=class_field, values=field, aggfunc={field: np.mean})
     # Impute the missing values
-    imputer = MissForest()
+    imputer = MissForest(max_iter=20)
     imputed_data = imputer.fit_transform(normalize_df)
     normalize_df = pd.DataFrame(imputed_data, columns=normalize_df.columns, index=normalize_df.index)
 
@@ -274,7 +273,7 @@ def impute_peptide_intensities(dataset_df, field, class_field, verbose):
 @click.option("--contaminants", help="Contaminants and high abundant proteins to be removed")
 @click.option("--routliers", help="Remove outliers from the peptide table", is_flag=True)
 @click.option("--output", help="Peptide intensity file including other all properties for normalization")
-@click.option('--nmethod', help="Normalization method used to normalize intensities for all samples (options: quantile, robusts, standard)", default="quantile")
+@click.option('--nmethod', help="Normalization method used to normalize intensities for all samples (options: qnorm)", default="qnorm")
 @click.option("--compress", help="Read the input peptides file in compress gzip file", is_flag= True)
 @click.option("--log2", help="Transform to log2 the peptide intensity values before normalization", is_flag=True)
 @click.option("--violin", help="Use violin plot instead of boxplot for distribution representations", is_flag=True)
@@ -304,18 +303,13 @@ def peptide_normalization(peptides: str, contaminants: str, routliers: bool, out
     if verbose:
         plot_distributions(dataset_df, INTENSITY, SAMPLE_ID, log2=not log2)
         plot_box_plot(dataset_df, INTENSITY, SAMPLE_ID, log2=not log2,
-                      title="Original peptide intensity distribution (no normalization)", violin=violin)
+                      title="Original peptidoform intensity distribution (no normalization)", violin=violin)
 
     # Remove high abundant and contaminants proteins and the outliers
     if contaminants is not None:
         print("Remove contaminants...")
         dataset_df = remove_contaminants_decoys(dataset_df, contaminants)
     print_dataset_size(dataset_df, "Peptides after contaminants removal: ", verbose)
-
-    if verbose:
-        plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=not log2)
-        plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=not log2,
-                      title="Peptide intensity distribution after contaminants removal", violin=violin)
 
     print("Normalize intensities.. ")
     dataset_df = intensity_normalization(dataset_df, field=NORM_INTENSITY, class_field=SAMPLE_ID, scaling_method=nmethod)
@@ -324,7 +318,7 @@ def peptide_normalization(peptides: str, contaminants: str, routliers: bool, out
         log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or ((nmethod == "quantile" or nmethod == "robust") and not log2)
         plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm)
         plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
-                      title="Peptide intensity distribution after imputation, normalization method: " + nmethod, violin=violin)
+                      title="Peptidoform intensity distribution after normalization, method: " + nmethod, violin=violin)
 
     print("Select the best peptidoform across fractions...")
     print("Number of peptides before peptidofrom selection: " + str(len(dataset_df.index)))
@@ -349,18 +343,15 @@ def peptide_normalization(peptides: str, contaminants: str, routliers: bool, out
         log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or ((nmethod == "quantile" or nmethod == "robust") and not log2)
         plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm)
         plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
-                      title="Peptide intensity distribution after imputation, normalization method: " + nmethod, violin=violin)
+                      title="Peptide intensity distribution method: " + nmethod, violin=violin)
 
     print("Peptides before removing low frequency peptides: " + str(len(dataset_df.index)))
     dataset_df = remove_low_frequency_peptides(dataset_df, 0.20)
-    print_dataset_size(dataset_df, "Peptides after remove low frecuency peptides: ", verbose)
+    print_dataset_size(dataset_df, "Peptides after remove low frequency peptides: ", verbose)
 
-    if verbose:
-        log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or ((nmethod == "quantile" or nmethod == "robust") and not log2)
-        plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm)
-        plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
-                      title="Peptide intensity distribution after imputation, normalization method: " + nmethod, violin=violin)
 
+    # Perform imputation using Random Forest in Peptide Intensities
+    dataset_df = impute_peptide_intensities(dataset_df, field=NORM_INTENSITY, class_field=SAMPLE_ID)
     print("Normalize at Peptide level...")
     dataset_df = peptide_intensity_normalization(dataset_df, field=NORM_INTENSITY, class_field=SAMPLE_ID, scaling_method=nmethod)
 
@@ -368,16 +359,8 @@ def peptide_normalization(peptides: str, contaminants: str, routliers: bool, out
         log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or ((nmethod == "quantile" or nmethod == "robust") and not log2)
         plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm)
         plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
-                      title="Peptide intensity distribution after imputation, normalization method: " + nmethod, violin=violin)
+                      title="Normalization at peptide level method: " + nmethod, violin=violin)
 
-    # Perform imputation using Random Forest in Peptide Intensities
-    dataset_df = impute_peptide_intensities(dataset_df, field=NORM_INTENSITY, class_field=SAMPLE_ID, verbose=verbose)
-
-    if verbose:
-        log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or ((nmethod == "quantile" or nmethod == "robust") and not log2)
-        plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm)
-        plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
-                      title="Peptide intensity distribution after imputation, normalization method: " + nmethod, violin=violin)
 
     print("Save the normalized peptide intensities...")
     dataset_df.to_csv(output, index=False, sep=',')
