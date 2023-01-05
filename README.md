@@ -55,7 +55,7 @@ Options:
 Peptide normalization starts from the output file from script `peptide_file_generation.py`. The structure of the input contains the following columns: 
 
 - ProteinName: Protein name
-- PeptideSequence: Peptide sequence including posttranslation modifications `(e.g. .(Acetyl)ASPDWGYDDKN(Deamidated)GPEQWSK)`
+- PeptideSequence: Peptide sequence including post-translation modifications `(e.g. .(Acetyl)ASPDWGYDDKN(Deamidated)GPEQWSK)`
 - PrecursorCharge: Precursor charge
 - FragmentIon: Fragment ion
 - ProductCharge: Product charge
@@ -69,7 +69,14 @@ Peptide normalization starts from the output file from script `peptide_file_gene
 - SampleID: Sample ID `(e.g. PXD000561-Sample-54)`
 - StudyID: Study ID `(e.g. PXD000561)`. In most of the cases the study ID is the same as the ProteomeXchange ID.
 
+#### Removing Contaminants and Decoys
 
+The first step is to remove contaminants and decoys from the input file. The script `peptide_normalization.py` provides a parameter `--contaminants` for the user to provide a file with a list of protein accessions which represent each contaminant in the file. An example file can be seen in `data/contaminants.txt`. In addition to all the proteins accessions, the tool remove all the proteins with the following prefixes: `CONTAMINANT` and `DECOY`.
+
+
+```asciidoc 
+
+```asciidoc
 ### Credits 
 
 Julianus and Yasset Perez-Riverol
