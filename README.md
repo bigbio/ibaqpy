@@ -73,10 +73,13 @@ Peptide normalization starts from the output file from script `peptide_file_gene
 
 The first step is to remove contaminants and decoys from the input file. The script `peptide_normalization.py` provides a parameter `--contaminants` for the user to provide a file with a list of protein accessions which represent each contaminant in the file. An example file can be seen in `data/contaminants.txt`. In addition to all the proteins accessions, the tool remove all the proteins with the following prefixes: `CONTAMINANT` and `DECOY`.
 
+#### Peptidoform Normalization
 
-```asciidoc 
+A peptidoform is a combination of a `PeptideSequence(Modifications) + Charge + BioReplicate + Fraction`. In the current version of the file, each row correspond to one peptidoform. 
 
-```asciidoc
+The current version of the tool uses the parackage [qnorm](https://pypi.org/project/qnorm/) to normalize the intensities for each peptidofrom. **qnorm** implements a quantile normalization method. 
+
+
 ### Credits 
 
 Julianus and Yasset Perez-Riverol

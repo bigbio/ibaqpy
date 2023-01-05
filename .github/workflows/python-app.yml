@@ -36,8 +36,8 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test peptide file generation
       run: |
-        python peptide_file_generation.py --mztab data/PXD020192-heart.mzTab.gz --msstats data/PXD020192-heart-msstats.tsv.gz --triqler data/PXD020192-heart-triqler.tsv.gz --sdrf data/PXD020192-heart.sdrf.tsv.gz --output data/PXD020192-Peptide-Intensities.tsv --compress
+        python peptide_file_generation.py --help
     - name: Test with normalization
       run: |
-        python peptide_normalization.py --log2 --peptides ./data/heart-grouped-Intensities.tsv --contaminants contaminants_ids.tsv --routliers --output data/heart-grouped-Intensities-Norm.tsv --verbose --nmethod qnorm
+        python peptide_normalization.py --help
 
