@@ -79,7 +79,24 @@ A peptidoform is a combination of a `PeptideSequence(Modifications) + Charge + B
 
 The current version of the tool uses the parackage [qnorm](https://pypi.org/project/qnorm/) to normalize the intensities for each peptidofrom. **qnorm** implements a quantile normalization method. 
 
+#### Peptidoform to Peptide Summarization
+
+For each peptidoform a peptide sequence (canonical) with not modification is generated. The intensity of all peptides group by biological replicate are `sum`. 
+
+Then, the intensities of the peptides across different biological replicates are summarize using the function `median`. 
+
+At the end of this step, for each peptide, the corresponding protein + the intensity of the peptide is stored. 
+
+#### Peptide Intensity Imputation and Normalization
+
+Before the final two steps (peptide normalization and imputation), the algorithm removes all peptides that are source of missing values significantly. The algorithm removes all peptides that have more than 80% of missing values and peptides that do not appear in more than 1 sample. 
+
+Finally, two extra steps are performed: 
+
+- ``peptide intensity imputation``: Imputation is performed using the package [missingpy](https://pypi.org/project/missingpy/). The algorithm uses a Random Forest algorithm to perform the imputation.
+- ``peptide intensity normalization``: Similar to the normalization of the peptidoform intensities, the peptide intensities are normalized using the package [qnorm](https://pypi.org/project/qnorm/).
 
 ### Credits 
 
-Julianus and Yasset Perez-Riverol
+- Julianus Pfeuffer
+- Yasset Perez-Riverol 
