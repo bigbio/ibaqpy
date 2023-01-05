@@ -1,4 +1,5 @@
 missingpy
+sklearn==0.22.1
 pyopenms
 numpy == 1.21
 click
