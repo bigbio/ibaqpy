@@ -2,10 +2,9 @@ pyopenms
 numpy == 1.21
 click
 pandas
-pyteomics
-combat
 matplotlib
 qnorm
 scikit_learn
 seaborn == 0.10
 typing_extensions
+missingpy

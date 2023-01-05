@@ -38,7 +38,7 @@ def remove_contaminants_decoys(dataset: DataFrame, contaminants_file: str, prote
     contaminants = contaminants_reader.read().split("\n")
     contaminants = [cont for cont in contaminants if cont.strip()]
 
-    contaminants.append('CONTAMINANTS')
+    contaminants.append('CONTAMINANT')
     contaminants.append('DECOY')
     #cregex = ".*(" + '|'.join(contaminants) + ").*"
     cregex = '|'.join(contaminants)
