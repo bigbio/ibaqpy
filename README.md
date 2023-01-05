@@ -96,6 +96,9 @@ Finally, two extra steps are performed:
 - ``peptide intensity imputation``: Imputation is performed using the package [missingpy](https://pypi.org/project/missingpy/). The algorithm uses a Random Forest algorithm to perform the imputation.
 - ``peptide intensity normalization``: Similar to the normalization of the peptidoform intensities, the peptide intensities are normalized using the package [qnorm](https://pypi.org/project/qnorm/).
 
+### Compute IBAQ
+
+
 ### Credits 
 
 - Julianus Pfeuffer
