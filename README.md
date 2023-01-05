@@ -50,7 +50,24 @@ Options:
   --help              Show this message and exit.
 ```
 
+### Peptide Normalization - peptide_normalization.py
 
+Peptide normalization starts from the output file from script `peptide_file_generation.py`. The structure of the input contains the following columns: 
+
+- ProteinName: Protein name
+- PeptideSequence: Peptide sequence including posttranslation modifications `(e.g. .(Acetyl)ASPDWGYDDKN(Deamidated)GPEQWSK)`
+- PrecursorCharge: Precursor charge
+- FragmentIon: Fragment ion
+- ProductCharge: Product charge
+- IsotopeLabelType: Isotope label type
+- Condition: Condition label `(e.g. heart)`
+- BioReplicate: Biological replicate index `(e.g. 1)`
+- Run: Run index `(e.g. 1)`
+- Fraction: Fraction index `(e.g. 1)`
+- Intensity: Peptide intensity
+- Reference: Name of the RAW file containing the peptide intensity `(e.g. Adult_Heart_Gel_Elite_54_f16)`
+- SampleID: Sample ID `(e.g. PXD000561-Sample-54)`
+- StudyID: Study ID `(e.g. PXD000561)`. In most of the cases the study ID is the same as the ProteomeXchange ID.
 
 
 ### Credits 
