@@ -21,6 +21,7 @@ SEARCH_ENGINE = 'searchScore'
 SCAN = 'Scan'
 MBR = 'MatchBetweenRuns'
 IBAQ = 'Ibaq'
+IBAQ_NORMALIZED = 'IbaqNorm'
 IBAQ_LOG = 'IbaqLog'
 IBAQ_PPB = 'IbaqPpb'
 
@@ -40,9 +41,9 @@ def remove_contaminants_decoys(dataset: DataFrame, contaminants_file: str, prote
 
     contaminants.append('CONTAMINANT')
     contaminants.append('DECOY')
-    #cregex = ".*(" + '|'.join(contaminants) + ").*"
+    # cregex = ".*(" + '|'.join(contaminants) + ").*"
     cregex = '|'.join(contaminants)
-    #for contaminant in contaminants:
-        #dataset.drop(index=dataset[dataset[protein_field].str.contains(contaminant)].index, inplace=True)
+    # for contaminant in contaminants:
+    # dataset.drop(index=dataset[dataset[protein_field].str.contains(contaminant)].index, inplace=True)
 
     return dataset[~dataset[protein_field].str.contains(cregex)]

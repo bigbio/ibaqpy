@@ -1,22 +1,20 @@
+import re
 import click
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import seaborn as sns
-from pandas import DataFrame
 import qnorm
-import re
+import seaborn as sns
 from missingpy import MissForest
+from pandas import DataFrame
 
 from ibaqpy_commons import remove_contaminants_decoys, INTENSITY, SAMPLE_ID, NORM_INTENSITY, \
-    PEPTIDE_SEQUENCE, CONDITION, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE, RT, PEPTIDE_CANONICAL, SEARCH_ENGINE, \
-    PROTEIN_NAME, STUDY_ID
-
+    PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE, PEPTIDE_CANONICAL, SEARCH_ENGINE, \
+    PROTEIN_NAME, STUDY_ID, CONDITION
 
 def print_dataset_size(dataset: DataFrame, message: str, verbose: bool) -> None:
     if verbose:
         print(message + str(len(dataset.index)))
-
 
 def print_help_msg(command) -> None:
     """
@@ -124,13 +122,12 @@ def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "
 
     elif scaling_method == 'qnorm':
         # pivot to have one col per sample
-        normalize_df = pd.pivot_table(dataset, index=[PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE, PROTEIN_NAME, STUDY_ID],
+        normalize_df = pd.pivot_table(dataset, index=[PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE, PROTEIN_NAME, STUDY_ID, CONDITION],
                                       columns=class_field, values=field, aggfunc={field: np.mean})
         normalize_df = qnorm.quantile_normalize(normalize_df, axis=1)
         normalize_df = normalize_df.reset_index()
-        normalize_df = normalize_df.melt(id_vars=[PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE, PROTEIN_NAME, STUDY_ID])
+        normalize_df = normalize_df.melt(id_vars=[PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE, PROTEIN_NAME, STUDY_ID, CONDITION])
         normalize_df.rename(columns={'value': NORM_INTENSITY}, inplace=True)
-        #normalize_df = pd.merge(normalize_df, dataset[[PROTEIN_NAME, PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE]], how='left', on=[PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE])
         print(dataset.head())
         return normalize_df
 
@@ -146,47 +143,34 @@ def get_peptidoform_normalize_intensities(dataset: DataFrame, higher_intensity: 
     """
     dataset = dataset[dataset[NORM_INTENSITY].notna()]
     if higher_intensity:
-        dataset = dataset.loc[dataset.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, BIOREPLICATE])[NORM_INTENSITY].idxmax()].reset_index(drop=True)
+        dataset = dataset.loc[dataset.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE])[NORM_INTENSITY].idxmax()].reset_index(drop=True)
     else:
-        dataset = dataset.loc[dataset.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, BIOREPLICATE])[
+        dataset = dataset.loc[dataset.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE])[
             SEARCH_ENGINE].idxmax()].reset_index(drop=True)
     return dataset
 
 def sum_peptidoform_intensities(dataset: DataFrame) -> DataFrame:
     """
     Sum the peptidoform intensities for all peptidofrom across replicates of the same sample.
-
     :param dataset: Dataframe to be analyzed
     :return: dataframe with the intensities
     """
     dataset = dataset[dataset[NORM_INTENSITY].notna()]
-    normalize_df = dataset.groupby([PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE])[NORM_INTENSITY].sum()
+    normalize_df = dataset.groupby([PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION])[NORM_INTENSITY].sum()
     normalize_df = normalize_df.reset_index()
-    normalize_df = pd.merge(normalize_df, dataset[[PROTEIN_NAME, PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE]], how='left', on=[PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE])
+    normalize_df = pd.merge(normalize_df, dataset[[PROTEIN_NAME, PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION]], how='left', on=[PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION])
     return normalize_df
 
 def average_peptide_intensities(dataset: DataFrame) -> DataFrame:
     """
-    Median the intensities of all the peptidoforms for an specific peptide sample combination.
+    Median the intensities of all the peptidoforms for a specific peptide sample combination.
     :param dataset: Dataframe containing all the peptidoforms
     :return: New dataframe
     """
-    dataset_df = dataset.groupby([PEPTIDE_CANONICAL, SAMPLE_ID])[NORM_INTENSITY].median()
+    dataset_df = dataset.groupby([PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION])[NORM_INTENSITY].median()
     dataset_df = dataset_df.reset_index()
-    dataset_df = pd.merge(dataset_df, dataset[[PROTEIN_NAME, PEPTIDE_CANONICAL, SAMPLE_ID]], how='left', on=[PEPTIDE_CANONICAL, SAMPLE_ID])
+    dataset_df = pd.merge(dataset_df, dataset[[PROTEIN_NAME, PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION]], how='left', on=[PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION])
     return dataset_df
-
-
-def intensity_imputation_randomforest(dataset_df: DataFrame, field: str, class_field:str):
-    """
-    Impute the missing values using Random Forest. The imputation is done for each sample independently.
-    :param dataset_df: dataframe with the data
-    :param field: field to impute
-    :param class_field: field to use as class
-    :return:
-    """
-    # random_forest = RandomForestRegressor(n_estimators=100, random_state=0)
-
 
 def remove_low_frequency_peptides(dataset_df: DataFrame, percentage_samples: float = 0.20):
     """
@@ -195,8 +179,8 @@ def remove_low_frequency_peptides(dataset_df: DataFrame, percentage_samples: flo
     :param percentage_samples: percentage of samples
     :return:
     """
-    # dataset_df = dataset_df.groupby([PEPTIDE_CANONICAL]).filter(lambda x: ((len(x) >= percentage_samples * len(dataset_df[SAMPLE_ID].unique())) and len(x) > 1))
-    normalize_df = pd.pivot_table(dataset_df,index=[PEPTIDE_CANONICAL, PROTEIN_NAME],
+
+    normalize_df = pd.pivot_table(dataset_df,index=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION],
                                   columns=SAMPLE_ID, values=NORM_INTENSITY, aggfunc={NORM_INTENSITY: np.mean})
     # Count the number of null values in each row
     null_count = normalize_df.isnull().sum(axis=1)
@@ -212,7 +196,7 @@ def remove_low_frequency_peptides(dataset_df: DataFrame, percentage_samples: flo
 
     normalize_df = normalize_df.reset_index()
     normalize_df = normalize_df.melt(
-        id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME])
+        id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION])
     normalize_df.rename(columns={'value': NORM_INTENSITY}, inplace=True)
 
     # Remove rows with null values in NORMALIZE_INTENSITY
@@ -232,17 +216,16 @@ def peptide_intensity_normalization(dataset_df: DataFrame, field: str, class_fie
     """
     if scaling_method == 'qnorm':
         # pivot to have one col per sample
-        normalize_df = pd.pivot_table(dataset_df, index=[PEPTIDE_CANONICAL, PROTEIN_NAME],
+        normalize_df = pd.pivot_table(dataset_df, index=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION],
                                       columns=class_field, values=field, aggfunc={field: np.mean})
         normalize_df = qnorm.quantile_normalize(normalize_df, axis=1)
         normalize_df = normalize_df.reset_index()
-        normalize_df = normalize_df.melt(id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME])
+        normalize_df = normalize_df.melt(id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION])
         normalize_df.rename(columns={'value': NORM_INTENSITY}, inplace=True)
         normalize_df = normalize_df[normalize_df[NORM_INTENSITY].notna()]
         return normalize_df
 
     return dataset_df
-
 
 def impute_peptide_intensities(dataset_df, field, class_field):
     """
@@ -253,20 +236,18 @@ def impute_peptide_intensities(dataset_df, field, class_field):
     :return:
     """
     # pivot to have one col per sample
-    normalize_df = pd.pivot_table(dataset_df, index=[PEPTIDE_CANONICAL, PROTEIN_NAME],
+    normalize_df = pd.pivot_table(dataset_df, index=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION],
                                   columns=class_field, values=field, aggfunc={field: np.mean})
     # Impute the missing values
-    imputer = MissForest(max_iter=20)
+    imputer = MissForest(max_iter=5)
     imputed_data = imputer.fit_transform(normalize_df)
     normalize_df = pd.DataFrame(imputed_data, columns=normalize_df.columns, index=normalize_df.index)
 
     # Melt the dataframe
     normalize_df = normalize_df.reset_index()
-    normalize_df = normalize_df.melt(id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME])
+    normalize_df = normalize_df.melt(id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION])
     normalize_df.rename(columns={'value': NORM_INTENSITY}, inplace=True)
     return normalize_df
-
-
 
 @click.command()
 @click.option("--peptides", help="Peptides files from the peptide file generation tool")
@@ -278,7 +259,8 @@ def impute_peptide_intensities(dataset_df, field, class_field):
 @click.option("--log2", help="Transform to log2 the peptide intensity values before normalization", is_flag=True)
 @click.option("--violin", help="Use violin plot instead of boxplot for distribution representations", is_flag=True)
 @click.option("--verbose",
-              help="Print addition information about the distributions of the intensities, number of peptides remove after normalization, etc.",
+              help="Print addition information about the distributions of the intensities, number of peptides remove "
+                   "after normalization, etc.",
               is_flag=True)
 def peptide_normalization(peptides: str, contaminants: str, routliers: bool, output: str, nmethod: str, compress: bool, log2: bool,
                           violin: bool, verbose: bool) -> None:

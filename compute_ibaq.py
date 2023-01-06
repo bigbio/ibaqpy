@@ -5,8 +5,7 @@ import pandas as pd
 from pandas import DataFrame, Series
 from pyopenms import *
 
-from ibaqpy_commons import remove_contaminants_decoys, PROTEIN_NAME, INTENSITY, CONDITION, IBAQ, IBAQ_LOG, IBAQ_PPB, \
-    NORM_INTENSITY
+from ibaqpy_commons import PROTEIN_NAME, IBAQ, IBAQ_LOG, IBAQ_PPB, NORM_INTENSITY, SAMPLE_ID, IBAQ_NORMALIZED, CONDITION
 
 
 def print_help_msg(command):
@@ -18,6 +17,11 @@ def print_help_msg(command):
     with click.Context(command) as ctx:
         click.echo(command.get_help(ctx))
 
+
+def normalize(group):
+    group[IBAQ_NORMALIZED] = group[IBAQ] / group[IBAQ].sum()
+    return group
+
 def normalize_ibaq(res: DataFrame) -> DataFrame:
     """
     Normalize the ibaq values using the total ibaq of the sample. The resulted
@@ -27,12 +31,14 @@ def normalize_ibaq(res: DataFrame) -> DataFrame:
     :return:
     """
 
-    # Get the total intensity for the sample.
-    total_ibaq = res[IBAQ].sum()
+    res = res.groupby([SAMPLE_ID, CONDITION]).apply(normalize)
+
     # Normalization method used by Proteomics DB 10 + log10(ibaq/sum(ibaq))
-    res[IBAQ_LOG] = res[IBAQ].apply(lambda x: 100 + math.log2(x / total_ibaq))
+    res[IBAQ_LOG] = res[IBAQ_NORMALIZED].apply(lambda x: (math.log10(x) + 10) if x > 0 else 0)
+
     # Normalization used by PRIDE Team (no log transformation) (ibaq/total_ibaq) * 100'000'000
-    res[IBAQ_PPB] = res[IBAQ].apply(lambda x: (x / total_ibaq) * 100000000)
+    res[IBAQ_PPB] = res[IBAQ_NORMALIZED].apply(lambda x: (x) * 100000000)
+
     return res
 
 
@@ -65,7 +71,6 @@ def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, min_aa
     :param peptides: Peptide intensity file
     :param enzyme: Enzyme used to digest the protein sample
     :param normalize: use some basic normalization steps.
-    :param contaminants_file: Contaminant data file
     :param output: output format containing the ibaq values.
     :return:
     """
@@ -76,19 +81,16 @@ def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, min_aa
     fasta_proteins = list()  # type: list[FASTAEntry]
     FASTAFile().load(fasta, fasta_proteins)
     uniquepepcounts = dict()  # type: dict[str, int]
-    MINLEN = min_aa
-    MAXLEN = max_aa
-    ENZYMENAME = enzyme
     digestor = ProteaseDigestion()
-    digestor.setEnzyme(ENZYMENAME)
+    digestor.setEnzyme(enzyme)
 
     def get_average_nr_peptides_unique_bygroup(pdrow: Series) -> Series:
         """
-        Get the average intensity for protein gorups
+        Get the average intensity for protein groups
         :param pdrow: peptide row
         :return: average intensity
         """
-        proteins = pdrow.name.split(';')
+        proteins = pdrow.name[0].split(';')
         summ = 0
         for prot in proteins:
             summ += uniquepepcounts[prot]
@@ -96,7 +98,7 @@ def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, min_aa
 
     for entry in fasta_proteins:
         digest = list()  # type: list[str]
-        digestor.digest(AASequence().fromString(entry.sequence), digest, MINLEN, MAXLEN)
+        digestor.digest(AASequence().fromString(entry.sequence), digest, min_aa, max_aa)
         digestuniq = set(digest)
         uniquepepcounts[parse_uniprot_name(entry.identifier)] = len(digestuniq)
 
@@ -104,12 +106,11 @@ def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, min_aa
     print(data.head())
     # next line assumes unique peptides only (at least per indistinguishable group)
 
-    res = pd.DataFrame(data.groupby(PROTEIN_NAME)[NORM_INTENSITY].sum()).apply(get_average_nr_peptides_unique_bygroup, 1)
+    res = pd.DataFrame(data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION])[NORM_INTENSITY].sum()).apply(get_average_nr_peptides_unique_bygroup, 1)
     res = res.sort_values(ascending=False)
     res = res.to_frame()
-    res[PROTEIN_NAME] = res.index
+    res = res.reset_index()
     res = res.rename(columns={0: IBAQ})
-    res = res[[PROTEIN_NAME, IBAQ]]
 
     if normalize:
         res = normalize_ibaq(res)
