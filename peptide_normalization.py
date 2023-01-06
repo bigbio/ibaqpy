@@ -297,6 +297,7 @@ def peptide_normalization(peptides: str, contaminants: str, routliers: bool, out
     print_dataset_size(dataset_df, "Number of peptides: ", verbose)
 
     print("Logarithmic if specified..")
+    dataset_df.loc[dataset_df.Intensity == 0, INTENSITY] = 1
     dataset_df[NORM_INTENSITY] = np.log2(dataset_df[INTENSITY]) if log2 else dataset_df[INTENSITY]
 
     # Print the distribution of the original peptide intensities from quantms analysis

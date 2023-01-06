@@ -5,7 +5,9 @@ import pandas as pd
 from pandas import DataFrame, Series
 from pyopenms import *
 
-from ibaqpy_commons import remove_contaminants_decoys, PROTEIN_NAME, INTENSITY, CONDITION, IBAQ, IBAQ_LOG, IBAQ_PPB
+from ibaqpy_commons import remove_contaminants_decoys, PROTEIN_NAME, INTENSITY, CONDITION, IBAQ, IBAQ_LOG, IBAQ_PPB, \
+    NORM_INTENSITY
+
 
 def print_help_msg(command):
     """
@@ -33,6 +35,16 @@ def normalize_ibaq(res: DataFrame) -> DataFrame:
     res[IBAQ_PPB] = res[IBAQ].apply(lambda x: (x / total_ibaq) * 100000000)
     return res
 
+
+def parse_uniprot_name(identifier: str) -> str:
+    """
+    Parse the uniprot name from the identifier  (e.g. sp|P12345|PROT_NAME)
+    :param identifier: Uniprot identifier
+    :return:
+    """
+    return identifier.split('|')[2]
+
+
 @click.command()
 @click.option("-f", "--fasta", help="Protein database to compute IBAQ values")
 @click.option("-p", "--peptides", help="Peptide identifications with intensities following the peptide intensity output")
@@ -40,12 +52,15 @@ def normalize_ibaq(res: DataFrame) -> DataFrame:
               default="Trypsin")
 @click.option("-n", "--normalize", help="Normalize IBAQ values using by using the total IBAQ of the experiment",
               is_flag=True)
-@click.option("-c", "--contaminants", help="Contaminants protein accession", default="contaminants_ids.tsv")
+@click.option("--min_aa", help="Minimum number of amino acids to consider a peptide", default=7)
+@click.option("--max_aa", help="Maximum number of amino acids to consider a peptide", default=30)
 @click.option("-o", "--output", help="Output file with the proteins and ibaq values")
-def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, contaminants_file: str, output: str) -> None:
+def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, min_aa: int, max_aa: int, output: str) -> None:
     """
     This command computes the IBAQ values for a file output of peptides with the format described in
     peptide_contaminants_file_generation.py.
+    :param min_aa: Minimum number of amino acids to consider a peptide
+    :param max_aa: Maximum number of amino acids to consider a peptide
     :param fasta: Fasta file used to perform the peptide identification
     :param peptides: Peptide intensity file
     :param enzyme: Enzyme used to digest the protein sample
@@ -61,8 +76,8 @@ def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, contam
     fasta_proteins = list()  # type: list[FASTAEntry]
     FASTAFile().load(fasta, fasta_proteins)
     uniquepepcounts = dict()  # type: dict[str, int]
-    MINLEN = 6
-    MAXLEN = 30
+    MINLEN = min_aa
+    MAXLEN = max_aa
     ENZYMENAME = enzyme
     digestor = ProteaseDigestion()
     digestor.setEnzyme(ENZYMENAME)
@@ -77,32 +92,31 @@ def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, contam
         summ = 0
         for prot in proteins:
             summ += uniquepepcounts[prot]
-        return pdrow.intensity / (summ / len(proteins))
+        return pdrow.NormIntensity / (summ / len(proteins))
 
     for entry in fasta_proteins:
         digest = list()  # type: list[str]
         digestor.digest(AASequence().fromString(entry.sequence), digest, MINLEN, MAXLEN)
         digestuniq = set(digest)
-        uniquepepcounts[entry.identifier.decode('utf-8')] = len(digestuniq)
+        uniquepepcounts[parse_uniprot_name(entry.identifier)] = len(digestuniq)
 
-    data = pd.read_csv(peptides, sep="\t")
+    data = pd.read_csv(peptides, sep=",")
     print(data.head())
     # next line assumes unique peptides only (at least per indistinguishable group)
 
-    res = pd.DataFrame(data.groupby(PROTEIN_NAME)[INTENSITY].sum()).apply(get_average_nr_peptides_unique_bygroup, 1)
+    res = pd.DataFrame(data.groupby(PROTEIN_NAME)[NORM_INTENSITY].sum()).apply(get_average_nr_peptides_unique_bygroup, 1)
     res = res.sort_values(ascending=False)
     res = res.to_frame()
     res[PROTEIN_NAME] = res.index
     res = res.rename(columns={0: IBAQ})
     res = res[[PROTEIN_NAME, IBAQ]]
 
-    res = remove_contaminants_decoys(res, contaminants_file, protein_field=PROTEIN_NAME)
     if normalize:
         res = normalize_ibaq(res)
 
-    # For absolute expression the relation is one sample + one condition
-    condition = data[CONDITION].unique()[0]
-    res[CONDITION] = condition.lower()
+    # # For absolute expression the relation is one sample + one condition
+    # condition = data[CONDITION].unique()[0]
+    # res[CONDITION] = condition.lower()
 
     res.to_csv(output, index=False)
 
