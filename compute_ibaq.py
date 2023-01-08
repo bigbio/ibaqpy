@@ -6,6 +6,7 @@ from pandas import DataFrame, Series
 from pyopenms import *
 
 from ibaqpy_commons import PROTEIN_NAME, IBAQ, IBAQ_LOG, IBAQ_PPB, NORM_INTENSITY, SAMPLE_ID, IBAQ_NORMALIZED, CONDITION
+from peptide_normalization import plot_distributions, plot_box_plot
 
 
 def print_help_msg(command):
@@ -94,7 +95,10 @@ def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, min_aa
         summ = 0
         for prot in proteins:
             summ += uniquepepcounts[prot]
-        return pdrow.NormIntensity / (summ / len(proteins))
+        if len(proteins) > 0 and summ > 0:
+            return  pdrow.NormIntensity / (summ / len(proteins))
+        # If there is no protein in the group, return np nan
+        return np.nan # type: ignore
 
     for entry in fasta_proteins:
         digest = list()  # type: list[str]
@@ -114,6 +118,13 @@ def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, min_aa
 
     if normalize:
         res = normalize_ibaq(res)
+
+    # Remove IBAQ_NORMALIZED NAN values
+    res = res.dropna(subset=[IBAQ_NORMALIZED])
+
+    plot_distributions(res, IBAQ_PPB, SAMPLE_ID, log2=True)
+    plot_box_plot(res, IBAQ_PPB, SAMPLE_ID, log2=True,
+                      title="IBAQ Distribution", violin=False)
 
     # # For absolute expression the relation is one sample + one condition
     # condition = data[CONDITION].unique()[0]

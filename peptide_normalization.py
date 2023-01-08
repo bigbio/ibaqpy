@@ -252,9 +252,10 @@ def impute_peptide_intensities(dataset_df, field, class_field):
 @click.command()
 @click.option("--peptides", help="Peptides files from the peptide file generation tool")
 @click.option("--contaminants", help="Contaminants and high abundant proteins to be removed")
-@click.option("--routliers", help="Remove outliers from the peptide table", is_flag=True)
 @click.option("--output", help="Peptide intensity file including other all properties for normalization")
 @click.option('--nmethod', help="Normalization method used to normalize intensities for all samples (options: qnorm)", default="qnorm")
+@click.option("--impute", help="Impute the missing values using MissForest", is_flag=True)
+@click.option("--pnormalization", help="Normalize the peptide intensities using different methods (options: qnorm)", is_flag=True)
 @click.option("--compress", help="Read the input peptides file in compress gzip file", is_flag= True)
 @click.option("--log2", help="Transform to log2 the peptide intensity values before normalization", is_flag=True)
 @click.option("--violin", help="Use violin plot instead of boxplot for distribution representations", is_flag=True)
@@ -262,8 +263,22 @@ def impute_peptide_intensities(dataset_df, field, class_field):
               help="Print addition information about the distributions of the intensities, number of peptides remove "
                    "after normalization, etc.",
               is_flag=True)
-def peptide_normalization(peptides: str, contaminants: str, routliers: bool, output: str, nmethod: str, compress: bool, log2: bool,
+def peptide_normalization(peptides: str, contaminants: str, output: str, nmethod: str, impute: bool, pnormalization: bool,  compress: bool, log2: bool,
                           violin: bool, verbose: bool) -> None:
+    """
+    Normalize the peptide intensities using different methods.
+    :param peptides:
+    :param contaminants:
+    :param output:
+    :param nmethod:
+    :param impute:
+    :param pnormalization:
+    :param compress:
+    :param log2:
+    :param violin:
+    :param verbose:
+    :return:
+    """
 
     if peptides is None or output is None:
         print_help_msg(peptide_normalization)
@@ -334,16 +349,18 @@ def peptide_normalization(peptides: str, contaminants: str, routliers: bool, out
 
 
     # Perform imputation using Random Forest in Peptide Intensities
-    dataset_df = impute_peptide_intensities(dataset_df, field=NORM_INTENSITY, class_field=SAMPLE_ID)
-    print("Normalize at Peptide level...")
-    dataset_df = peptide_intensity_normalization(dataset_df, field=NORM_INTENSITY, class_field=SAMPLE_ID, scaling_method=nmethod)
+    if impute:
+       dataset_df = impute_peptide_intensities(dataset_df, field=NORM_INTENSITY, class_field=SAMPLE_ID)
+
+    if pnormalization:
+       print("Normalize at Peptide level...")
+       dataset_df = peptide_intensity_normalization(dataset_df, field=NORM_INTENSITY, class_field=SAMPLE_ID, scaling_method=nmethod)
 
     if verbose:
         log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or ((nmethod == "quantile" or nmethod == "robust") and not log2)
         plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm)
         plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
                       title="Normalization at peptide level method: " + nmethod, violin=violin)
-
 
     print("Save the normalized peptide intensities...")
     dataset_df.to_csv(output, index=False, sep=',')
