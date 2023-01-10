@@ -37,8 +37,8 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test peptide file generation
       run: |
-        python peptide_file_generation.py --help
+        python bin/peptide_file_generation.py --help
     - name: Test with normalization
       run: |
-        python peptide_normalization.py --help
+        python bin/peptide_normalization.py --help
 

@@ -8,4 +8,3 @@ matplotlib
 qnorm
 seaborn == 0.10
 typing_extensions
-missingpy

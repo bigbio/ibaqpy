@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import re
 import click
 import numpy as np
@@ -6,7 +9,7 @@ import qnorm
 from missingpy import MissForest
 from pandas import DataFrame
 
-from ibaqpy_commons import remove_contaminants_decoys, INTENSITY, SAMPLE_ID, NORM_INTENSITY, \
+from commons.ibaqpy_commons import remove_contaminants_decoys, INTENSITY, SAMPLE_ID, NORM_INTENSITY, \
     PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE, PEPTIDE_CANONICAL, SEARCH_ENGINE, \
     PROTEIN_NAME, STUDY_ID, CONDITION, plot_distributions, plot_box_plot
 

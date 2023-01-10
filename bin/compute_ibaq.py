@@ -1,3 +1,6 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
 import math
 
 import click
@@ -5,8 +8,8 @@ import pandas as pd
 from pandas import DataFrame, Series
 from pyopenms import *
 
-from ibaqpy_commons import PROTEIN_NAME, IBAQ, IBAQ_LOG, IBAQ_PPB, NORM_INTENSITY, SAMPLE_ID, IBAQ_NORMALIZED, CONDITION
-from ibaqpy_commons import plot_distributions, plot_box_plot
+from commons.ibaqpy_commons import PROTEIN_NAME, IBAQ, IBAQ_LOG, IBAQ_PPB, NORM_INTENSITY, SAMPLE_ID, IBAQ_NORMALIZED, CONDITION
+from commons.ibaqpy_commons import plot_distributions, plot_box_plot
 
 
 def print_help_msg(command):

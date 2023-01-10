@@ -1,13 +1,13 @@
-import gzip
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+
+
 import os
-import re
-import shutil
 
 import click
 import pandas as pd
-from typing_extensions import OrderedDict
 
-from ibaqpy_commons import *
+from commons.ibaqpy_commons import *
 
 def print_help_msg(command) -> None:
   """
