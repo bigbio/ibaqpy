@@ -1,5 +1,7 @@
 # ibaqpy
 
+[![Python application](https://github.com/bigbio/ibaqpy/actions/workflows/python-app.yml/badge.svg)](https://github.com/bigbio/ibaqpy/actions/workflows/python-app.yml)
+
 iBAQ (intensity Based Absolute Quantification) determines the abundance of a protein by dividing the total precursor intensities by the number of theoretically observable peptides of the protein. **ibaqpy** compute IBAQ values for proteins starting from a msstats input file and a SDRF experimental design file. This package provides multiple tools: 
 
 - `peptide_file_generation.py`: generate a peptide file from a msstats input file and a SDRF experimental design file. 
