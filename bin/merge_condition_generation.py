@@ -7,7 +7,7 @@ import os
 import click
 import pandas as pd
 
-from commons.ibaqpy_commons import *
+from ibaq.ibaqpy_commons import *
 
 def print_help_msg(command) -> None:
   """

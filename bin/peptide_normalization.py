@@ -9,7 +9,7 @@ import qnorm
 from missingpy import MissForest
 from pandas import DataFrame
 
-from commons.ibaqpy_commons import remove_contaminants_decoys, INTENSITY, SAMPLE_ID, NORM_INTENSITY, \
+from ibaq.ibaqpy_commons import remove_contaminants_decoys, INTENSITY, SAMPLE_ID, NORM_INTENSITY, \
     PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE, PEPTIDE_CANONICAL, SEARCH_ENGINE, \
     PROTEIN_NAME, STUDY_ID, CONDITION, plot_distributions, plot_box_plot
 

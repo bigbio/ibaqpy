@@ -8,7 +8,7 @@ import click
 import pandas as pd
 from typing_extensions import OrderedDict
 
-from commons.ibaqpy_commons import *
+from ibaq.ibaqpy_commons import *
 
 
 def get_mbr_hit(scan: str):
