@@ -12,6 +12,9 @@ PEPTIDE_CHARGE = 'PrecursorCharge'
 FRAGMENT_ION = 'FragmentIon'
 PRODUCT_CHARGE = 'ProductCharge'
 ISOTOPE_LABEL_TYPE = 'IsotopeLabelType'
+CHANNEL = 'Channel'
+MIXTRUE = 'Mixture'
+TECHREPMIXTURE = 'TechRepMixture'
 CONDITION = 'Condition'
 BIOREPLICATE = 'BioReplicate'
 RUN = 'Run'
@@ -29,6 +32,54 @@ IBAQ = 'Ibaq'
 IBAQ_NORMALIZED = 'IbaqNorm'
 IBAQ_LOG = 'IbaqLog'
 IBAQ_PPB = 'IbaqPpb'
+
+TMT16plex = {
+    "TMT126": 1,
+    "TMT127N": 2,
+    "TMT127C": 3,
+    "TMT128N": 4,
+    "TMT128C": 5,
+    "TMT129N": 6,
+    "TMT129C": 7,
+    "TMT130N": 8,
+    "TMT130C": 9,
+    "TMT131N": 10,
+    "TMT131C": 11,
+    "TMT132N": 12,
+    "TMT132C": 13,
+    "TMT133N": 14,
+    "TMT133C": 15,
+    "TMT134N": 16,
+}
+
+TMT11plex = {
+    "TMT126": 1,
+    "TMT127N": 2,
+    "TMT127C": 3,
+    "TMT128N": 4,
+    "TMT128C": 5,
+    "TMT129N": 6,
+    "TMT129C": 7,
+    "TMT130N": 8,
+    "TMT130C": 9,
+    "TMT131N": 10,
+    "TMT131C": 11,
+}
+
+TMT10plex = {
+    "TMT126": 1,
+    "TMT127N": 2,
+    "TMT127C": 3,
+    "TMT128N": 4,
+    "TMT128C": 5,
+    "TMT129N": 6,
+    "TMT129C": 7,
+    "TMT130N": 8,
+    "TMT130C": 9,
+    "TMT131": 10,
+}
+
+TMT6plex = {"TMT126": 1, "TMT127": 2, "TMT128": 3, "TMT129": 4, "TMT130": 5, "TMT131": 6}
 
 
 def remove_contaminants_decoys(dataset: DataFrame, contaminants_file: str, protein_field=PROTEIN_NAME) -> DataFrame:
@@ -53,6 +104,7 @@ def remove_contaminants_decoys(dataset: DataFrame, contaminants_file: str, prote
 
     return dataset[~dataset[protein_field].str.contains(cregex)]
 
+
 def plot_distributions(dataset: DataFrame, field: str, class_field: str, log2: bool = True) -> None:
     """
     Print the quantile plot for the dataset
@@ -72,6 +124,7 @@ def plot_distributions(dataset: DataFrame, field: str, class_field: str, log2: b
     # plotting multiple density plot
     data_wide.plot.kde(figsize=(8, 6), linewidth=2, legend=False)
     pd.set_option('mode.chained_assignment', 'warn')
+
 
 def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool = False, weigth: int = 10,
                   rotation: int = 45, title: str = "", violin: bool = False) -> None:
