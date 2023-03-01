@@ -67,13 +67,21 @@ def get_canonical_peptide(peptide_sequence: str) -> str:
 
 def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "all",
                             scaling_method: str = "msstats") -> DataFrame:
-    ## TODO add imputation and/or removal to those two norm strategies
+    # TODO add imputation and/or removal to those two norm strategies
     if scaling_method == 'msstats':
-        g = dataset.groupby(['Run', 'Fraction'])[INTENSITY].apply(np.median)
-        g.name = 'RunMedian'
-        dataset = dataset.join(g, on=['Run', 'Fraction'])
-        dataset['FractionMedian'] = dataset['RunMedian'].groupby(dataset['Fraction']).transform('median')
-        dataset[NORM_INTENSITY] = dataset[INTENSITY] - dataset['RunMedian'] + dataset['FractionMedian']
+        # For TMT normalization
+        if "Channel" in dataset.columns:
+            g = dataset.groupby(['Run', 'Channel'])[field].apply(np.median)
+            g.name = 'RunMedian'
+            dataset = dataset.join(g, on=['Run', 'Channel'])
+            median_baseline = dataset.drop_duplicates(subset=["Run", "Channel", field])[field].median()
+            dataset[NORM_INTENSITY] = dataset[field] - dataset['RunMedian'] + median_baseline
+        else:
+            g = dataset.groupby(['Run', 'Fraction'])[field].apply(np.median)
+            g.name = 'RunMedian'
+            dataset = dataset.join(g, on=['Run', 'Fraction'])
+            dataset['FractionMedian'] = dataset['RunMedian'].groupby(dataset['Fraction']).transform('median')
+            dataset[NORM_INTENSITY] = dataset[field] - dataset['RunMedian'] + dataset['FractionMedian']
         return dataset
 
     elif scaling_method == 'qnorm':
@@ -302,7 +310,7 @@ def peptide_normalization(peptides: str, contaminants: str, output: str, nmethod
                                          scaling_method=nmethod)
     if verbose:
         log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or (
-                    (nmethod == "quantile" or nmethod == "robust") and not log2)
+                (nmethod == "quantile" or nmethod == "robust") and not log2)
         plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm)
         plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
                       title="Peptidoform intensity distribution after normalization, method: " + nmethod, violin=violin)
@@ -328,7 +336,7 @@ def peptide_normalization(peptides: str, contaminants: str, output: str, nmethod
 
     if verbose:
         log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or (
-                    (nmethod == "quantile" or nmethod == "robust") and not log2)
+                (nmethod == "quantile" or nmethod == "robust") and not log2)
         plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm)
         plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
                       title="Peptide intensity distribution method: " + nmethod, violin=violin)
@@ -348,7 +356,7 @@ def peptide_normalization(peptides: str, contaminants: str, output: str, nmethod
 
     if verbose:
         log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or (
-                    (nmethod == "quantile" or nmethod == "robust") and not log2)
+                (nmethod == "quantile" or nmethod == "robust") and not log2)
         plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm)
         plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
                       title="Normalization at peptide level method: " + nmethod, violin=violin)
