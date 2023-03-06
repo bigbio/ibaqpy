@@ -175,7 +175,8 @@ def peptide_file_generation(msstats: str, sdrf: str, compress: bool, output: str
         msstats_df[REFERENCE] = msstats_df[REFERENCE].apply(get_reference_name)
         result_df = pd.merge(msstats_df, sdrf_df[['source name', REFERENCE, CHANNEL]], how='left',
                              on=[REFERENCE, CHANNEL])
-        result_df.drop(CHANNEL, axis=1, inplace=True)
+        # result_df.drop(CHANNEL, axis=1, inplace=True)
+        result_df = result_df[result_df["Condition"] != "Empty"]
         result_df.rename(columns={'Charge': PEPTIDE_CHARGE}, inplace=True)
     else:
         print("Warning: Only support label free and TMT experiment!")
