@@ -56,6 +56,16 @@ def get_study_accession(sample_id: str) -> str:
     return sample_id.split('-')[0]
 
 
+def get_reference_name(reference_spectrum: str) -> str:
+    """
+    Get the reference name from Reference column. The function expected a reference name in the following format eg.
+    20150820_Haura-Pilot-TMT1-bRPLC03-2.mzML_controllerType=0 controllerNumber=1 scan=16340
+    :param reference_spectrum:
+    :return: reference name
+    """
+    return re.split(r'\.mzML|\.MZML|\.raw|\.RAW', reference_spectrum)[0]
+
+
 def get_run_mztab(ms_run: str, metadata: OrderedDict) -> str:
     """
   Convert the ms_run into a reference file for merging with msstats output
@@ -123,7 +133,6 @@ def peptide_file_generation(msstats: str, sdrf: str, compress: bool, output: str
 
     # Read the msstats file
     msstats_df = pd.read_csv(msstats, sep=',', compression=compression_method)
-    msstats_df[REFERENCE] = msstats_df[REFERENCE].apply(remove_extension_file)
 
     msstats_df.rename(
         columns={'ProteinName': PROTEIN_NAME, 'PeptideSequence': PEPTIDE_SEQUENCE, 'PrecursorCharge': PEPTIDE_CHARGE,
@@ -146,7 +155,32 @@ def peptide_file_generation(msstats: str, sdrf: str, compress: bool, output: str
              BIOREPLICATE, FRACTION, FRAGMENT_ION, ISOTOPE_LABEL_TYPE]]
 
     # Merged the SDRF with Resulted file
-    result_df = pd.merge(msstats_df, sdrf_df[['source name', REFERENCE]], how='left', on=[REFERENCE])
+    labels = set(sdrf_df['comment[label]'])
+    if CHANNEL not in msstats_df.columns:
+        msstats_df[REFERENCE] = msstats_df[REFERENCE].apply(remove_extension_file)
+        result_df = pd.merge(msstats_df, sdrf_df[['source name', REFERENCE]], how='left', on=[REFERENCE])
+    elif 'TMT' in ','.join(labels) or 'tmt' in ','.join(labels):
+        if (len(labels) > 11 or "TMT134N" in labels or "TMT133C" in labels
+                or "TMT133N" in labels or "TMT132C" in labels or "TMT132N" in labels):
+            choice = TMT16plex
+        elif len(labels) == 11 or "TMT131C" in labels:
+            choice = TMT11plex
+        elif len(labels) > 6:
+            choice = TMT10plex
+        else:
+            choice = TMT6plex
+        choice = pd.DataFrame.from_dict(choice, orient='index', columns=[CHANNEL]).reset_index().rename(
+            columns={'index': 'comment[label]'})
+        sdrf_df = sdrf_df.merge(choice, on='comment[label]', how='left')
+        msstats_df[REFERENCE] = msstats_df[REFERENCE].apply(get_reference_name)
+        result_df = pd.merge(msstats_df, sdrf_df[['source name', REFERENCE, CHANNEL]], how='left',
+                             on=[REFERENCE, CHANNEL])
+        result_df.drop(CHANNEL, axis=1, inplace=True)
+        result_df.rename(columns={'Charge': PEPTIDE_CHARGE}, inplace=True)
+    else:
+        print("Warning: Only support label free and TMT experiment!")
+        exit(1)
+
     result_df.rename(columns={'source name': SAMPLE_ID}, inplace=True)
 
     result_df[STUDY_ID] = result_df[SAMPLE_ID].apply(get_study_accession)
