@@ -118,14 +118,18 @@ def get_peptidoform_normalize_intensities(dataset: DataFrame, higher_intensity: 
     return dataset
 
 
-def sum_peptidoform_intensities(dataset: DataFrame) -> DataFrame:
+def sum_peptidoform_intensities(dataset: DataFrame, smethod: str) -> DataFrame:
     """
-    Sum the peptidoform intensities for all peptidofrom across replicates of the same sample.
+    Summary the peptidoform intensities for all peptidofrom across replicates of the same sample.
     :param dataset: Dataframe to be analyzed
+    :param smethod: Method to summary peptidoform intensities per peptide
     :return: dataframe with the intensities
     """
     dataset = dataset[dataset[NORM_INTENSITY].notna()]
-    normalize_df = dataset.groupby([PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION])[NORM_INTENSITY].sum()
+    if smethod == "sum":
+        normalize_df = dataset.groupby([PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION])[NORM_INTENSITY].sum()
+    elif smethod == "median":
+        normalize_df = dataset.groupby([PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION])[NORM_INTENSITY].median()
     normalize_df = normalize_df.reset_index()
     normalize_df = pd.merge(normalize_df,
                             dataset[[PROTEIN_NAME, PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION]], how='left',
@@ -248,25 +252,26 @@ def impute_peptide_intensities(dataset_df, field, class_field):
 @click.option("--output", help="Peptide intensity file including other all properties for normalization")
 @click.option('--nmethod', help="Normalization method used to normalize intensities for all samples (options: qnorm)",
               default="qnorm")
+@click.option("--smethod", help="Summary method used to calculate the intensity for peptides with multiple peptidoforms (options: sum)",
+              default="sum")
 @click.option("--impute", help="Impute the missing values using MissForest", is_flag=True)
 @click.option("--pnormalization", help="Normalize the peptide intensities using different methods (options: qnorm)",
               is_flag=True)
 @click.option("--compress", help="Read the input peptides file in compress gzip file", is_flag=True)
-@click.option("--log2", help="Transform to log2 the peptide intensity values before normalization", is_flag=True)
 @click.option("--violin", help="Use violin plot instead of boxplot for distribution representations", is_flag=True)
 @click.option("--verbose",
               help="Print addition information about the distributions of the intensities, number of peptides remove "
                    "after normalization, etc.",
               is_flag=True)
-def peptide_normalization(peptides: str, contaminants: str, output: str, nmethod: str, impute: bool,
-                          pnormalization: bool, compress: bool, log2: bool,
-                          violin: bool, verbose: bool) -> None:
+def peptide_normalization(peptides: str, contaminants: str, output: str, nmethod: str, smethod: str, impute: bool,
+                          pnormalization: bool, compress: bool, violin: bool, verbose: bool) -> None:
     """
     Normalize the peptide intensities using different methods.
     :param peptides:
     :param contaminants:
     :param output:
     :param nmethod:
+    :param smethod:
     :param impute:
     :param pnormalization:
     :param compress:
@@ -289,9 +294,7 @@ def peptide_normalization(peptides: str, contaminants: str, output: str, nmethod
         dataset_df = pd.read_csv(peptides, sep=",")
     print_dataset_size(dataset_df, "Number of peptides: ", verbose)
 
-    print("Logarithmic if specified..")
-    dataset_df.loc[dataset_df.Intensity == 0, INTENSITY] = 1
-    dataset_df[NORM_INTENSITY] = np.log2(dataset_df[INTENSITY]) if log2 else dataset_df[INTENSITY]
+    dataset_df[NORM_INTENSITY] = dataset_df[INTENSITY]
 
     # Print the distribution of the original peptide intensities from quantms analysis
     if verbose:
@@ -324,10 +327,10 @@ def peptide_normalization(peptides: str, contaminants: str, output: str, nmethod
     print("Add Canonical peptides to the dataframe...")
     dataset_df[PEPTIDE_CANONICAL] = dataset_df[PEPTIDE_SEQUENCE].apply(lambda x: get_canonical_peptide(x))
 
-    print("Sum all peptidoforms per Sample...")
-    print("Number of peptides before sum selection: " + str(len(dataset_df.index)))
-    dataset_df = sum_peptidoform_intensities(dataset_df)
-    print("Number of peptides after sum: " + str(len(dataset_df.index)))
+    print("Summary all peptidoforms per Sample...")
+    print("Number of peptides before summary selection: " + str(len(dataset_df.index)))
+    dataset_df = sum_peptidoform_intensities(dataset_df, smethod)
+    print("Number of peptides after summary: " + str(len(dataset_df.index)))
 
     print("Average all peptidoforms per Peptide/Sample...")
     print("Number of peptides before average: " + str(len(dataset_df.index)))
