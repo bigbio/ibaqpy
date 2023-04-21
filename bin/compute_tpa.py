@@ -3,7 +3,6 @@
 
 import click
 import pandas as pd
-from pandas import DataFrame, Series
 from pyopenms import *
 
 from bin.compute_ibaq import print_help_msg, parse_uniprot_name
@@ -32,7 +31,7 @@ def tpa_compute(fasta: str, peptides: str, ruler: bool, ploidy: int, cpc: float,
     :return:
     """
     if peptides is None or fasta is None:
-        print_help_msg(ibaq_compute)
+        print_help_msg(tpa_compute)
         exit(1)
 
     data = pd.read_csv(peptides, sep=",")
@@ -52,7 +51,7 @@ def tpa_compute(fasta: str, peptides: str, ruler: bool, ploidy: int, cpc: float,
         if name in proteins:
             mw = AASequence().fromString(entry.sequence).getMonoWeight()
             mw_dict[name] = mw
-    
+
     # calculate TPA for every protein group
     def get_protein_group_mw(group: str) -> float:
         mw_list = [mw_dict[i] for i in group.split(";")]
@@ -63,43 +62,41 @@ def tpa_compute(fasta: str, peptides: str, ruler: bool, ploidy: int, cpc: float,
     res["MolecularWeight"] = res["MolecularWeight"].replace(0, 1)
     res["TPA"] = res["NormIntensity"] / res["MolecularWeight"]
     plot_distributions(res, "TPA", SAMPLE_ID, log2=True)
-    plot_box_plot(res, "TPA", SAMPLE_ID, log2=True,
-                    title="TPA Distribution", violin=False)
+    plot_box_plot(res, "TPA", SAMPLE_ID, log2=True, title="TPA Distribution", violin=False)
 
     # calculate protein weight(ng) and concentration(nM)
     if ruler:
         avogadro = 6.02214129e23
-        average_base_pair_mass = 617.96 # 615.8771
+        average_base_pair_mass = 617.96  # 615.8771
 
         organism = res.loc[0, "ProteinName"].split("_")[1].lower()
         histone_df = pd.read_json(open(os.path.split(__file__)[0] + os.sep + "histones.json", "rb")).T
         target_histones = histone_df[histone_df["name"] == organism.lower()]
         genome_size = target_histones["genome_size"].values[0]
-        histones_list = target_histones["histone_entries"].values[0]
-                                                                                           
+        histones_list = target_histones["histone_entries"].values[0]                                                                          
         dna_mass = ploidy * genome_size * average_base_pair_mass / avogadro
 
         def calculate(protein_intensity, histone_intensity, mw):
             copy = (protein_intensity / histone_intensity) * dna_mass * avogadro / mw
             # The number of moles is equal to the number of particles divided by Avogadro's constant
-            moles = copy * 1e9 / avogadro # unit nmol
-            weight = moles * mw # unit ng
+            moles = copy * 1e9 / avogadro  # unit nmol
+            weight = moles * mw  # unit ng
             return tuple([copy, moles, weight])
 
         def proteomicRuler(df):
             histone_intensity = df[df["ProteinName"].isin(histones_list)]["NormIntensity"].sum()
             histone_intensity = histone_intensity if histone_intensity > 0 else 1
             df[["Copy", "Moles[nmol]", "Weight[ng]"]] = df.apply(lambda x: calculate(x["NormIntensity"], histone_intensity, x["MolecularWeight"]), axis = 1, result_type="expand")
-            volume = df["Weight[ng]"].sum() * 1e-9 / cpc # unit L
-            df["Concentration[nM]"] = df["Moles[nmol]"] / volume # unit nM
+            volume = df["Weight[ng]"].sum() * 1e-9 / cpc  # unit L
+            df["Concentration[nM]"] = df["Moles[nmol]"] / volume  # unit nM
             return df
 
         res = res.groupby(["Condition"]).apply(proteomicRuler)
 
         plot_distributions(res, "Concentration[nM]", SAMPLE_ID, log2=True)
-        plot_box_plot(res, "Concentration[nM]", SAMPLE_ID, log2=True,
-                        title="Concentration[nM] Distribution", violin=False)
+        plot_box_plot(res, "Concentration[nM]", SAMPLE_ID, log2=True, title="Concentration[nM] Distribution", violin=False)
         res.to_csv(output, index=False)
+
 
 if __name__ == '__main__':
     tpa_compute()
