@@ -8,7 +8,8 @@ import pandas as pd
 from pandas import DataFrame, Series
 from pyopenms import *
 
-from ibaq.ibaqpy_commons import PROTEIN_NAME, IBAQ, IBAQ_LOG, IBAQ_PPB, NORM_INTENSITY, SAMPLE_ID, IBAQ_NORMALIZED, CONDITION
+from ibaq.ibaqpy_commons import PROTEIN_NAME, IBAQ, IBAQ_LOG, IBAQ_PPB, NORM_INTENSITY, SAMPLE_ID, IBAQ_NORMALIZED, \
+    CONDITION
 from ibaq.ibaqpy_commons import plot_distributions, plot_box_plot
 
 
@@ -26,6 +27,7 @@ def normalize(group):
     group[IBAQ_NORMALIZED] = group[IBAQ] / group[IBAQ].sum()
     return group
 
+
 def normalize_ibaq(res: DataFrame) -> DataFrame:
     """
     Normalize the ibaq values using the total ibaq of the sample. The resulted
@@ -41,7 +43,7 @@ def normalize_ibaq(res: DataFrame) -> DataFrame:
     res[IBAQ_LOG] = res[IBAQ_NORMALIZED].apply(lambda x: (math.log10(x) + 10) if x > 0 else 0)
 
     # Normalization used by PRIDE Team (no log transformation) (ibaq/total_ibaq) * 100'000'000
-    res[IBAQ_PPB] = res[IBAQ_NORMALIZED].apply(lambda x: (x) * 100000000)
+    res[IBAQ_PPB] = res[IBAQ_NORMALIZED].apply(lambda x: x * 100000000)
 
     return res
 
@@ -57,7 +59,8 @@ def parse_uniprot_name(identifier: str) -> str:
 
 @click.command()
 @click.option("-f", "--fasta", help="Protein database to compute IBAQ values")
-@click.option("-p", "--peptides", help="Peptide identifications with intensities following the peptide intensity output")
+@click.option("-p", "--peptides",
+              help="Peptide identifications with intensities following the peptide intensity output")
 @click.option("-e", "--enzyme", help="Enzyme used during the analysis of the dataset (default: Trypsin)",
               default="Trypsin")
 @click.option("-n", "--normalize", help="Normalize IBAQ values using by using the total IBAQ of the experiment",
@@ -65,7 +68,8 @@ def parse_uniprot_name(identifier: str) -> str:
 @click.option("--min_aa", help="Minimum number of amino acids to consider a peptide", default=7)
 @click.option("--max_aa", help="Maximum number of amino acids to consider a peptide", default=30)
 @click.option("-o", "--output", help="Output file with the proteins and ibaq values")
-def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, min_aa: int, max_aa: int, output: str) -> None:
+def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, min_aa: int, max_aa: int,
+                 output: str) -> None:
     """
     This command computes the IBAQ values for a file output of peptides with the format described in
     peptide_contaminants_file_generation.py.
@@ -99,9 +103,9 @@ def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, min_aa
         for prot in proteins:
             summ += uniquepepcounts[prot]
         if len(proteins) > 0 and summ > 0:
-            return  pdrow.NormIntensity / (summ / len(proteins))
+            return pdrow.NormIntensity / (summ / len(proteins))
         # If there is no protein in the group, return np nan
-        return np.nan # type: ignore
+        return np.nan  # type: ignore
 
     for entry in fasta_proteins:
         digest = list()  # type: list[str]
@@ -113,7 +117,8 @@ def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, min_aa
     print(data.head())
     # next line assumes unique peptides only (at least per indistinguishable group)
 
-    res = pd.DataFrame(data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION])[NORM_INTENSITY].sum()).apply(get_average_nr_peptides_unique_bygroup, 1)
+    res = pd.DataFrame(data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION])[NORM_INTENSITY].sum()).apply(
+        get_average_nr_peptides_unique_bygroup, 1)
     res = res.sort_values(ascending=False)
     res = res.to_frame()
     res = res.reset_index()
@@ -127,13 +132,14 @@ def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, min_aa
 
     plot_distributions(res, IBAQ_PPB, SAMPLE_ID, log2=True)
     plot_box_plot(res, IBAQ_PPB, SAMPLE_ID, log2=True,
-                      title="IBAQ Distribution", violin=False)
+                  title="IBAQ Distribution", violin=False)
 
     # # For absolute expression the relation is one sample + one condition
     # condition = data[CONDITION].unique()[0]
     # res[CONDITION] = condition.lower()
 
     res.to_csv(output, index=False)
+
 
 if __name__ == '__main__':
     ibaq_compute()

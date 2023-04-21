@@ -15,7 +15,7 @@ iBAQ (intensity Based Absolute Quantification) determines the abundance of a pro
 Absolute quantification files has been store in the following url: 
 
 ```
-http://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/
+https://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/
 ```
 
 Inside each project reanalysis folder, the folder proteomicslfq contains the msstats input file with the structure `{Name of the project}_msstats_in.csv`. 

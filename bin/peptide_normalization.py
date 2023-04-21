@@ -35,11 +35,11 @@ def remove_outliers_iqr(dataset: DataFrame):
     :param dataset: Peptide dataframe
     :return: None
     """
-    Q1 = dataset[INTENSITY].quantile(0.25)
-    Q3 = dataset[INTENSITY].quantile(0.75)
-    IQR = Q3 - Q1
+    q1 = dataset[INTENSITY].quantile(0.25)
+    q3 = dataset[INTENSITY].quantile(0.75)
+    iqr = q3 - q1
 
-    dataset.query('(@Q1 - 1.5 * @IQR) <= Intensity <= (@Q3 + 1.5 * @IQR)', inplace=True)
+    dataset.query('(@q1 - 1.5 * @iqr) <= Intensity <= (@q3 + 1.5 * @iqr)', inplace=True)
 
 
 def remove_missing_values(normalize_df: DataFrame, ratio: float = 0.3) -> DataFrame:
@@ -246,6 +246,7 @@ def impute_peptide_intensities(dataset_df, field, class_field):
 @click.option("--peptides", help="Peptides files from the peptide file generation tool")
 @click.option("--contaminants", help="Contaminants and high abundant proteins to be removed")
 @click.option("--output", help="Peptide intensity file including other all properties for normalization")
+@click.option("--skip_normalization", help="Skip normalization step", is_flag=True, default=False)
 @click.option('--nmethod', help="Normalization method used to normalize intensities for all samples (options: qnorm)",
               default="qnorm")
 @click.option("--impute", help="Impute the missing values using MissForest", is_flag=True)
@@ -258,14 +259,15 @@ def impute_peptide_intensities(dataset_df, field, class_field):
               help="Print addition information about the distributions of the intensities, number of peptides remove "
                    "after normalization, etc.",
               is_flag=True)
-def peptide_normalization(peptides: str, contaminants: str, output: str, nmethod: str, impute: bool,
-                          pnormalization: bool, compress: bool, log2: bool,
+def peptide_normalization(peptides: str, contaminants: str, output: str, skip_normalization: bool,
+                          nmethod: str, impute: bool, pnormalization: bool, compress: bool, log2: bool,
                           violin: bool, verbose: bool) -> None:
     """
     Normalize the peptide intensities using different methods.
     :param peptides:
     :param contaminants:
     :param output:
+    :param skip_normalization:
     :param nmethod:
     :param impute:
     :param pnormalization:
@@ -306,8 +308,9 @@ def peptide_normalization(peptides: str, contaminants: str, output: str, nmethod
     print_dataset_size(dataset_df, "Peptides after contaminants removal: ", verbose)
 
     print("Normalize intensities.. ")
-    dataset_df = intensity_normalization(dataset_df, field=NORM_INTENSITY, class_field=SAMPLE_ID,
-                                         scaling_method=nmethod)
+    if not skip_normalization:
+        dataset_df = intensity_normalization(dataset_df, field=NORM_INTENSITY, class_field=SAMPLE_ID,
+                                             scaling_method=nmethod)
     if verbose:
         log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or (
                 (nmethod == "quantile" or nmethod == "robust") and not log2)

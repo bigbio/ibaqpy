@@ -11,9 +11,11 @@ from ibaq.ibaqpy_commons import plot_distributions, plot_box_plot
 import numpy as np
 import os
 
+
 @click.command()
 @click.option("-f", "--fasta", help="Protein database")
-@click.option("-p", "--peptides", help="Peptide identifications with intensities following the peptide intensity output")
+@click.option("-p", "--peptides",
+              help="Peptide identifications with intensities following the peptide intensity output")
 @click.option("-r", "--ruler", help="Whether to use proteomicRuler", default=True)
 @click.option("-n", "--ploidy", help="ploidy number", default=2)
 @click.option("-c", "--cpc", help="cellular protein concentration(g/L)", default=200)
@@ -73,7 +75,7 @@ def tpa_compute(fasta: str, peptides: str, ruler: bool, ploidy: int, cpc: float,
         histone_df = pd.read_json(open(os.path.split(__file__)[0] + os.sep + "histones.json", "rb")).T
         target_histones = histone_df[histone_df["name"] == organism.lower()]
         genome_size = target_histones["genome_size"].values[0]
-        histones_list = target_histones["histone_entries"].values[0]                                                                          
+        histones_list = target_histones["histone_entries"].values[0]
         dna_mass = ploidy * genome_size * average_base_pair_mass / avogadro
 
         def calculate(protein_intensity, histone_intensity, mw):
@@ -83,18 +85,21 @@ def tpa_compute(fasta: str, peptides: str, ruler: bool, ploidy: int, cpc: float,
             weight = moles * mw  # unit ng
             return tuple([copy, moles, weight])
 
-        def proteomicRuler(df):
+        def proteomic_ruler(df):
             histone_intensity = df[df["ProteinName"].isin(histones_list)]["NormIntensity"].sum()
             histone_intensity = histone_intensity if histone_intensity > 0 else 1
-            df[["Copy", "Moles[nmol]", "Weight[ng]"]] = df.apply(lambda x: calculate(x["NormIntensity"], histone_intensity, x["MolecularWeight"]), axis = 1, result_type="expand")
+            df[["Copy", "Moles[nmol]", "Weight[ng]"]] = df.apply(
+                lambda x: calculate(x["NormIntensity"], histone_intensity, x["MolecularWeight"]), axis=1,
+                result_type="expand")
             volume = df["Weight[ng]"].sum() * 1e-9 / cpc  # unit L
             df["Concentration[nM]"] = df["Moles[nmol]"] / volume  # unit nM
             return df
 
-        res = res.groupby(["Condition"]).apply(proteomicRuler)
+        res = res.groupby(["Condition"]).apply(proteomic_ruler)
 
         plot_distributions(res, "Concentration[nM]", SAMPLE_ID, log2=True)
-        plot_box_plot(res, "Concentration[nM]", SAMPLE_ID, log2=True, title="Concentration[nM] Distribution", violin=False)
+        plot_box_plot(res, "Concentration[nM]", SAMPLE_ID, log2=True, title="Concentration[nM] Distribution",
+                      violin=False)
         res.to_csv(output, index=False)
 
 
