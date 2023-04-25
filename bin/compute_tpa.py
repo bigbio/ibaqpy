@@ -13,9 +13,9 @@ import os
 
 @click.command()
 @click.option("-f", "--fasta", help="Protein database")
+@click.option("--contaminants", help="Contaminants and high abundant proteins to be removed")
 @click.option("-p", "--peptides",
               help="Peptide identifications with intensities following the peptide intensity output")
-@click.option("-p", "--peptides", help="Peptide identifications with intensities following the peptide intensity output")
 @click.option("-r", "--ruler", help="Whether to use ProteomicRuler", is_flag=True)
 @click.option("-n", "--ploidy", help="Ploidy number", default=2)
 @click.option("-c", "--cpc", help="Cellular protein concentration(g/L)", default=200)
