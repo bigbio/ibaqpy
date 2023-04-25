@@ -2,7 +2,7 @@
 
 [![Python application](https://github.com/bigbio/ibaqpy/actions/workflows/python-app.yml/badge.svg)](https://github.com/bigbio/ibaqpy/actions/workflows/python-app.yml)
 
-iBAQ (intensity Based Absolute Quantification) determines the abundance of a protein by dividing the total precursor intensities by the number of theoretically observable peptides of the protein. **ibaqpy** compute IBAQ values for proteins starting from a msstats input file and a SDRF experimental design file. This package provides multiple tools: 
+iBAQ (intensity Based Absolute Quantification) determines the abundance of a protein by dividing the total precursor intensities by the number of theoretically observable peptides of the protein. The TPA (Total Protein Approach) value is determined by summing peptide intensities of each protein and then dividing by the molecular mass to determine the relative concentration of each protein. By using [ProteomicRuler](https://www.sciencedirect.com/science/article/pii/S1535947620337749), it is possible to calculate the protein copy number and absolute concentration. **ibaqpy** compute IBAQ values, TPA values, copy numbers and concentration for proteins starting from a msstats input file and a SDRF experimental design file. This package provides multiple tools: 
 
 - `peptide_file_generation.py`: generate a peptide file from a msstats input file and a SDRF experimental design file. 
 
@@ -10,22 +10,24 @@ iBAQ (intensity Based Absolute Quantification) determines the abundance of a pro
 
 - `compute_ibaq.py`: Compute IBAQ values from the output file from script `peptide_normalization.py`.
 
+- `compute_tpa.py`: Compute TPA values, protein copy numbers and concentration from the output file from script `peptide_file_generation.py`.
+
 ### Collecting intensity files 
 
 Absolute quantification files has been store in the following url: 
 
 ```
-http://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/
+https://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/
 ```
 
 Inside each project reanalysis folder, the folder proteomicslfq contains the msstats input file with the structure `{Name of the project}_msstats_in.csv`. 
 
-E.g. http://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/PXD000561/proteomicslfq/PXD000561.sdrf_openms_design_msstats_in.csv 
+E.g. http://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/PXD003947/proteomicslfq/PXD003947.sdrf_openms_design_msstats_in.csv 
 
 ### Generate Peptidoform Intesity file - peptide_file_generation.py
 
 ```asciidoc
-python  peptide_file_generation.py --msstats PXD000561.sdrf_openms_design_msstats_in.csv --sdrf PXD000561.sdrf.tsv --output PXD000561-peptides.csv
+python  peptide_file_generation.py --msstats PXD003947.sdrf_openms_design_msstats_in.csv --sdrf PXD003947.sdrf.tsv --output PXD003947-peptides.csv
 ```
 
 The command provides an additional `flag` for compression data analysis where the msstats and sdrf files are compressed. 
@@ -68,8 +70,8 @@ Peptide normalization starts from the output file from script `peptide_file_gene
 - Fraction: Fraction index `(e.g. 1)`
 - Intensity: Peptide intensity
 - Reference: Name of the RAW file containing the peptide intensity `(e.g. Adult_Heart_Gel_Elite_54_f16)`
-- SampleID: Sample ID `(e.g. PXD000561-Sample-54)`
-- StudyID: Study ID `(e.g. PXD000561)`. In most of the cases the study ID is the same as the ProteomeXchange ID.
+- SampleID: Sample ID `(e.g. PXD003947-Sample-3)`
+- StudyID: Study ID `(e.g. PXD003947)`. In most of the cases the study ID is the same as the ProteomeXchange ID.
 
 #### Removing Contaminants and Decoys
 
@@ -98,9 +100,69 @@ Finally, two extra steps are performed:
 - ``peptide intensity imputation``: Imputation is performed using the package [missingpy](https://pypi.org/project/missingpy/). The algorithm uses a Random Forest algorithm to perform the imputation.
 - ``peptide intensity normalization``: Similar to the normalization of the peptidoform intensities, the peptide intensities are normalized using the package [qnorm](https://pypi.org/project/qnorm/).
 
-### Compute IBAQ
+### Compute IBAQ - compute_ibaq.py
 
+```asciidoc
+python compute_ibaq.py --fasta Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta --peptides PXD003947-peptides.csv --enzyme "Trypsin" --normalize --output PXD003947-ibaq.tsv
+``` 
 
+```asciidoc
+python compute_ibaq.py --help
+Usage: compute_ibaq.py [OPTIONS]
+
+  Compute the IBAQ values for a file output of peptides with the format described in
+  peptide_normalization.py.
+
+  :param min_aa: Minimum number of amino acids to consider a peptide
+  :param max_aa: Maximum number of amino acids to consider a peptide
+  :param fasta: Fasta file used to perform the peptide identification
+  :param peptides: Peptide intensity file
+  :param enzyme: Enzyme used to digest the protein sample
+  :param normalize: use some basic normalization steps
+  :param output: output format containing the ibaq values
+
+Options:
+  -f, --fasta TEXT      Protein database to compute IBAQ values  [required]
+  -p, --peptides TEXT   Peptide identifications with intensities following the peptide intensity output  [required]
+  -e, --enzyme          Enzyme used during the analysis of the dataset (default: Trypsin)
+  -n, --normalize       Normalize IBAQ values using by using the total IBAQ of the experiment
+  --min_aa              Minimum number of amino acids to consider a peptide (default: 7)
+  --max_aa              Maximum number of amino acids to consider a peptide (default: 30)
+  -o, --output TEXT     Output format containing the ibaq values
+  --help                Show this message and exit.
+```
+
+### Compute TPA - compute_tpa.py
+
+```asciidoc
+python compute_tpa.py --fasta Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta --contaminants contaminants_ids.tsv --peptides PXD003947-peptides.csv --ruler --ploidy 2 --cpc 200 --output PXD003947-tpa.tsv
+``` 
+
+```asciidoc
+python compute_tpa.py --help
+Usage: compute_tpa.py [OPTIONS]
+
+  Compute the protein copy numbers and concentrations according to a file output of peptides with the
+  format described in peptide_file_generation.py.
+
+  :param fasta: Fasta file used to perform the peptide identification
+  :param peptides: Peptide intensity file
+  :param contaminants: Contaminants file
+  :param ruler: Whether to compute protein copy number, weight and concentration.
+  :param ploidy: Ploidy number
+  :param cpc: Cellular protein concentration(g/L)
+  :param output: Output format containing the TPA values, protein copy numbers and concentrations
+
+Options:
+  -f, --fasta TEXT      Protein database to compute IBAQ values  [required]
+  -p, --peptides TEXT   Peptide identifications with intensities following the peptide intensity output  [required]
+  --contaminants        Contaminants and high abundant proteins to be removed
+  -r, --ruler           Calculate protein copy number and concentration according to ProteomicRuler
+  -n, --ploidy          Ploidy number (default: 2)
+  -c, --cpc             Cellular protein concentration(g/L) (default: 200)
+  -o, --output TEXT     Output format containing the TPA values, protein copy numbers and concentrations
+  --help                Show this message and exit.
+```
 
 ### Credits 
 

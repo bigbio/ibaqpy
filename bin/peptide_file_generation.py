@@ -133,6 +133,8 @@ def peptide_file_generation(msstats: str, sdrf: str, compress: bool, output: str
 
     # Read the msstats file
     msstats_df = pd.read_csv(msstats, sep=',', compression=compression_method)
+    # Remove 0 intensity signals from the msstats file
+    msstats_df = msstats_df[msstats_df[INTENSITY] > 0]
 
     msstats_df.rename(
         columns={'ProteinName': PROTEIN_NAME, 'PeptideSequence': PEPTIDE_SEQUENCE, 'PrecursorCharge': PEPTIDE_CHARGE,
