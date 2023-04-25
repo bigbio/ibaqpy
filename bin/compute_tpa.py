@@ -92,10 +92,10 @@ def tpa_compute(fasta: str, contaminants: str, peptides: str, ruler: bool, ploid
             return tuple([copy, moles, weight])
 
         def proteomic_ruler(df):
-            histone_intensity = df[df["ProteinName"].isin(histones_list)]["NormIntensity"].sum()
+            histone_intensity = df[df[PROTEIN_NAME].isin(histones_list)][INTENSITY].sum()
             histone_intensity = histone_intensity if histone_intensity > 0 else 1
             df[["Copy", "Moles[nmol]", "Weight[ng]"]] = df.apply(
-                lambda x: calculate(x["NormIntensity"], histone_intensity, x["MolecularWeight"]), axis=1,
+                lambda x: calculate(x[INTENSITY], histone_intensity, x["MolecularWeight"]), axis=1,
                 result_type="expand")
             volume = df["Weight[ng]"].sum() * 1e-9 / cpc  # unit L
             df["Concentration[nM]"] = df["Moles[nmol]"] / volume  # unit nM
