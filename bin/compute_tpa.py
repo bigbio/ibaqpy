@@ -8,7 +8,6 @@ from pyopenms import *
 from bin.compute_ibaq import print_help_msg, parse_uniprot_name
 from ibaq.ibaqpy_commons import PROTEIN_NAME, INTENSITY, SAMPLE_ID, CONDITION, remove_contaminants_decoys
 from ibaq.ibaqpy_commons import plot_distributions, plot_box_plot
-import numpy as np
 import os
 
 
