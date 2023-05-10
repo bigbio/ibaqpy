@@ -10,6 +10,37 @@ iBAQ (intensity Based Absolute Quantification) determines the abundance of a pro
 
 - `compute_ibaq.py`: Compute IBAQ values from the output file from script `peptide_normalization.py`.
 
+### How to install ibaqpy
+
+Ibaqpy is available in PyPI and can be installed using pip:
+
+```asciidoc
+pip install ibaqpy
+```
+
+You can install the package from code: 
+
+1. Clone the repository:
+
+```asciidoc
+>$ git clone https://github.com/bigbio/ibaqpy
+>$ cd ibaqpy
+```
+
+2. Install conda environment:
+
+```asciidoc
+>$ mamba create --name ibaqpy python=3.7
+>$ conda activate ibaqpy
+>$ mamba install -c conda-forge --file requirements.txt
+```
+
+3. Install ibaqpy:
+
+```asciidoc
+>$ python setup.py install
+```
+
 ### Collecting intensity files 
 
 Absolute quantification files has been store in the following url: 
