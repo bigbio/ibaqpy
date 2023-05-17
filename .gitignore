@@ -7,3 +7,4 @@ res.csv
 /data/PXD008934-out_triqler.tsv.gz
 venv
 /venv/
+/compute-all.sh
