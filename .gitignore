@@ -5,3 +5,6 @@ res.csv
 /data/PXD008934-out.mzTab.gz
 /data/PXD008934-out_msstats.csv.gz
 /data/PXD008934-out_triqler.tsv.gz
+venv
+/venv/
+/compute-all.sh

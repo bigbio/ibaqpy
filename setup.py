@@ -30,7 +30,6 @@ setup(
     include_package_data=True,
     install_requires=[
         'pyopenms',
-        'missingpy',
         'scikit-learn == 0.22.1',
         'numpy == 1.21',
         'click',

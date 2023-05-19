@@ -6,7 +6,6 @@ import click
 import numpy as np
 import pandas as pd
 import qnorm
-from missingpy import MissForest
 from pandas import DataFrame
 
 from ibaq.ibaqpy_commons import remove_contaminants_decoys, INTENSITY, SAMPLE_ID, NORM_INTENSITY, \
@@ -227,17 +226,18 @@ def impute_peptide_intensities(dataset_df, field, class_field):
             group_normalize_df = group_normalize_df.melt(id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION])
             group_normalize_df.rename(columns={'value': NORM_INTENSITY}, inplace=True)
             normalize_df = normalize_df.append(group_normalize_df, ignore_index=True)
-        else:
-            # Impute the missing values
-            imputer = MissForest(max_iter=5)
-            imputed_data = imputer.fit_transform(group_normalize_df)
-            group_normalize_df = pd.DataFrame(imputed_data, columns=group_normalize_df.columns,
-                                              index=group_normalize_df.index)
-            # Melt the dataframe
-            group_normalize_df = group_normalize_df.reset_index()
-            group_normalize_df = group_normalize_df.melt(id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION])
-            group_normalize_df.rename(columns={'value': NORM_INTENSITY}, inplace=True)
-            normalize_df = normalize_df.append(group_normalize_df, ignore_index=True)
+        # else:
+        #     # print ("nothing")
+        #     # Impute the missing values
+        #     # imputer = MissForest(max_iter=5)
+        #     # imputed_data = imputer.fit_transform(group_normalize_df)
+        #     # group_normalize_df = pd.DataFrame(imputed_data, columns=group_normalize_df.columns,
+        #     #                                   index=group_normalize_df.index)
+        #     # # Melt the dataframe
+        #     # group_normalize_df = group_normalize_df.reset_index()
+        #     # group_normalize_df = group_normalize_df.melt(id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION])
+        #     # group_normalize_df.rename(columns={'value': NORM_INTENSITY}, inplace=True)
+        #     # normalize_df = normalize_df.append(group_normalize_df, ignore_index=True)
 
     return normalize_df
 
@@ -349,8 +349,9 @@ def peptide_normalization(peptides: str, contaminants: str, output: str, skip_no
     print_dataset_size(dataset_df, "Peptides after remove low frequency peptides: ", verbose)
 
     # Perform imputation using Random Forest in Peptide Intensities
-    if impute:
-        dataset_df = impute_peptide_intensities(dataset_df, field=NORM_INTENSITY, class_field=SAMPLE_ID)
+    # TODO: Check if this is necessary (Probably we can do some research if imputation at peptide level is necessary
+    # if impute:
+    #     dataset_df = impute_peptide_intensities(dataset_df, field=NORM_INTENSITY, class_field=SAMPLE_ID)
 
     if pnormalization:
         print("Normalize at Peptide level...")

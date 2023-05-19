@@ -43,15 +43,14 @@ def remove_extension_file(filename: str) -> str:
   :param filename:
   :return:
   """
-    return filename.replace('.raw', '').replace('.RAW', '').replace('.mzML', '')
-
+    return filename.replace('.raw', '').replace('.RAW', '').replace('.mzML', '').replace('.wiff', '')
 
 def get_study_accession(sample_id: str) -> str:
     """
   Get the project accession from the Sample accession. The function expected a sample accession in the following
   format PROJECT-SAMPLEID
   :param sample_id: Sample Accession
-  :return: project accessions
+  :return: study accession
   """
     return sample_id.split('-')[0]
 
