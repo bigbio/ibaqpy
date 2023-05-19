@@ -81,6 +81,19 @@ TMT10plex = {
 
 TMT6plex = {"TMT126": 1, "TMT127": 2, "TMT128": 3, "TMT129": 4, "TMT130": 5, "TMT131": 6}
 
+ITRAQ4plex = {"ITRAQ114": 1, "ITRAQ115": 2, "ITRAQ116": 3, "ITRAQ117": 4}
+
+ITRAQ8plex = {
+            "ITRAQ113": 1,
+            "ITRAQ114": 2,
+            "ITRAQ115": 3,
+            "ITRAQ116": 4,
+            "ITRAQ117": 5,
+            "ITRAQ118": 6,
+            "ITRAQ119": 7,
+            "ITRAQ121": 8,
+        }
+
 
 def remove_contaminants_decoys(dataset: DataFrame, contaminants_file: str, protein_field=PROTEIN_NAME) -> DataFrame:
     """

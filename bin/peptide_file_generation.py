@@ -180,8 +180,22 @@ def peptide_file_generation(msstats: str, sdrf: str, compress: bool, output: str
         # result_df.drop(CHANNEL, axis=1, inplace=True)
         result_df = result_df[result_df["Condition"] != "Empty"]
         result_df.rename(columns={'Charge': PEPTIDE_CHARGE}, inplace=True)
+    elif 'ITRAQ' in ','.join(labels) or 'itraq' in ','.join(labels):
+        if len(labels) > 4:
+            choice = ITRAQ8plex
+        else:
+            choice = ITRAQ4plex
+        choice = pd.DataFrame.from_dict(choice, orient='index', columns=[CHANNEL]).reset_index().rename(
+            columns={'index': 'comment[label]'})
+        sdrf_df = sdrf_df.merge(choice, on='comment[label]', how='left')
+        msstats_df[REFERENCE] = msstats_df[REFERENCE].apply(get_reference_name)
+        result_df = pd.merge(msstats_df, sdrf_df[['source name', REFERENCE, CHANNEL]], how='left',
+                             on=[REFERENCE, CHANNEL])
+        # result_df.drop(CHANNEL, axis=1, inplace=True)
+        result_df = result_df[result_df["Condition"] != "Empty"]
+        result_df.rename(columns={'Charge': PEPTIDE_CHARGE}, inplace=True)
     else:
-        print("Warning: Only support label free and TMT experiment!")
+        print("Warning: Only support label free, TMT and ITRAQ experiment!")
         exit(1)
 
     result_df.rename(columns={'source name': SAMPLE_ID}, inplace=True)
