@@ -11,7 +11,8 @@ iBAQ (intensity Based Absolute Quantification) determines the abundance of a pro
 - `compute_ibaq.py`: Compute IBAQ values from the output file from script `peptide_normalization.py`.
 
 - `compute_tpa.py`: Compute TPA values, protein copy numbers and concentration from the output file from script `peptide_file_generation.py`.
-=======
+
+
 ### How to install ibaqpy
 
 Ibaqpy is available in PyPI and can be installed using pip:
