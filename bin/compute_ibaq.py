@@ -126,13 +126,17 @@ def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, min_aa
 
     if normalize:
         res = normalize_ibaq(res)
-
-    # Remove IBAQ_NORMALIZED NAN values
-    res = res.dropna(subset=[IBAQ_NORMALIZED])
-
-    plot_distributions(res, IBAQ_PPB, SAMPLE_ID, log2=True)
-    plot_box_plot(res, IBAQ_PPB, SAMPLE_ID, log2=True,
-                  title="IBAQ Distribution", violin=False)
+        # Remove IBAQ_NORMALIZED NAN values
+        res = res.dropna(subset=[IBAQ_NORMALIZED])
+        plot_column = IBAQ_PPB
+    else:
+        # Remove IBAQ NAN values
+        res = res.dropna(subset=[IBAQ])
+        plot_column = IBAQ
+        
+    plot_distributions(res, plot_column, SAMPLE_ID, log2=True)
+    plot_box_plot(res, plot_column, SAMPLE_ID, log2=True,
+                title="IBAQ Distribution", violin=False)
 
     # # For absolute expression the relation is one sample + one condition
     # condition = data[CONDITION].unique()[0]
