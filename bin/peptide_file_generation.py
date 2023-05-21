@@ -152,10 +152,10 @@ def peptide_file_generation(msstats: str, sdrf: str, compress: bool, min_aa: int
     msstats_df[PEPTIDE_SEQUENCE] = msstats_df.apply(lambda x: sub_mod(x[PEPTIDE_SEQUENCE]), axis=1)
     # Only peptides with more than min_aa (default: 7) amino acids are retained
     msstats_df = msstats_df[msstats_df.apply(lambda x: len(x[PEPTIDE_SEQUENCE]) >= min_aa, axis = 1)]
-    # Only unique peptide will be retained
-    msstats_df = msstats_df.groupby(PEPTIDE_SEQUENCE).filter(lambda x: len(set(x[PROTEIN_NAME])) == 1)
-    # Only proteins with unique peptides number greater than 2 are retained
-    msstats_df = msstats_df.groupby(PROTEIN_NAME).filter(lambda x: len(set(x[PEPTIDE_SEQUENCE])) >= min_unique)
+    # Only proteins with unique peptides number greater than min_unique (default: 2) are retained
+    unique_peptides = set(msstats_df.groupby(PEPTIDE_SEQUENCE).filter(lambda x: len(set(x[PROTEIN_NAME])) == 1)[PEPTIDE_SEQUENCE].tolist())
+    strong_proteins = set(msstats_df[msstats_df[PEPTIDE_SEQUENCE].isin(unique_peptides)].groupby(PROTEIN_NAME).filter(lambda x: len(set(x[PEPTIDE_SEQUENCE])) >= min_unique)[PROTEIN_NAME].tolist())
+    msstats_df = msstats_df[msstats_df[PROTEIN_NAME].isin(strong_proteins)]
     
 
     msstats_df.rename(
