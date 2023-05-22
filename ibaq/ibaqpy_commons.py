@@ -1,3 +1,4 @@
+import re
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -116,6 +117,17 @@ def remove_contaminants_decoys(dataset: DataFrame, contaminants_file: str, prote
     # dataset.drop(index=dataset[dataset[protein_field].str.contains(contaminant)].index, inplace=True)
 
     return dataset[~dataset[protein_field].str.contains(cregex)]
+
+
+def get_canonical_peptide(peptide_sequence: str) -> str:
+    """
+    This function returns a peptide sequence without the modification information
+    :param peptide_sequence: peptide sequence with mods
+    :return: peptide sequence
+    """
+    clean_peptide = re.sub("[\(\[].*?[\)\]]", "", peptide_sequence)
+    clean_peptide = clean_peptide.replace(".", "")
+    return clean_peptide
 
 
 def plot_distributions(dataset: DataFrame, field: str, class_field: str, log2: bool = True) -> None:
