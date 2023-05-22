@@ -1,9 +1,9 @@
-scikit-learn==0.22.1
+scikit-learn
 pyopenms
-numpy == 1.21
+numpy
 click
-pandas
+pandas == 2.0.1
 matplotlib
 qnorm
-seaborn == 0.10
+seaborn
 typing_extensions

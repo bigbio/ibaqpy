@@ -33,7 +33,7 @@ You can install the package from code:
 2. Install conda environment:
 
 ```asciidoc
->$ mamba create --name ibaqpy python=3.7
+>$ mamba create --name ibaqpy python=3.8
 >$ conda activate ibaqpy
 >$ mamba install -c conda-forge --file requirements.txt
 ```
