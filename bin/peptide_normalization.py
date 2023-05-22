@@ -10,7 +10,7 @@ from pandas import DataFrame
 
 from ibaq.ibaqpy_commons import remove_contaminants_decoys, INTENSITY, SAMPLE_ID, NORM_INTENSITY, \
     PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE, PEPTIDE_CANONICAL, SEARCH_ENGINE, \
-    PROTEIN_NAME, STUDY_ID, CONDITION, plot_distributions, plot_box_plot
+    PROTEIN_NAME, STUDY_ID, CONDITION, get_canonical_peptide, plot_distributions, plot_box_plot
 
 
 def print_dataset_size(dataset: DataFrame, message: str, verbose: bool) -> None:
@@ -51,17 +51,6 @@ def remove_missing_values(normalize_df: DataFrame, ratio: float = 0.3) -> DataFr
     n_samples = len(normalize_df.columns)
     normalize_df = normalize_df.dropna(thresh=round(n_samples * ratio))
     return normalize_df
-
-
-def get_canonical_peptide(peptide_sequence: str) -> str:
-    """
-    This function returns a peptide sequence without the modification information
-    :param peptide_sequence: peptide sequence with mods
-    :return: peptide sequence
-    """
-    clean_peptide = re.sub("[\(\[].*?[\)\]]", "", peptide_sequence)
-    clean_peptide = clean_peptide.replace(".", "")
-    return clean_peptide
 
 
 def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "all",
@@ -324,8 +313,9 @@ def peptide_normalization(peptides: str, contaminants: str, output: str, skip_no
     print("Number of peptides after peptidofrom selection: " + str(len(dataset_df.index)))
 
     # Add the peptide sequence canonical without the modifications
-    print("Add Canonical peptides to the dataframe...")
-    dataset_df[PEPTIDE_CANONICAL] = dataset_df[PEPTIDE_SEQUENCE].apply(lambda x: get_canonical_peptide(x))
+    if PEPTIDE_CANONICAL not in dataset_df.columns:
+        print("Add Canonical peptides to the dataframe...")
+        dataset_df[PEPTIDE_CANONICAL] = dataset_df[PEPTIDE_SEQUENCE].apply(lambda x: get_canonical_peptide(x))
 
     print("Sum all peptidoforms per Sample...")
     print("Number of peptides before sum selection: " + str(len(dataset_df.index)))

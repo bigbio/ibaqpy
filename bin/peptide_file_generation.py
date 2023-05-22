@@ -98,17 +98,6 @@ def best_probability_error_bestsearch_engine(probability: float) -> float:
     return 1 - probability
 
 
-def sub_mod(peptide: str) -> str:
-    """
-  Remove the modification from the peptide, e.g. 
-  :param peptide: Peptide with modifications
-  :return:
-  """
-    peptide = peptide.replace(".", "")
-    peptide = re.sub(r"\(.*?\)", "", peptide)
-    return peptide
-
-
 def print_help_msg(command) -> None:
     """
   Print help information
@@ -149,12 +138,12 @@ def peptide_file_generation(msstats: str, sdrf: str, compress: bool, min_aa: int
     msstats_df = pd.read_csv(msstats, sep=',', compression=compression_method)
     # Remove 0 intensity signals from the msstats file
     msstats_df = msstats_df[msstats_df[INTENSITY] > 0]
-    msstats_df[PEPTIDE_SEQUENCE] = msstats_df.apply(lambda x: sub_mod(x[PEPTIDE_SEQUENCE]), axis=1)
+    msstats_df[PEPTIDE_CANONICAL] = msstats_df.apply(lambda x: get_canonical_peptide(x[PEPTIDE_SEQUENCE]), axis=1)
     # Only peptides with more than min_aa (default: 7) amino acids are retained
-    msstats_df = msstats_df[msstats_df.apply(lambda x: len(x[PEPTIDE_SEQUENCE]) >= min_aa, axis = 1)]
+    msstats_df = msstats_df[msstats_df.apply(lambda x: len(x[PEPTIDE_CANONICAL]) >= min_aa, axis = 1)]
     # Only proteins with unique peptides number greater than min_unique (default: 2) are retained
-    unique_peptides = set(msstats_df.groupby(PEPTIDE_SEQUENCE).filter(lambda x: len(set(x[PROTEIN_NAME])) == 1)[PEPTIDE_SEQUENCE].tolist())
-    strong_proteins = set(msstats_df[msstats_df[PEPTIDE_SEQUENCE].isin(unique_peptides)].groupby(PROTEIN_NAME).filter(lambda x: len(set(x[PEPTIDE_SEQUENCE])) >= min_unique)[PROTEIN_NAME].tolist())
+    unique_peptides = set(msstats_df.groupby(PEPTIDE_CANONICAL).filter(lambda x: len(set(x[PROTEIN_NAME])) == 1)[PEPTIDE_CANONICAL].tolist())
+    strong_proteins = set(msstats_df[msstats_df[PEPTIDE_CANONICAL].isin(unique_peptides)].groupby(PROTEIN_NAME).filter(lambda x: len(set(x[PEPTIDE_CANONICAL])) >= min_unique)[PROTEIN_NAME].tolist())
     msstats_df = msstats_df[msstats_df[PROTEIN_NAME].isin(strong_proteins)]
     
 
