@@ -145,7 +145,7 @@ def peptide_file_generation(msstats: str, sdrf: str, compress: bool, min_aa: int
     unique_peptides = set(msstats_df.groupby(PEPTIDE_CANONICAL).filter(lambda x: len(set(x[PROTEIN_NAME])) == 1)[PEPTIDE_CANONICAL].tolist())
     strong_proteins = set(msstats_df[msstats_df[PEPTIDE_CANONICAL].isin(unique_peptides)].groupby(PROTEIN_NAME).filter(lambda x: len(set(x[PEPTIDE_CANONICAL])) >= min_unique)[PROTEIN_NAME].tolist())
     msstats_df = msstats_df[msstats_df[PROTEIN_NAME].isin(strong_proteins)]
-    
+
 
     msstats_df.rename(
         columns={'ProteinName': PROTEIN_NAME, 'PeptideSequence': PEPTIDE_SEQUENCE, 'PrecursorCharge': PEPTIDE_CHARGE,
@@ -197,12 +197,11 @@ def peptide_file_generation(msstats: str, sdrf: str, compress: bool, min_aa: int
         else:
             choice = ITRAQ4plex
         choice = pd.DataFrame.from_dict(choice, orient='index', columns=[CHANNEL]).reset_index().rename(
-            columns={'index': 'comment[label]'})
+        columns={'index': 'comment[label]'})
         sdrf_df = sdrf_df.merge(choice, on='comment[label]', how='left')
         msstats_df[REFERENCE] = msstats_df[REFERENCE].apply(get_reference_name)
         result_df = pd.merge(msstats_df, sdrf_df[['source name', REFERENCE, CHANNEL]], how='left',
                              on=[REFERENCE, CHANNEL])
-        # result_df.drop(CHANNEL, axis=1, inplace=True)
         result_df = result_df[result_df["Condition"] != "Empty"]
         result_df.rename(columns={'Charge': PEPTIDE_CHARGE}, inplace=True)
     else:
