@@ -36,7 +36,7 @@ setup(
         'pandas',
         'matplotlib',
         'qnorm',
-        'seaborn == 0.10',
+        'seaborn',
         'typing_extensions'
     ],
     scripts=['bin/compute_ibaq.py', 'bin/peptide_file_generation.py', 'bin/peptide_normalization.py',
