@@ -20,7 +20,8 @@ import os
 @click.option("-n", "--ploidy", help="Ploidy number", default=2)
 @click.option("-c", "--cpc", help="Cellular protein concentration(g/L)", default=200)
 @click.option("-o", "--output", help="Output file with the proteins and other values")
-def tpa_compute(fasta: str, contaminants: str, peptides: str, ruler: bool, ploidy: int, cpc: float, output: str) -> None:
+def tpa_compute(fasta: str, contaminants: str, peptides: str, ruler: bool, ploidy: int, cpc: float,
+                output: str) -> None:
     """
     This command computes the protein copies and concentrations according to a file output of peptides with the
     format described in peptide_contaminants_file_generation.py.
@@ -37,11 +38,11 @@ def tpa_compute(fasta: str, contaminants: str, peptides: str, ruler: bool, ploid
         print_help_msg(tpa_compute)
         exit(1)
 
-    data = pd.read_csv(peptides, sep=",", usecols = [PROTEIN_NAME, INTENSITY, SAMPLE_ID, CONDITION])
+    data = pd.read_csv(peptides, sep=",", usecols=[PROTEIN_NAME, INTENSITY, SAMPLE_ID, CONDITION])
     print("Remove contaminants...")
     data = remove_contaminants_decoys(data, contaminants)
     data[INTENSITY] = data[INTENSITY].astype("float")
-    data = data.dropna(subset = [INTENSITY])
+    data = data.dropna(subset=[INTENSITY])
     data = data[data[INTENSITY] > 0]
     print(data.head())
 
