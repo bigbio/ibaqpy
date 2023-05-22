@@ -30,8 +30,8 @@ setup(
     include_package_data=True,
     install_requires=[
         'pyopenms',
-        'scikit-learn == 0.22.1',
-        'numpy == 1.21',
+        'scikit-learn',
+        'numpy',
         'click',
         'pandas',
         'matplotlib',
