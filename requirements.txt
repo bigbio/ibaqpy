@@ -1,8 +1,8 @@
 scikit-learn
-pyopenms == 2.7.0
+pyopenms
 numpy
 click
-pandas == 2.0.1
+pandas
 matplotlib
 qnorm
 seaborn
