@@ -1,5 +1,5 @@
 scikit-learn
-pyopenms
+pyopenms == 2.7.0
 numpy
 click
 pandas == 2.0.1
@@ -7,3 +7,4 @@ matplotlib
 qnorm
 seaborn
 typing_extensions
+setuptools
