@@ -5,7 +5,6 @@ import os
 import re
 
 import click
-import pandas as pd
 from typing_extensions import OrderedDict
 
 from ibaq.ibaqpy_commons import *
@@ -136,7 +135,7 @@ def peptide_file_generation(msstats: str, sdrf: str, compress: bool, min_aa: int
     compression_method = 'gzip' if compress else None
 
     # Read the msstats file
-    msstats_df = pd.read_csv(msstats, sep=',', compression=compression_method)
+    msstats_df = pd.read_csv(msstats, sep=',', compression=compression_method, dtype={CONDITION: 'category', ISOTOPE_LABEL_TYPE: 'category'})
     # Remove 0 intensity signals from the msstats file
     msstats_df = msstats_df[msstats_df[INTENSITY] > 0]
     msstats_df[PEPTIDE_CANONICAL] = msstats_df.apply(lambda x: get_canonical_peptide(x[PEPTIDE_SEQUENCE]), axis=1)
