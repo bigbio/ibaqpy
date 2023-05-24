@@ -120,6 +120,7 @@ Usage: peptide_normalization.py [OPTIONS]
   :param violin: Use violin plot instead of boxplot for distribution representations
   :param verbose: Print addition information about the distributions of the intensities, 
                   number of peptides remove after normalization, etc.
+  :param qc_report: PDF file to store multiple QC images
 
 Options:
   --peptides TEXT       Peptides files from the peptide file generation tool  [required]
@@ -134,6 +135,7 @@ Options:
   --violin              Use violin plot instead of boxplot for distribution representations
   --verbose             Print addition information about the distributions of the intensities, 
                         number of peptides remove after normalization, etc.
+  --qc_report           PDF file to store multiple QC images (default: "peptideNorm-QCprofile.pdf")
   --output TEXT         Peptide intensity file including other all properties for normalization
   --help                Show this message and exit.
 ```
@@ -205,6 +207,9 @@ Usage: compute_ibaq.py [OPTIONS]
   :param enzyme: Enzyme used to digest the protein sample
   :param normalize: use some basic normalization steps
   :param output: output format containing the ibaq values
+  :param verbose: Print addition information about the distributions of the intensities, 
+                  number of peptides remove after normalization, etc.
+  :param qc_report: PDF file to store multiple QC images
 
 Options:
   -f, --fasta TEXT      Protein database to compute IBAQ values  [required]
@@ -214,6 +219,9 @@ Options:
   --min_aa              Minimum number of amino acids to consider a peptide (default: 7)
   --max_aa              Maximum number of amino acids to consider a peptide (default: 30)
   -o, --output TEXT     Output format containing the ibaq values
+  --verbose             Print addition information about the distributions of the intensities, 
+                        number of peptides remove after normalization, etc.
+  --qc_report           PDF file to store multiple QC images (default: "IBAQ-QCprofile.pdf")
   --help                Show this message and exit.
 ```
 
@@ -253,6 +261,9 @@ Usage: compute_tpa.py [OPTIONS]
   :param ploidy: Ploidy number
   :param cpc: Cellular protein concentration(g/L)
   :param output: Output format containing the TPA values, protein copy numbers and concentrations
+  :param verbose: Print addition information about the distributions of the intensities, 
+                  number of peptides remove after normalization, etc.
+  :param qc_report: PDF file to store multiple QC images
 
 Options:
   -f, --fasta TEXT      Protein database to compute IBAQ values  [required]
@@ -262,6 +273,9 @@ Options:
   -n, --ploidy          Ploidy number (default: 2)
   -c, --cpc             Cellular protein concentration(g/L) (default: 200)
   -o, --output TEXT     Output format containing the TPA values, protein copy numbers and concentrations
+  --verbose             Print addition information about the distributions of the intensities, 
+                        number of peptides remove after normalization, etc.
+  --qc_report           PDF file to store multiple QC images (default: "TPA-QCprofile.pdf")
   --help                Show this message and exit.
 ```
 
