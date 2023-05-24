@@ -145,8 +145,7 @@ def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, min_aa
     # Print the distribution of the protein IBAQ values
     if verbose:
         pdf = PdfPages(qc_report)
-        density = plot_distributions(res, plot_column, SAMPLE_ID, log2=True, 
-                            title="IBAQ Distribution")
+        density = plot_distributions(res, plot_column, SAMPLE_ID, log2=True, title="IBAQ Distribution")
         plt.show()
         pdf.savefig(density)
         box = plot_box_plot(res, plot_column, SAMPLE_ID, log2=True,
