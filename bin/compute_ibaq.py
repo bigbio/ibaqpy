@@ -7,6 +7,8 @@ import click
 import pandas as pd
 from pandas import DataFrame, Series
 from pyopenms import *
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 
 from ibaq.ibaqpy_commons import PROTEIN_NAME, IBAQ, IBAQ_LOG, IBAQ_PPB, NORM_INTENSITY, SAMPLE_ID, IBAQ_NORMALIZED, \
     CONDITION
@@ -67,18 +69,25 @@ def parse_uniprot_name(identifier: str) -> str:
 @click.option("--min_aa", help="Minimum number of amino acids to consider a peptide", default=7)
 @click.option("--max_aa", help="Maximum number of amino acids to consider a peptide", default=30)
 @click.option("-o", "--output", help="Output file with the proteins and ibaq values")
+@click.option("--verbose",
+              help="Print addition information about the distributions of the intensities, number of peptides remove "
+                   "after normalization, etc.",
+              is_flag=True)
+@click.option("--qc_report", help="PDF file to store multiple QC images", default="IBAQ-QCprofile.pdf")
 def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, min_aa: int, max_aa: int,
-                 output: str) -> None:
+                 output: str, verbose: bool, qc_report: str) -> None:
     """
     This command computes the IBAQ values for a file output of peptides with the format described in
     peptide_contaminants_file_generation.py.
-    :param min_aa: Minimum number of amino acids to consider a peptide
-    :param max_aa: Maximum number of amino acids to consider a peptide
-    :param fasta: Fasta file used to perform the peptide identification
-    :param peptides: Peptide intensity file
-    :param enzyme: Enzyme used to digest the protein sample
+    :param min_aa: Minimum number of amino acids to consider a peptide.
+    :param max_aa: Maximum number of amino acids to consider a peptide.
+    :param fasta: Fasta file used to perform the peptide identification.
+    :param peptides: Peptide intensity file.
+    :param enzyme: Enzyme used to digest the protein sample.
     :param normalize: use some basic normalization steps.
     :param output: output format containing the ibaq values.
+    :param verbose: Print addition information.
+    :param qc_report: PDF file to store multiple QC images.
     :return:
     """
     if peptides is None or fasta is None:
@@ -133,9 +142,18 @@ def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, min_aa
         res = res.dropna(subset=[IBAQ])
         plot_column = IBAQ
 
-    plot_distributions(res, plot_column, SAMPLE_ID, log2=True)
-    plot_box_plot(res, plot_column, SAMPLE_ID, log2=True,
-                  title="IBAQ Distribution", violin=False)
+    # Print the distribution of the protein IBAQ values
+    if verbose:
+        pdf = PdfPages(qc_report)
+        density = plot_distributions(res, plot_column, SAMPLE_ID, log2=True, 
+                            title="IBAQ Distribution")
+        plt.show()
+        pdf.savefig(density)
+        box = plot_box_plot(res, plot_column, SAMPLE_ID, log2=True,
+                      title="IBAQ Distribution", violin=False)
+        plt.show()
+        pdf.savefig(box)
+        pdf.close()
 
     # # For absolute expression the relation is one sample + one condition
     # condition = data[CONDITION].unique()[0]

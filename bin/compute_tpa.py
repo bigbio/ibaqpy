@@ -4,6 +4,8 @@
 import click
 import pandas as pd
 from pyopenms import *
+import matplotlib.pyplot as plt
+from matplotlib.backends.backend_pdf import PdfPages
 
 from bin.compute_ibaq import print_help_msg, parse_uniprot_name
 from ibaq.ibaqpy_commons import PROTEIN_NAME, INTENSITY, SAMPLE_ID, CONDITION, remove_contaminants_decoys
@@ -20,18 +22,25 @@ import os
 @click.option("-n", "--ploidy", help="Ploidy number", default=2)
 @click.option("-c", "--cpc", help="Cellular protein concentration(g/L)", default=200)
 @click.option("-o", "--output", help="Output file with the proteins and other values")
+@click.option("--verbose",
+              help="Print addition information about the distributions of the intensities, number of peptides remove "
+                   "after normalization, etc.",
+              is_flag=True)
+@click.option("--qc_report", help="PDF file to store multiple QC images", default="TPA-QCprofile.pdf")
 def tpa_compute(fasta: str, contaminants: str, peptides: str, ruler: bool, ploidy: int, cpc: float,
-                output: str) -> None:
+                output: str, verbose: bool, qc_report: str) -> None:
     """
     This command computes the protein copies and concentrations according to a file output of peptides with the
     format described in peptide_contaminants_file_generation.py.
-    :param fasta: Fasta file used to perform the peptide identification
-    :param contaminants: Contaminants file
+    :param fasta: Fasta file used to perform the peptide identification.
+    :param contaminants: Contaminants file.
     :param peptides: Peptide intensity file without normalization.
     :param ruler: Whether to compute protein copies, weight and concentration.
     :param ploidy: Ploidy number.
     :param cpc: Cellular protein concentration(g/L).
-    :param output: Output format containing the TPA values, protein copy numbers and concentrations
+    :param output: Output format containing the TPA values, protein copy numbers and concentrations.
+    :param verbose: Print addition information.
+    :param qc_report: PDF file to store multiple QC images.
     :return:
     """
     if peptides is None or fasta is None:
@@ -70,8 +79,15 @@ def tpa_compute(fasta: str, contaminants: str, peptides: str, ruler: bool, ploid
     res["MolecularWeight"] = res["MolecularWeight"].fillna(1)
     res["MolecularWeight"] = res["MolecularWeight"].replace(0, 1)
     res["TPA"] = res[INTENSITY] / res["MolecularWeight"]
-    plot_distributions(res, "TPA", SAMPLE_ID, log2=True)
-    plot_box_plot(res, "TPA", SAMPLE_ID, log2=True, title="TPA Distribution", violin=False)
+    # Print the distribution of the protein TPA values
+    if verbose:
+        pdf = PdfPages(qc_report)
+        density = plot_distributions(res, "TPA", SAMPLE_ID, log2=True, title="TPA Distribution")
+        plt.show()
+        pdf.savefig(density)
+        box = plot_box_plot(res, "TPA", SAMPLE_ID, log2=True, title="TPA Distribution", violin=False)
+        plt.show()
+        pdf.savefig(box)
 
     # calculate protein weight(ng) and concentration(nM)
     if ruler:
@@ -104,9 +120,23 @@ def tpa_compute(fasta: str, contaminants: str, peptides: str, ruler: bool, ploid
 
         res = res.groupby([CONDITION]).apply(proteomic_ruler)
 
-        plot_distributions(res, "Concentration[nM]", SAMPLE_ID, log2=True)
-        plot_box_plot(res, "Concentration[nM]", SAMPLE_ID, log2=True, title="Concentration[nM] Distribution",
-                      violin=False)
+        if verbose:
+            density = plot_distributions(res, "Copy", SAMPLE_ID, log2=True, title="Copy numbers Distribution")
+            plt.show()
+            pdf.savefig(density)
+            box = plot_box_plot(res, "Copy", SAMPLE_ID, log2=True, title="Copy numbers Distribution",
+                        violin=False)
+            plt.show()
+            pdf.savefig(box)
+
+            density = plot_distributions(res, "Concentration[nM]", SAMPLE_ID, log2=True, title="Concentration[nM] Distribution")
+            plt.show()
+            pdf.savefig(density)
+            box = plot_box_plot(res, "Concentration[nM]", SAMPLE_ID, log2=True, title="Concentration[nM] Distribution",
+                        violin=False)
+            plt.show()
+            pdf.savefig(box)
+            pdf.close()
         res.to_csv(output, index=False)
 
 
