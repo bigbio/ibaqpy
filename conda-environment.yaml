@@ -1,0 +1,19 @@
+# You can use this file to create a conda environment for this pipeline:
+#   conda env create -f environment.yml
+name: ibaqpy
+channels:
+  - openms
+  - conda-forge
+  - bioconda
+dependencies:
+  - pyopenms
+  - pandas
+  - scikit-learn
+  - numpy
+  - click
+  - matplotlib
+  - pip:
+      - git+https://github.com/Maarten-vd-Sande/qnorm
+  - seaborn
+  - typing_extensions
+  - setuptools
