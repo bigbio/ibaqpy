@@ -130,7 +130,8 @@ def get_canonical_peptide(peptide_sequence: str) -> str:
     return clean_peptide
 
 
-def plot_distributions(dataset: DataFrame, field: str, class_field: str, title: str = "", log2: bool = True) -> None:
+def plot_distributions(dataset: DataFrame, field: str, class_field: str, title: str = "", log2: bool = True,
+                       weigth: int = 10) -> None:
     """
     Print the quantile plot for the dataset
     :param dataset: DataFrame
@@ -138,6 +139,7 @@ def plot_distributions(dataset: DataFrame, field: str, class_field: str, title: 
     :param class_field: Field to group the quantile into classes
     :param title: Title of the box plot
     :param log2: Log the intensity values
+    :param weigth: size of the plot
     :return:
     """
     pd.set_option('mode.chained_assignment', None)
@@ -148,7 +150,7 @@ def plot_distributions(dataset: DataFrame, field: str, class_field: str, title: 
     data_wide = normalize.pivot(columns=class_field,
                                 values=field)
     # plotting multiple density plot
-    data_wide.plot.kde(figsize=(10, 6), linewidth=2, legend=False)
+    data_wide.plot.kde(figsize=(weigth, 8), linewidth=2, legend=False)
     plt.title(title)
     pd.set_option('mode.chained_assignment', 'warn')
 
@@ -172,7 +174,7 @@ def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool =
     pd.set_option('mode.chained_assignment', None)
     normalized = dataset[[field, class_field]]
     np.seterr(divide='ignore')
-    plt.figure(figsize=(weigth, 10))
+    plt.figure(figsize=(weigth, 14))
     if log2:
         normalized[field] = np.log2(normalized[field])
 
@@ -182,7 +184,7 @@ def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool =
         chart = sns.boxplot(x=class_field, y=field, data=normalized, boxprops=dict(alpha=.3), palette="muted")
 
     chart.set(title=title)
-    chart.set_xticklabels(chart.get_xticklabels(), rotation=rotation)
+    chart.set_xticklabels(chart.get_xticklabels(), rotation=rotation, ha='right')
     pd.set_option('mode.chained_assignment', 'warn')
 
     return plt.gcf()
