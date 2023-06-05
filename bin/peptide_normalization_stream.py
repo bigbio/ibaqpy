@@ -5,7 +5,6 @@ import re
 import click
 import numpy as np
 import pandas as pd
-import qnorm
 import os
 from pandas import DataFrame
 
@@ -42,44 +41,6 @@ def print_help_msg(command) -> None:
     with click.Context(command) as ctx:
         click.echo(command.get_help(ctx))
 
-
-def intensity_normalization(dataset: DataFrame, label: str, field: str, ref_dict: dict, class_field: str = "all",
-                            scaling_method: str = "msstats") -> DataFrame:
-    # TODO add imputation and/or removal to those two norm strategies
-    if scaling_method == 'msstats':
-        # For ISO normalization
-        if label in ["TMT", "ITRAQ"]:
-            baseline_dict = {key: list(set(values)) for key, values in ref_dict.items()}
-            median_baseline = pd.Series(sum(baseline_dict.values(), [])).median()
-            ref_dict = {key: np.median(list(values)) for key, values in ref_dict.items()}
-            dataset[NORM_INTENSITY] = dataset.apply(lambda x: x[field] - ref_dict[(x["Run"], x["Channel"])] + median_baseline, axis = 1)
-        else:
-            fractions = [i[1] for i in ref_dict.keys()]
-            fraction_median = {}
-            for fraction in fractions:
-                fraction_keys = [i for i in ref_dict.keys() if i[1] == fraction]
-                fraction_intensities = []
-                for key in fraction_keys:
-                    fraction_intensities.extend(ref_dict[key])
-                fraction_median[fraction] = np.median(fraction_intensities)
-            ref_dict = {key: np.median(values) for key, values in ref_dict.items()}
-            datadet[NORM_INTENSITY] = dataset.apply(lambda x: x[field] - ref_dict[(x["Run"], x["Fraction"])] + np.median([ref_dict[i] for i in ref_dict.keys() if i[1] == x["Fraction"]]), axis = 1)
-        return dataset
-
-    elif scaling_method == 'qnorm':
-        # pivot to have one col per sample
-        normalize_df = pd.pivot_table(dataset, index=[PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE,
-                                                      PROTEIN_NAME, STUDY_ID, CONDITION],
-                                      columns=class_field, values=field, aggfunc={field: np.mean})
-        normalize_df = qnorm.quantile_normalize(normalize_df, axis=1)
-        normalize_df = normalize_df.reset_index()
-        normalize_df = normalize_df.melt(
-            id_vars=[PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE, PROTEIN_NAME, STUDY_ID, CONDITION])
-        normalize_df.rename(columns={'value': NORM_INTENSITY}, inplace=True)
-        print(dataset.head())
-        return normalize_df
-
-    return dataset
 
 
 def get_peptidoform_normalize_intensities(dataset: DataFrame, higher_intensity: bool = True) -> DataFrame:
@@ -129,43 +90,6 @@ def average_peptide_intensities(dataset: DataFrame) -> DataFrame:
                           on=[PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION])
 
     return dataset_df
-
-
-def remove_low_frequency_peptides(dataset_df: DataFrame, percentage_samples: float = 0.20):
-    """
-    Remove peptides that are present in less than 20% of the samples.
-    :param dataset_df: dataframe with the data
-    :param percentage_samples: percentage of samples
-    :return:
-    """
-
-    normalize_df = pd.pivot_table(dataset_df, index=[PEPTIDE_CANONICAL, PROTEIN_NAME],
-                                  columns=SAMPLE_ID, values=NORM_INTENSITY, aggfunc={NORM_INTENSITY: np.mean})
-    # Count the number of null values in each row
-    null_count = normalize_df.isnull().sum(axis=1)
-
-    # Find the rows that have null values above the threshold
-    rows_to_drop = null_count[null_count >= (1 - percentage_samples) * normalize_df.shape[1]].index
-
-    # Drop the rows with too many null values
-    normalize_df = normalize_df.drop(rows_to_drop)
-
-    # Remove rows with non-null values in only one column
-    normalize_df = normalize_df[normalize_df.notnull().sum(axis=1) != normalize_df.shape[1] - 1]
-    normalize_df = normalize_df.reset_index()
-    normalize_df = normalize_df.melt(
-        id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME])
-    normalize_df.rename(columns={'value': NORM_INTENSITY}, inplace=True)
-
-    # recover condition column
-    normalize_df = normalize_df.merge(dataset_df[[SAMPLE_ID, CONDITION]].drop_duplicates(subset=[SAMPLE_ID]),
-                                      on=SAMPLE_ID, how="left")
-
-    # Remove rows with null values in NORMALIZE_INTENSITY
-    normalize_df = normalize_df[normalize_df[NORM_INTENSITY].notna()]
-
-    print(normalize_df.head())
-    return normalize_df
 
 
 def peptide_intensity_normalization(dataset_df: DataFrame, field: str, class_field: str, scaling_method: str):
@@ -341,6 +265,7 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
     unique_peptides = {}
     canonical_dict = {}
     group_intensities = {}
+    quantile = {}
     for msstats_df in msstats_chunks:
         msstats_df.rename(
         columns={'ProteinName': PROTEIN_NAME, 'PeptideSequence': PEPTIDE_SEQUENCE, 'PrecursorCharge': PEPTIDE_CHARGE,
@@ -393,7 +318,7 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
                               PEPTIDE_CANONICAL, PROTEIN_NAME]]
         unique_dict = dict(zip(unique_df[PEPTIDE_CANONICAL], unique_df[PROTEIN_NAME]))
         for i in unique_dict.keys():
-            if i in unique_peptides.keys():
+            if i in unique_peptides.keys() and unique_dict[i] != unique_peptides[i]:
                 unique_peptides.pop(i)
             else:
                 unique_peptides[i] = unique_dict[i]
@@ -407,26 +332,42 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
 
     ## TODO: Filter proteins with less unique peptides than min_unique (default: 2)
     for sample in sample_names:
-        print(f"Start filtering {sample}...")
+        print(f"{sample} -> Filter out proteins containing unique peptides fewer than {min_unique}..")
         msstats_df = pd.read_csv(f"ibaqpyTemp/{sample}.csv", sep=',')
         msstats_df = msstats_df[msstats_df[PROTEIN_NAME].isin(strong_proteins)]
         print(f"{sample} -> Logarithmic if specified..")
         msstats_df.loc[msstats_df.Intensity == 0, INTENSITY] = 1
         msstats_df[NORM_INTENSITY] = np.log2(msstats_df[INTENSITY]) if log2 else msstats_df[INTENSITY]
-
-        if not skip_normalization:
-            if label in ["TMT", "ITRAQ"]:
-                g = msstats_df.groupby(['Run', 'Channel'])
-            else:
-                g = msstats_df.groupby(['Run', 'Fraction'])
-            for name, group in g:
-                group_intensity = group[NORM_INTENSITY].tolist()
-                if name not in group_intensities:
-                    group_intensities[name] = group_intensity
-                else:
-                    group_intensities.update({name: group_intensities[NORM_INTENSITY] + group_intensity})
-
         msstats_df.to_csv(f"ibaqpyTemp/{sample}.csv", index=False, sep=',')
+        if not skip_normalization:
+            if nmethod == 'msstats':
+                if label in ["TMT", "ITRAQ"]:
+                    g = msstats_df.groupby(['Run', 'Channel'])
+                else:
+                    g = msstats_df.groupby(['Run', 'Fraction'])
+                for name, group in g:
+                    group_intensity = group[NORM_INTENSITY].tolist()
+                    if name not in group_intensities:
+                        group_intensities[name] = group_intensity
+                    else:
+                        group_intensities.update({name: group_intensities[NORM_INTENSITY] + group_intensity})
+            elif nmethod == 'qnorm':
+
+                def recalculate(original, count, value):
+                    return (original*count+value)/(count+1), count + 1
+                
+                dic = msstats_df[NORM_INTENSITY].dropna().sort_values(ascending=False).reset_index(drop=True).to_dict()
+                if len(quantile) == 0:
+                    quantile = {k: (v, 1) for k, v in dic.items()}
+                else:
+                    update = min(len(quantile), len(dic))
+                    for i in range(0, update):
+                        original, count = quantile[i]
+                        quantile[i] = recalculate(original, count, dic[i])
+                    if len(dic) <= len(quantile):
+                        continue
+                    else:
+                        quantile.update({k: (v, 1) for k, v in dic.items() if k >= update})
 
     def normalization(dataset_df, label, sample, skip_normalization, nmethod, pnormalization):
         # Remove high abundant and contaminants proteins and the outliers
@@ -437,8 +378,23 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
 
         if not skip_normalization:
             print(f"{sample} -> Normalize intensities.. ")
-            dataset_df = intensity_normalization(dataset_df, label, field=NORM_INTENSITY, class_field=SAMPLE_ID,
-                                                 ref_dict = group_intensities)
+            class_field = SAMPLE_ID
+            field = NORM_INTENSITY
+            if nmethod == 'msstats':
+                # For ISO normalization
+                if label in ["TMT", "ITRAQ"]:
+                    dataset_df.loc[:, NORM_INTENSITY] = dataset_df.apply(lambda x: x[field] - group_intensities[(x["Run"], x["Channel"])] +
+                                                                         median_baseline, axis = 1)
+                else:
+                    dataset_df.loc[:, NORM_INTENSITY] = dataset_df.apply(lambda x: x[field] - group_intensities[(x["Run"], x["Fraction"])] +
+                                                                         np.median([group_intensities[i] for i in group_intensities.keys()
+                                                                         if i[1] == x["Fraction"]]), axis = 1)
+            elif nmethod == 'qnorm':
+                # pivot to have one col per sample
+                ref_dict = dataset_df[NORM_INTENSITY].dropna().drop_duplicates().sort_values(ascending=False).reset_index(drop=True).to_dict()
+                ref_dict = {v: norm_intensity[k] for k, v in ref_dict.items()}
+                dataset_df.loc[:, NORM_INTENSITY] = dataset_df.apply(lambda x: ref_dict[x[NORM_INTENSITY]] if x[NORM_INTENSITY] in ref_dict.keys()
+                                                                     else np.nan, axis = 1)
 
         print(f"{sample} -> Select the best peptidoform across fractions...")
         print(f"{sample} -> Number of peptides before peptidofrom selection: " + str(len(dataset_df.index)))
@@ -475,13 +431,32 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
 
     ## TODO: Peptide intensity normalization
     peptides_count = {}
+    if not skip_normalization:
+        if nmethod == 'qnorm':
+            norm_intensity = {k: v[0] for k, v in quantile.items()}
+        elif nmethod == 'msstats':
+            # For ISO normalization
+            print(f"Label -> {label}")
+            if label in ["TMT", "ITRAQ"]:
+                median_baseline = np.median(list(set(sum(group_intensities.values(), []))))
+                group_intensities = {key: np.median(list(values)) for key, values in group_intensities.items()}
+            else:
+                fractions = [i[1] for i in group_intensities.keys()]
+                fraction_median = {}
+                for fraction in fractions:
+                    fraction_keys = [i for i in group_intensities.keys() if i[1] == fraction]
+                    fraction_intensities = []
+                    for key in fraction_keys:
+                        fraction_intensities.extend(group_intensities[key])
+                    fraction_median[fraction] = np.median(fraction_intensities)
+                group_intensities = {key: np.median(values) for key, values in group_intensities.items()}
     for sample in sample_names:
         dataset_df = pd.read_csv(f"ibaqpyTemp/{sample}.csv", sep=',')
         norm_df = normalization(dataset_df, label, sample, skip_normalization, nmethod, pnormalization)
         sample_peptides = norm_df[PEPTIDE_CANONICAL].unique().tolist()
         peptides_count = {peptide: peptides_count.get(peptide, 0) + 1 for peptide in sample_peptides}
         norm_df.to_csv(f"ibaqpyTemp/{sample}.csv", sep = ",", index=False)
-    del group_intensities
+    del group_intensities, quantile
 
     sample_number = len(sample_names)
     peptides_count = {k: v / sample_number for k, v in peptides_count.items() if v / sample_number >= 0.2 and v > 1}
@@ -489,6 +464,7 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
     del peptides_count, strong_proteins
 
     # Filter low-frequency peptides
+    print("IBAQPY WARNING: Writing normalized intensities into CSV...")
     for sample in sample_names:
         dataset_df = pd.read_csv(f"ibaqpyTemp/{sample}.csv", sep=',')
         # Filter low-frequency peptides, which indicate whether the peptide occurs less than 20% in all samples or
@@ -500,7 +476,7 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
         dataset_df.to_csv(output, index=False, header=header, mode=write_mode)
         dataset_df.to_csv(f"ibaqpyTemp/{sample}.csv", sep=',', index=False)
     del strong_peptides
-    
+
 
 if __name__ == '__main__':
     peptide_normalization()
