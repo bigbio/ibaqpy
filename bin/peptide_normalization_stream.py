@@ -8,7 +8,9 @@ import pandas as pd
 import os
 from pandas import DataFrame
 
-from ibaq.ibaqpy_commons import *
+from ibaq.ibaqpy_commons import remove_contaminants_decoys, INTENSITY, SAMPLE_ID, NORM_INTENSITY, \
+    PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE, PEPTIDE_CANONICAL, SEARCH_ENGINE, \
+    PROTEIN_NAME, STUDY_ID, CONDITION, get_canonical_peptide
 
 
 def parse_uniprot_accession(uniprot_id: str) -> str:
@@ -40,7 +42,6 @@ def print_help_msg(command) -> None:
     """
     with click.Context(command) as ctx:
         click.echo(command.get_help(ctx))
-
 
 
 def get_peptidoform_normalize_intensities(dataset: DataFrame, higher_intensity: bool = True) -> DataFrame:
@@ -115,31 +116,6 @@ def peptide_intensity_normalization(dataset_df: DataFrame, field: str, class_fie
     return dataset_df
 
 
-def impute_peptide_intensities(dataset_df, field, class_field):
-    """
-    Impute the missing values using different methods.
-    :param dataset_df: dataframe with the data
-    :param field: field to impute
-    :param class_field: field to use as class
-    :return:
-    """
-    normalize_df = pd.DataFrame()
-    # group by condition to detect missing values
-    for c, g in dataset_df.groupby(CONDITION):
-        # pivot to have one col per sample
-        group_normalize_df = pd.pivot_table(g, index=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION],
-                                            columns=class_field, values=field, aggfunc={field: np.mean})
-
-        # no missing values group -> only one sample
-        if len(group_normalize_df.columns) < 2:
-            group_normalize_df = group_normalize_df.reset_index()
-            group_normalize_df = group_normalize_df.melt(id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION])
-            group_normalize_df.rename(columns={'value': NORM_INTENSITY}, inplace=True)
-            normalize_df = normalize_df.append(group_normalize_df, ignore_index=True)
-
-    return normalize_df
-
-
 def remove_extension_file(filename: str) -> str:
     """
   The filename can have
@@ -180,15 +156,13 @@ def get_reference_name(reference_spectrum: str) -> str:
 @click.option("--skip_normalization", help="Skip normalization step", is_flag=True, default=False)
 @click.option('--nmethod', help="Normalization method used to normalize intensities for all samples (options: qnorm)",
               default="qnorm")
-@click.option("--impute", help="Impute the missing values using MissForest", is_flag=True)
 @click.option("--pnormalization", help="Normalize the peptide intensities using different methods (options: qnorm)",
               is_flag=True)
 @click.option("--output", help="Peptide intensity file including other all properties for normalization")
 @click.option("--compress", help="Read the input peptides file in compress gzip file", is_flag=True)
 @click.option("--log2", help="Transform to log2 the peptide intensity values before normalization", is_flag=True)
-
 def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: str, skip_normalization: bool,
-                          min_aa: int, min_unique: int, nmethod: str, impute: bool, pnormalization: bool,
+                          min_aa: int, min_unique: int, nmethod: str, pnormalization: bool,
                           compress: bool, chunksize: int, log2: bool) -> None:
     """Intensity normalization of stream processing peptide performed from MSstats
 
@@ -200,7 +174,6 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
     :param min_aa:
     :param min_unique:
     :param nmethod:
-    :param impute:
     :param pnormalization:
     :param compress:
     :param chunksize:
@@ -224,7 +197,7 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
     # Determine label type
     labels = set(sdrf_df['comment[label]'])
     with open(msstats, 'r') as file:
-        header_row = file.readline().strip().split(',')  
+        header_row = file.readline().strip().split(',')
         msstats_columns = header_row[1:]
     if CHANNEL not in msstats_columns:
         label = "LFQ"
@@ -268,9 +241,9 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
     quantile = {}
     for msstats_df in msstats_chunks:
         msstats_df.rename(
-        columns={'ProteinName': PROTEIN_NAME, 'PeptideSequence': PEPTIDE_SEQUENCE, 'PrecursorCharge': PEPTIDE_CHARGE,
-                 'Run': RUN,
-                 'Condition': CONDITION, 'Intensity': INTENSITY}, inplace=True)
+            columns={'ProteinName': PROTEIN_NAME, 'PeptideSequence': PEPTIDE_SEQUENCE, 'PrecursorCharge': PEPTIDE_CHARGE,
+                    'Run': RUN,
+                    'Condition': CONDITION, 'Intensity': INTENSITY}, inplace=True)
         msstats_df = msstats_df[msstats_df[INTENSITY] > 0]
         if PEPTIDE_CANONICAL not in msstats_df.columns:
             modified_seqs = msstats_df[PEPTIDE_SEQUENCE].unique().tolist()
@@ -285,8 +258,8 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
         if FRACTION not in msstats_df.columns:
             msstats_df[FRACTION] = 1
             msstats_df = msstats_df[
-                [PROTEIN_NAME, PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, INTENSITY, REFERENCE, CONDITION, RUN,
-                BIOREPLICATE, FRACTION, FRAGMENT_ION, ISOTOPE_LABEL_TYPE]]
+                        [PROTEIN_NAME, PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, INTENSITY, REFERENCE, CONDITION, RUN,
+                        BIOREPLICATE, FRACTION, FRAGMENT_ION, ISOTOPE_LABEL_TYPE]]
 
         # Merged the SDRF with Resulted file
         if label == "LFQ":
@@ -314,8 +287,8 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
             write_mode = "a" if os.path.exists(file_name) else "w"
             header = False if os.path.exists(file_name) else True
             result_df[result_df[SAMPLE_ID] == sample].to_csv(file_name, index=False, header = header, mode=write_mode)
-        unique_df = result_df.groupby(PEPTIDE_CANONICAL).filter(lambda x: len(set(x[PROTEIN_NAME])) == 1)[[
-                              PEPTIDE_CANONICAL, PROTEIN_NAME]]
+        unique_df = result_df.groupby(PEPTIDE_CANONICAL).filter(lambda x: len(set(x[PROTEIN_NAME])) == 1)[
+                    [PEPTIDE_CANONICAL, PROTEIN_NAME]]
         unique_dict = dict(zip(unique_df[PEPTIDE_CANONICAL], unique_df[PROTEIN_NAME]))
         for i in unique_dict.keys():
             if i in unique_peptides.keys() and unique_dict[i] != unique_peptides[i]:
@@ -355,7 +328,7 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
 
                 def recalculate(original, count, value):
                     return (original*count+value)/(count+1), count + 1
-                
+
                 dic = msstats_df[NORM_INTENSITY].dropna().sort_values(ascending=False).reset_index(drop=True).to_dict()
                 if len(quantile) == 0:
                     quantile = {k: (v, 1) for k, v in dic.items()}
@@ -378,7 +351,6 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
 
         if not skip_normalization:
             print(f"{sample} -> Normalize intensities.. ")
-            class_field = SAMPLE_ID
             field = NORM_INTENSITY
             if nmethod == 'msstats':
                 # For ISO normalization
@@ -415,11 +387,6 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
         print(f"{sample} -> Number of peptides before average: " + str(len(dataset_df.index)))
         dataset_df = average_peptide_intensities(dataset_df)
         print(f"{sample} -> Number of peptides after average: " + str(len(dataset_df.index)))
-
-        # Perform imputation using Random Forest in Peptide Intensities
-        # TODO: Check if this is necessary (Probably we can do some research if imputation at peptide level is necessary
-        # if impute:
-        #     dataset_df = impute_peptide_intensities(dataset_df, field=NORM_INTENSITY, class_field=SAMPLE_ID)
 
         if pnormalization:
             print(f"{sample} -> Normalize at Peptide level...")
