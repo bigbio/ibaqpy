@@ -11,17 +11,8 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
 
 from ibaq.ibaqpy_commons import PROTEIN_NAME, IBAQ, IBAQ_LOG, IBAQ_PPB, NORM_INTENSITY, SAMPLE_ID, IBAQ_NORMALIZED, \
-    CONDITION
+    CONDITION, print_help_msg
 from ibaq.ibaqpy_commons import plot_distributions, plot_box_plot
-
-def print_help_msg(command):
-    """
-    Print the help of the command
-    :param command: command
-    :return:
-    """
-    with click.Context(command) as ctx:
-        click.echo(command.get_help(ctx))
 
 
 def normalize(group):
@@ -149,7 +140,7 @@ def ibaq_compute(fasta: str, peptides: str, enzyme: str, normalize: bool, min_aa
         plt.show()
         pdf.savefig(density)
         box = plot_box_plot(res, plot_column, SAMPLE_ID, log2=True,
-                      title="IBAQ Distribution", violin=False)
+                            title="IBAQ Distribution", violin=False)
         plt.show()
         pdf.savefig(box)
         pdf.close()

@@ -1,4 +1,8 @@
 import re
+from typing import OrderedDict
+
+import click
+import matplotlib
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -85,15 +89,25 @@ TMT6plex = {"TMT126": 1, "TMT127": 2, "TMT128": 3, "TMT129": 4, "TMT130": 5, "TM
 ITRAQ4plex = {"ITRAQ114": 1, "ITRAQ115": 2, "ITRAQ116": 3, "ITRAQ117": 4}
 
 ITRAQ8plex = {
-            "ITRAQ113": 1,
-            "ITRAQ114": 2,
-            "ITRAQ115": 3,
-            "ITRAQ116": 4,
-            "ITRAQ117": 5,
-            "ITRAQ118": 6,
-            "ITRAQ119": 7,
-            "ITRAQ121": 8,
-        }
+    "ITRAQ113": 1,
+    "ITRAQ114": 2,
+    "ITRAQ115": 3,
+    "ITRAQ116": 4,
+    "ITRAQ117": 5,
+    "ITRAQ118": 6,
+    "ITRAQ119": 7,
+    "ITRAQ121": 8,
+}
+
+
+def print_help_msg(command: click.Command):
+    """
+    Print the help of the command
+    :param command: click command object
+    :return: None
+    """
+    with click.Context(command) as ctx:
+        click.echo(command.get_help(ctx))
 
 
 def remove_contaminants_decoys(dataset: DataFrame, contaminants_file: str, protein_field=PROTEIN_NAME) -> DataFrame:
@@ -131,7 +145,7 @@ def get_canonical_peptide(peptide_sequence: str) -> str:
 
 
 def plot_distributions(dataset: DataFrame, field: str, class_field: str, title: str = "", log2: bool = True,
-                       weigth: int = 10) -> None:
+                       weight: float = 10) -> matplotlib.pyplot:
     """
     Print the quantile plot for the dataset
     :param dataset: DataFrame
@@ -139,7 +153,7 @@ def plot_distributions(dataset: DataFrame, field: str, class_field: str, title: 
     :param class_field: Field to group the quantile into classes
     :param title: Title of the box plot
     :param log2: Log the intensity values
-    :param weigth: size of the plot
+    :param weight: size of the plot
     :return:
     """
     pd.set_option('mode.chained_assignment', None)
@@ -150,7 +164,7 @@ def plot_distributions(dataset: DataFrame, field: str, class_field: str, title: 
     data_wide = normalize.pivot(columns=class_field,
                                 values=field)
     # plotting multiple density plot
-    data_wide.plot.kde(figsize=(weigth, 8), linewidth=2, legend=False)
+    data_wide.plot.kde(figsize=(weight, 8), linewidth=2, legend=False)
     plt.title(title)
     pd.set_option('mode.chained_assignment', 'warn')
 
@@ -158,7 +172,7 @@ def plot_distributions(dataset: DataFrame, field: str, class_field: str, title: 
 
 
 def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool = False, weigth: int = 10,
-                  rotation: int = 30, title: str = "", violin: bool = False) -> None:
+                  rotation: int = 30, title: str = "", violin: bool = False) -> matplotlib.pyplot:
     """
     Plot a box plot of two values field and classes field
     :param violin: Also add violin on top of box plot
@@ -188,3 +202,107 @@ def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool =
     pd.set_option('mode.chained_assignment', 'warn')
 
     return plt.gcf()
+
+
+def remove_extension_file(filename: str) -> str:
+    """
+  The filename can have
+  :param filename:
+  :return:
+  """
+    return filename.replace('.raw', '').replace('.RAW', '').replace('.mzML', '').replace('.wiff', '')
+
+
+def sum_peptidoform_intensities(dataset: DataFrame) -> DataFrame:
+    """
+    Sum the peptidoform intensities for all peptidofrom across replicates of the same sample.
+    :param dataset: Dataframe to be analyzed
+    :return: dataframe with the intensities
+    """
+    dataset = dataset[dataset[NORM_INTENSITY].notna()]
+    normalize_df = dataset.groupby([PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION])[NORM_INTENSITY].sum()
+    normalize_df = normalize_df.reset_index()
+    normalize_df = pd.merge(normalize_df,
+                            dataset[[PROTEIN_NAME, PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION]], how='left',
+                            on=[PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION])
+
+    return normalize_df
+
+
+def get_mbr_hit(scan: str):
+    """
+  This function annotates if the peptide is inferred or not by Match between Runs algorithm (1), 0 if the peptide is
+  identified in the corresponding file.
+  :param scan: scan value
+  :return:
+  """
+    return 1 if pd.isna(scan) else 0
+
+
+def parse_uniprot_accession(uniprot_id: str) -> str:
+    """
+    Parse the uniprot accession from the uniprot id in the form of
+    tr|CONTAMINANT_Q3SX28|CONTAMINANT_TPM2_BOVIN and convert to CONTAMINANT_TPM2_BOVIN
+    :param uniprot_id: uniprot id
+    :return: uniprot accession
+    """
+    uniprot_list = uniprot_id.split(";")
+    result_uniprot_list = []
+    for accession in uniprot_list:
+        if accession.count("|") == 2:
+            accession = accession.split("|")[2]
+        result_uniprot_list.append(accession)
+    return ";".join(result_uniprot_list)
+
+
+def get_study_accession(sample_id: str) -> str:
+    """
+  Get the project accession from the Sample accession. The function expected a sample accession in the following
+  format PROJECT-SAMPLEID
+  :param sample_id: Sample Accession
+  :return: study accession
+  """
+    return sample_id.split('-')[0]
+
+
+def get_reference_name(reference_spectrum: str) -> str:
+    """
+    Get the reference name from Reference column. The function expected a reference name in the following format eg.
+    20150820_Haura-Pilot-TMT1-bRPLC03-2.mzML_controllerType=0 controllerNumber=1 scan=16340
+    :param reference_spectrum:
+    :return: reference name
+    """
+    return re.split(r'\.mzML|\.MZML|\.raw|\.RAW', reference_spectrum)[0]
+
+
+def get_run_mztab(ms_run: str, metadata: OrderedDict) -> str:
+    """
+  Convert the ms_run into a reference file for merging with msstats output
+  :param ms_run: ms_run index in mztab
+  :param metadata:  metadata information in mztab
+  :return: file name
+  """
+    m = re.search(r"\[([A-Za-z0-9_]+)\]", ms_run)
+    file_location = metadata['ms_run[' + str(m.group(1)) + "]-location"]
+    file_location = remove_extension_file(file_location)
+    return os.path.basename(file_location)
+
+
+def get_scan_mztab(ms_run: str) -> str:
+    """
+  Get the scan number for an mzML spectrum in mzTab. The format of the reference
+  must be controllerType=0 controllerNumber=1 scan=30121
+  :param ms_run: the original ms_run reference in mzTab
+  :return: the scan index
+  """
+    reference_parts = ms_run.split()
+    return reference_parts[-1]
+
+
+def best_probability_error_bestsearch_engine(probability: float) -> float:
+    """
+  Convert probability to a Best search engine score
+  :param probability: probability
+  :return:
+  """
+    return 1 - probability

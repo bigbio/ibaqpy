@@ -4,9 +4,6 @@
 
 import os
 
-import click
-import pandas as pd
-
 from ibaq.ibaqpy_commons import *
 
 
