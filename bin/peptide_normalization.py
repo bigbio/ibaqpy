@@ -78,10 +78,9 @@ def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "
     elif scaling_method == 'qnorm':
         # pivot to have one col per sample
         print("Transforming to wide format dataset size {}".format(len(dataset.index)))
-        dataset.set_index([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE,
-                           PROTEIN_NAME, STUDY_ID, CONDITION], inplace=True)
-        normalize_df = dataset.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE,
-                                        PROTEIN_NAME, STUDY_ID, CONDITION])[field].mean().unstack(class_field)
+        normalize_df = pd.pivot_table(dataset, index=[PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE,
+                                                      PROTEIN_NAME, STUDY_ID, CONDITION],
+                                      columns=class_field, values=field, aggfunc={field: np.mean})
         normalize_df = qnorm.quantile_normalize(normalize_df, axis=1)
         normalize_df = normalize_df.reset_index()
         normalize_df = normalize_df.melt(
