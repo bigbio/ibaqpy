@@ -80,7 +80,7 @@ def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "
         print("Transforming to wide format dataset size {}".format(len(dataset.index)))
         normalize_df = pd.pivot_table(dataset, index=[PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE,
                                                       PROTEIN_NAME, STUDY_ID, CONDITION],
-                                      columns=class_field, values=field, aggfunc={field: np.mean})
+                                      columns=class_field, values=field, aggfunc={field: np.mean}, observed=True)
         normalize_df = qnorm.quantile_normalize(normalize_df, axis=1)
         normalize_df = normalize_df.reset_index()
         normalize_df = normalize_df.melt(
@@ -102,10 +102,10 @@ def get_peptidoform_normalize_intensities(dataset: DataFrame, higher_intensity: 
     """
     dataset = dataset[dataset[NORM_INTENSITY].notna()]
     if higher_intensity:
-        dataset = dataset.loc[dataset.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE])[
+        dataset = dataset.loc[dataset.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE], observed=True)[
             NORM_INTENSITY].idxmax()].reset_index(drop=True)
     else:
-        dataset = dataset.loc[dataset.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE])[
+        dataset = dataset.loc[dataset.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE], observed=True)[
             SEARCH_ENGINE].idxmax()].reset_index(drop=True)
     return dataset
 
@@ -115,7 +115,7 @@ def average_peptide_intensities(dataset: DataFrame) -> DataFrame:
     :param dataset: Dataframe containing all the peptidoforms
     :return: New dataframe
     """
-    dataset_df = dataset.groupby([PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION])[NORM_INTENSITY].median()
+    dataset_df = dataset.groupby([PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION], observed=True)[NORM_INTENSITY].median()
     dataset_df = dataset_df.reset_index()
     dataset_df = pd.merge(dataset_df, dataset[[PROTEIN_NAME, PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION]], how='left',
                           on=[PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION])
@@ -131,7 +131,7 @@ def remove_low_frequency_peptides(dataset_df: DataFrame, percentage_samples: flo
     """
 
     normalize_df = pd.pivot_table(dataset_df, index=[PEPTIDE_CANONICAL, PROTEIN_NAME],
-                                  columns=SAMPLE_ID, values=NORM_INTENSITY, aggfunc={NORM_INTENSITY: np.mean})
+                                  columns=SAMPLE_ID, values=NORM_INTENSITY, aggfunc={NORM_INTENSITY: np.mean}, observed=True)
     # Count the number of null values in each row
     null_count = normalize_df.isnull().sum(axis=1)
 
@@ -171,7 +171,7 @@ def peptide_intensity_normalization(dataset_df: DataFrame, field: str, class_fie
     if scaling_method == 'qnorm':
         # pivot to have one col per sample
         normalize_df = pd.pivot_table(dataset_df, index=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION],
-                                      columns=class_field, values=field, aggfunc={field: np.mean})
+                                      columns=class_field, values=field, aggfunc={field: np.mean}, observed=True)
         normalize_df = qnorm.quantile_normalize(normalize_df, axis=1)
         normalize_df = normalize_df.reset_index()
         normalize_df = normalize_df.melt(id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION])
@@ -195,7 +195,7 @@ def impute_peptide_intensities(dataset_df, field, class_field):
     for c, g in dataset_df.groupby(CONDITION):
         # pivot to have one col per sample
         group_normalize_df = pd.pivot_table(g, index=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION],
-                                            columns=class_field, values=field, aggfunc={field: np.mean})
+                                            columns=class_field, values=field, aggfunc={field: np.mean}, observed=True)
 
         # no missing values group -> only one sample
         if len(group_normalize_df.columns) < 2:
@@ -362,6 +362,7 @@ def peptide_normalization(msstats: str, sdrf: str, min_aa: int, min_unique: int,
     print_dataset_size(dataset_df, "Peptides after contaminants removal: ", verbose)
 
     print("Normalize intensities.. ")
+    # dataset_df = dataset_df.dropna(how="any")
     if not skip_normalization:
         dataset_df = intensity_normalization(dataset_df, field=NORM_INTENSITY, class_field=SAMPLE_ID,
                                              scaling_method=nmethod)

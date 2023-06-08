@@ -220,7 +220,7 @@ def sum_peptidoform_intensities(dataset: DataFrame) -> DataFrame:
     :return: dataframe with the intensities
     """
     dataset = dataset[dataset[NORM_INTENSITY].notna()]
-    normalize_df = dataset.groupby([PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION])[NORM_INTENSITY].sum()
+    normalize_df = dataset.groupby([PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION], observed=True)[NORM_INTENSITY].sum()
     normalize_df = normalize_df.reset_index()
     normalize_df = pd.merge(normalize_df,
                             dataset[[PROTEIN_NAME, PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION]], how='left',
