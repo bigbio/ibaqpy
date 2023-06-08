@@ -346,15 +346,16 @@ def peptide_normalization(msstats: str, sdrf: str, min_aa: int, min_unique: int,
     print("Logarithmic if specified..")
     dataset_df.loc[dataset_df.Intensity == 0, INTENSITY] = 1
     dataset_df[NORM_INTENSITY] = np.log2(dataset_df[INTENSITY]) if log2 else dataset_df[INTENSITY]
+    dataset_df.drop(INTENSITY, axis=1, inplace=True)
 
     # Print the distribution of the original peptide intensities from quantms analysis
     if verbose:
         pdf = PdfPages(qc_report)
-        density = plot_distributions(dataset_df, INTENSITY, SAMPLE_ID, log2=not log2,
+        density = plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=not log2,
                                      title="Original peptidoform intensity distribution (no normalization)")
         plt.show()
         pdf.savefig(density)
-        box = plot_box_plot(dataset_df, INTENSITY, SAMPLE_ID, log2=not log2,
+        box = plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=not log2,
                       title="Original peptidoform intensity distribution (no normalization)", violin=violin)
         plt.show()
         pdf.savefig(box)
