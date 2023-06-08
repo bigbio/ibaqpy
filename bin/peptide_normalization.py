@@ -229,7 +229,6 @@ def impute_peptide_intensities(dataset_df, field, class_field):
 @click.option("--skip_normalization", help="Skip normalization step", is_flag=True, default=False)
 @click.option('--nmethod', help="Normalization method used to normalize intensities for all samples (options: qnorm)",
               default="qnorm")
-@click.option("--impute", help="Impute the missing values using MissForest", is_flag=True)
 @click.option("--pnormalization", help="Normalize the peptide intensities using different methods (options: qnorm)",
               is_flag=True)
 @click.option("--compress", help="Read the input peptides file in compress gzip file", is_flag=True)
@@ -241,7 +240,7 @@ def impute_peptide_intensities(dataset_df, field, class_field):
               is_flag=True)
 @click.option("--qc_report", help="PDF file to store multiple QC images", default="peptideNorm-QCprofile.pdf")
 def peptide_normalization(msstats: str, sdrf: str, min_aa: int, min_unique: int, contaminants: str, output: str, skip_normalization: bool,
-                          nmethod: str, impute: bool, pnormalization: bool, compress: bool, log2: bool,
+                          nmethod: str, pnormalization: bool, compress: bool, log2: bool,
                           violin: bool, verbose: bool, qc_report: str) -> None:
 
 

@@ -409,7 +409,8 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
 
     sample_number = len(sample_names)
     min_sample = 1 if sample_number > 1 else 0
-    peptides_count = {k: v / sample_number for k, v in peptides_count.items() if v / sample_number >= 0.2 and v > min_sample}
+    peptides_count = {k: v / sample_number for k, v in peptides_count.items() if
+                      v / sample_number >= 0.2 and v > min_sample}
     strong_peptides = list(peptides_count.keys())
     del peptides_count, strong_proteins
 
