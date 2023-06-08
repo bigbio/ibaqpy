@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import gc
 import click
 import numpy as np
 import pandas as pd
@@ -306,7 +306,7 @@ def peptide_normalization(msstats: str, sdrf: str, min_aa: int, min_unique: int,
         dataset_df = pd.merge(msstats_df, sdrf_df[['source name', REFERENCE, CHANNEL]], how='left',
                              on=[REFERENCE, CHANNEL])
         # result_df.drop(CHANNEL, axis=1, inplace=True)
-        dataset_df = dataset_df[dataset_df ["Condition"] != "Empty"]
+        dataset_df = dataset_df[dataset_df["Condition"] != "Empty"]
         dataset_df.rename(columns={'Charge': PEPTIDE_CHARGE}, inplace=True)
     elif 'ITRAQ' in ','.join(labels) or 'itraq' in ','.join(labels):
         if len(labels) > 4:
@@ -319,11 +319,15 @@ def peptide_normalization(msstats: str, sdrf: str, min_aa: int, min_unique: int,
         msstats_df[REFERENCE] = msstats_df[REFERENCE].apply(get_reference_name)
         dataset_df = pd.merge(msstats_df, sdrf_df[['source name', REFERENCE, CHANNEL]], how='left',
                              on=[REFERENCE, CHANNEL])
-        dataset_df = dataset_df[dataset_df ["Condition"] != "Empty"]
+        dataset_df = dataset_df[dataset_df["Condition"] != "Empty"]
         dataset_df.rename(columns={'Charge': PEPTIDE_CHARGE}, inplace=True)
     else:
         print("Warning: Only support label free, TMT and ITRAQ experiment!")
         exit(1)
+
+    # Remove the intermediate variables, and free the memory
+    del msstats_df, sdrf_df
+    gc.collect()
 
     dataset_df.rename(columns={'source name': SAMPLE_ID}, inplace=True)
 
@@ -342,15 +346,16 @@ def peptide_normalization(msstats: str, sdrf: str, min_aa: int, min_unique: int,
     print("Logarithmic if specified..")
     dataset_df.loc[dataset_df.Intensity == 0, INTENSITY] = 1
     dataset_df[NORM_INTENSITY] = np.log2(dataset_df[INTENSITY]) if log2 else dataset_df[INTENSITY]
+    dataset_df.drop(INTENSITY, axis=1, inplace=True)
 
     # Print the distribution of the original peptide intensities from quantms analysis
     if verbose:
         pdf = PdfPages(qc_report)
-        density = plot_distributions(dataset_df, INTENSITY, SAMPLE_ID, log2=not log2,
+        density = plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=not log2,
                                      title="Original peptidoform intensity distribution (no normalization)")
         plt.show()
         pdf.savefig(density)
-        box = plot_box_plot(dataset_df, INTENSITY, SAMPLE_ID, log2=not log2,
+        box = plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=not log2,
                       title="Original peptidoform intensity distribution (no normalization)", violin=violin)
         plt.show()
         pdf.savefig(box)
