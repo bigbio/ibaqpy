@@ -80,7 +80,7 @@ def intensity_normalization(dataset: DataFrame, field: str, class_field: str = "
         print("Transforming to wide format dataset size {}".format(len(dataset.index)))
         normalize_df = pd.pivot_table(dataset, index=[PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE,
                                                       PROTEIN_NAME, STUDY_ID, CONDITION],
-                                      columns=class_field, values=field, aggfunc={field: np.mean})
+                                      columns=class_field, values=field, aggfunc={field: np.mean}, observed=True)
         normalize_df = qnorm.quantile_normalize(normalize_df, axis=1)
         normalize_df = normalize_df.reset_index()
         normalize_df = normalize_df.melt(
@@ -102,7 +102,7 @@ def get_peptidoform_normalize_intensities(dataset: DataFrame, higher_intensity: 
     """
     dataset = dataset[dataset[NORM_INTENSITY].notna()]
     if higher_intensity:
-        dataset = dataset.loc[dataset.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE])[
+        dataset = dataset.loc[dataset.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE], observed=True)[
             NORM_INTENSITY].idxmax()].reset_index(drop=True)
     else:
         dataset = dataset.loc[dataset.groupby([PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE])[
