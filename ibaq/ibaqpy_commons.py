@@ -2,6 +2,7 @@ import re
 from typing import OrderedDict
 
 import click
+import os
 import matplotlib
 import numpy as np
 import pandas as pd
