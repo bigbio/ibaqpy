@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+import gc
 import click
 import numpy as np
 import pandas as pd
@@ -306,8 +306,8 @@ def peptide_normalization(msstats: str, sdrf: str, min_aa: int, min_unique: int,
         dataset_df = pd.merge(msstats_df, sdrf_df[['source name', REFERENCE, CHANNEL]], how='left',
                              on=[REFERENCE, CHANNEL])
         # result_df.drop(CHANNEL, axis=1, inplace=True)
-        dataset_df  = dataset_df [dataset_df ["Condition"] != "Empty"]
-        dataset_df .rename(columns={'Charge': PEPTIDE_CHARGE}, inplace=True)
+        dataset_df = dataset_df[dataset_df["Condition"] != "Empty"]
+        dataset_df.rename(columns={'Charge': PEPTIDE_CHARGE}, inplace=True)
     elif 'ITRAQ' in ','.join(labels) or 'itraq' in ','.join(labels):
         if len(labels) > 4:
             choice = ITRAQ8plex
@@ -319,15 +319,19 @@ def peptide_normalization(msstats: str, sdrf: str, min_aa: int, min_unique: int,
         msstats_df[REFERENCE] = msstats_df[REFERENCE].apply(get_reference_name)
         dataset_df = pd.merge(msstats_df, sdrf_df[['source name', REFERENCE, CHANNEL]], how='left',
                              on=[REFERENCE, CHANNEL])
-        dataset_df = dataset_df [dataset_df ["Condition"] != "Empty"]
+        dataset_df = dataset_df[dataset_df["Condition"] != "Empty"]
         dataset_df.rename(columns={'Charge': PEPTIDE_CHARGE}, inplace=True)
     else:
         print("Warning: Only support label free, TMT and ITRAQ experiment!")
         exit(1)
 
+    # Remove the intermediate variables, and free the memory
+    del msstats_df, sdrf_df
+    gc.collect()
+
     dataset_df.rename(columns={'source name': SAMPLE_ID}, inplace=True)
 
-    dataset_df[STUDY_ID] = dataset_df [SAMPLE_ID].apply(get_study_accession)
+    dataset_df[STUDY_ID] = dataset_df[SAMPLE_ID].apply(get_study_accession)
     dataset_df = dataset_df.filter(
         items=[PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, FRACTION, RUN, BIOREPLICATE, PROTEIN_NAME, STUDY_ID, CONDITION,
                SAMPLE_ID, INTENSITY])
