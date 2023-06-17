@@ -71,6 +71,7 @@ def tpa_compute(fasta: str, contaminants: str, peptides: str, ruler: bool, ploid
             mw = AASequence().fromString(entry.sequence).getMonoWeight()
             mw_dict[name] = mw
 
+    res = res[res[PROTEIN_NAME].isin(mw_dict.keys())]
     # calculate TPA for every protein group
     def get_protein_group_mw(group: str) -> float:
         mw_list = [mw_dict[i] for i in group.split(";")]
@@ -82,11 +83,12 @@ def tpa_compute(fasta: str, contaminants: str, peptides: str, ruler: bool, ploid
     res["TPA"] = res[INTENSITY] / res["MolecularWeight"]
     # Print the distribution of the protein TPA values
     if verbose:
+        plot_width = len(set(res[SAMPLE_ID])) * 0.5 + 10
         pdf = PdfPages(qc_report)
-        density = plot_distributions(res, "TPA", SAMPLE_ID, log2=True, title="TPA Distribution")
+        density = plot_distributions(res, "TPA", SAMPLE_ID, log2=True, width=plot_width, title="TPA Distribution")
         plt.show()
         pdf.savefig(density)
-        box = plot_box_plot(res, "TPA", SAMPLE_ID, log2=True, title="TPA Distribution", violin=False)
+        box = plot_box_plot(res, "TPA", SAMPLE_ID, log2=True, width=plot_width, title="TPA Distribution", violin=False)
         plt.show()
         pdf.savefig(box)
 

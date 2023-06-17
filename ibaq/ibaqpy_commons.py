@@ -146,7 +146,7 @@ def get_canonical_peptide(peptide_sequence: str) -> str:
 
 
 def plot_distributions(dataset: DataFrame, field: str, class_field: str, title: str = "", log2: bool = True,
-                       weight: float = 10) -> matplotlib.pyplot:
+                       width: float = 10) -> matplotlib.pyplot:
     """
     Print the quantile plot for the dataset
     :param dataset: DataFrame
@@ -154,7 +154,7 @@ def plot_distributions(dataset: DataFrame, field: str, class_field: str, title: 
     :param class_field: Field to group the quantile into classes
     :param title: Title of the box plot
     :param log2: Log the intensity values
-    :param weight: size of the plot
+    :param width: size of the plot
     :return:
     """
     pd.set_option('mode.chained_assignment', None)
@@ -165,14 +165,14 @@ def plot_distributions(dataset: DataFrame, field: str, class_field: str, title: 
     data_wide = normalize.pivot(columns=class_field,
                                 values=field)
     # plotting multiple density plot
-    data_wide.plot.kde(figsize=(weight, 8), linewidth=2, legend=False)
+    data_wide.plot.kde(figsize=(width, 8), linewidth=2, legend=False)
     plt.title(title)
     pd.set_option('mode.chained_assignment', 'warn')
 
     return plt.gcf()
 
 
-def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool = False, weigth: int = 10,
+def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool = False, width: int = 10,
                   rotation: int = 30, title: str = "", violin: bool = False) -> matplotlib.pyplot:
     """
     Plot a box plot of two values field and classes field
@@ -181,7 +181,7 @@ def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool =
     :param field: Intensity field
     :param class_field: class to group the peptides
     :param log2: transform peptide intensities to log scale
-    :param weigth: size of the plot
+    :param width: size of the plot
     :param rotation: rotation of the x-axis
     :param title: Title of the box plot
     :return:
@@ -189,7 +189,7 @@ def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool =
     pd.set_option('mode.chained_assignment', None)
     normalized = dataset[[field, class_field]]
     np.seterr(divide='ignore')
-    plt.figure(figsize=(weigth, 14))
+    plt.figure(figsize=(width, 14))
     if log2:
         normalized[field] = np.log2(normalized[field])
 
