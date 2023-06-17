@@ -349,12 +349,14 @@ def peptide_normalization(msstats: str, sdrf: str, min_aa: int, min_unique: int,
 
     # Print the distribution of the original peptide intensities from quantms analysis
     if verbose:
+        sample_names = set(dataset_df[SAMPLE_ID])
+        plot_width = len(sample_names) * 0.5 + 10
         pdf = PdfPages(qc_report)
-        density = plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=not log2,
+        density = plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=not log2, width=plot_width,
                                      title="Original peptidoform intensity distribution (no normalization)")
         plt.show()
         pdf.savefig(density)
-        box = plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=not log2,
+        box = plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=not log2, width=plot_width,
                       title="Original peptidoform intensity distribution (no normalization)", violin=violin)
         plt.show()
         pdf.savefig(box)
@@ -373,11 +375,11 @@ def peptide_normalization(msstats: str, sdrf: str, min_aa: int, min_unique: int,
     if verbose:
         log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or (
                 (nmethod == "quantile" or nmethod == "robust") and not log2)
-        density = plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
+        density = plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm, width=plot_width,
                            title="Peptidoform intensity distribution after normalization, method: " + nmethod)
         plt.show()
         pdf.savefig(density)
-        box = plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
+        box = plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm, width=plot_width,
                       title="Peptidoform intensity distribution after normalization, method: " + nmethod, violin=violin)
         plt.show()
         pdf.savefig(box)
@@ -405,11 +407,11 @@ def peptide_normalization(msstats: str, sdrf: str, min_aa: int, min_unique: int,
     if verbose:
         log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or (
                 (nmethod == "quantile" or nmethod == "robust") and not log2)
-        density = plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
+        density = plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm, width=plot_width,
                            title="Peptide intensity distribution method: " + nmethod)
         plt.show()
         pdf.savefig(density)
-        box = plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
+        box = plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm, width=plot_width,
                       title="Peptide intensity distribution method: " + nmethod, violin=violin)
         plt.show()
         pdf.savefig(box)
@@ -431,11 +433,11 @@ def peptide_normalization(msstats: str, sdrf: str, min_aa: int, min_unique: int,
     if verbose:
         log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or (
                 (nmethod == "quantile" or nmethod == "robust") and not log2)
-        density = plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
+        density = plot_distributions(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm, width=plot_width,
                            title="Normalization at peptide level method: " + nmethod)
         plt.show()
         pdf.savefig(density)
-        box = plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
+        box = plot_box_plot(dataset_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm, width=plot_width,
                       title="Normalization at peptide level method: " + nmethod, violin=violin)
         plt.show()
         pdf.savefig(box)
