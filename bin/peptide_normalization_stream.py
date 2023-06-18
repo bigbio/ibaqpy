@@ -300,10 +300,10 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
                         quantile.update({k: (v, 1) for k, v in dic.items() if k >= update})
     # Save original intensities QC plots
     original_intensities_df = original_intensities_df.reset_index(drop=True)
-    density = plot_distributions(original_intensities_df, INTENSITY, SAMPLE_ID, log2=not log2, weight=plot_width,
+    density = plot_distributions(original_intensities_df, INTENSITY, SAMPLE_ID, log2=not log2, width=plot_width,
                                  title="Original peptidoform intensity distribution (no normalization)")
     pdf.savefig(density)
-    box = plot_box_plot(original_intensities_df, INTENSITY, SAMPLE_ID, log2=not log2, weigth=plot_width,
+    box = plot_box_plot(original_intensities_df, INTENSITY, SAMPLE_ID, log2=not log2, width = plot_width,
                         title="Original peptidoform intensity distribution (no normalization)", violin=violin)
     pdf.savefig(box)
     del original_intensities_df
