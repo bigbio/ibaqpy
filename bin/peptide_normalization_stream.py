@@ -398,10 +398,10 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
     norm_intensities_df = norm_intensities_df.reset_index(drop=True)
     log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or (
             (nmethod == "quantile" or nmethod == "robust") and not log2)
-    density = plot_distributions(norm_intensities_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm, weight=plot_width,
+    density = plot_distributions(norm_intensities_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm, width=plot_width,
                                  title="Peptidoform intensity distribution after normalization, method: " + nmethod)
     pdf.savefig(density)
-    box = plot_box_plot(norm_intensities_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm, weigth=plot_width,
+    box = plot_box_plot(norm_intensities_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm, width=plot_width,
                         title="Peptidoform intensity distribution after normalization, method: " + nmethod,
                         violin=violin)
     pdf.savefig(box)
@@ -435,10 +435,10 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
             (nmethod == "quantile" or nmethod == "robust") and not log2)
     final_norm_intensities_df = final_norm_intensities_df.reset_index(drop=True)
     density = plot_distributions(final_norm_intensities_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm,
-                                 weight=plot_width,
+                                 width=plot_width,
                                  title="Normalization at peptide level method: " + nmethod)
     pdf.savefig(density)
-    box = plot_box_plot(final_norm_intensities_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm, weigth=plot_width,
+    box = plot_box_plot(final_norm_intensities_df, NORM_INTENSITY, SAMPLE_ID, log2=log_after_norm, width=plot_width,
                         title="Normalization at peptide level method: " + nmethod, violin=violin)
     pdf.savefig(box)
     pdf.close()

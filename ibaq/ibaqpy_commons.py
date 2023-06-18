@@ -172,7 +172,7 @@ def plot_distributions(dataset: DataFrame, field: str, class_field: str, title: 
     return plt.gcf()
 
 
-def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool = False, width: int = 10,
+def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool = False, width: float = 10,
                   rotation: int = 30, title: str = "", violin: bool = False) -> matplotlib.pyplot:
     """
     Plot a box plot of two values field and classes field
