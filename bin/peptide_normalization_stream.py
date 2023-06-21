@@ -97,7 +97,8 @@ def get_reference_name(reference_spectrum: str) -> str:
 @click.option("--chunksize", help="The number of rows of MSstats read using pandas streaming", default=10 * 1024 * 1024)
 @click.option("--min_aa", help="Minimum number of amino acids to filter peptides", default=7)
 @click.option("--min_unique", help="Minimum number of unique peptides to filter proteins", default=2)
-@click.option("--contaminants", help="Contaminants and high abundant proteins to be removed")
+@click.option("--remove_ids", help="Remove specific protein ids from the analysis using a file with one id per line")
+@click.option("--remove_decoy_contaminants", help="Remove decoy and contaminants proteins from the analysis",is_flag=True, default=False)
 @click.option("--skip_normalization", help="Skip normalization step", is_flag=True, default=False)
 @click.option('--nmethod', help="Normalization method used to normalize intensities for all samples (options: qnorm)",
               default="qnorm")
@@ -106,7 +107,8 @@ def get_reference_name(reference_spectrum: str) -> str:
 @click.option("--log2", help="Transform to log2 the peptide intensity values before normalization", is_flag=True)
 @click.option("--violin", help="Use violin plot instead of boxplot for distribution representations", is_flag=True)
 @click.option("--qc_report", help="PDF file to store multiple QC images", default="StreamPeptideNorm-QCprofile.pdf")
-def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: str, skip_normalization: bool,
+def peptide_normalization(msstats: str, sdrf: str, remove_ids: str, remove_decoy_contaminants: bool, output: str,
+                          skip_normalization: bool,
                           min_aa: int, min_unique: int, nmethod: str, compress: bool,
                           chunksize: int, log2: bool, violin: bool, qc_report: str) -> None:
     """Intensity normalization of stream processing peptide performed from MSstats
@@ -310,11 +312,13 @@ def peptide_normalization(msstats: str, sdrf: str, contaminants: str, output: st
 
     def normalization(dataset_df, label, sample, skip_normalization, nmethod):
         # Remove high abundant and contaminants proteins and the outliers
-        if contaminants is not None:
+        if remove_ids is not None:
             print(f"{sample} -> Remove contaminants...")
-            dataset_df = remove_contaminants_decoys(dataset_df, contaminants)
-            print(
-                f"{sample} -> Peptides after contaminants removal: {len(dataset_df[PEPTIDE_SEQUENCE].unique().tolist())}")
+            dataset_df = remove_protein_by_ids(dataset_df, remove_ids)
+        if remove_decoy_contaminants:
+            print(f"{sample} -> Remove decoy and contaminants...")
+            dataset_df = remove_contaminants_decoys(dataset_df)
+        print(f"{sample} -> Peptides after contaminants removal: {len(dataset_df[PEPTIDE_SEQUENCE].unique().tolist())}")
 
         if not skip_normalization:
             print(f"{sample} -> Normalize intensities.. ")

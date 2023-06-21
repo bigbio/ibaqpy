@@ -111,7 +111,25 @@ def print_help_msg(command: click.Command):
         click.echo(command.get_help(ctx))
 
 
-def remove_contaminants_decoys(dataset: DataFrame, contaminants_file: str, protein_field=PROTEIN_NAME) -> DataFrame:
+
+def remove_protein_by_ids(dataset: DataFrame, protein_file: str, protein_field=PROTEIN_NAME) -> DataFrame:
+    """
+    This method reads a file with a list of contaminants and high abudant proteins and
+    remove them from the dataset.
+    :param dataset: Peptide intensity DataFrame
+    :param protein_file: contaminants file
+    :param protein_field: protein field
+    :return: dataset with the filtered proteins
+    """
+    contaminants_reader = open(protein_file, 'r')
+    contaminants = contaminants_reader.read().split("\n")
+    contaminants = [cont for cont in contaminants if cont.strip()]
+    cregex = '|'.join(contaminants)
+    return dataset[~dataset[protein_field].str.contains(cregex)]
+
+
+
+def remove_contaminants_decoys(dataset: DataFrame, protein_field=PROTEIN_NAME) -> DataFrame:
     """
     This method reads a file with a list of contaminants and high abudant proteins and
     remove them from the dataset.
@@ -120,17 +138,10 @@ def remove_contaminants_decoys(dataset: DataFrame, contaminants_file: str, prote
     :param protein_field: protein field
     :return: dataset with the filtered proteins
     """
-    contaminants_reader = open(contaminants_file, 'r')
-    contaminants = contaminants_reader.read().split("\n")
-    contaminants = [cont for cont in contaminants if cont.strip()]
-
+    contaminants = []
     contaminants.append('CONTAMINANT')
     contaminants.append('DECOY')
-    # cregex = ".*(" + '|'.join(contaminants) + ").*"
     cregex = '|'.join(contaminants)
-    # for contaminant in contaminants:
-    # dataset.drop(index=dataset[dataset[protein_field].str.contains(contaminant)].index, inplace=True)
-
     return dataset[~dataset[protein_field].str.contains(cregex)]
 
 
