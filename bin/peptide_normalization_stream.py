@@ -99,6 +99,7 @@ def get_reference_name(reference_spectrum: str) -> str:
 @click.option("--min_unique", help="Minimum number of unique peptides to filter proteins", default=2)
 @click.option("--remove_ids", help="Remove specific protein ids from the analysis using a file with one id per line")
 @click.option("--remove_decoy_contaminants", help="Remove decoy and contaminants proteins from the analysis",is_flag=True, default=False)
+@click.option("--remove_low_frequency_peptides", help="Remove peptides that are present in less than 20% of the samples",is_flag=True, default=False)
 @click.option("--skip_normalization", help="Skip normalization step", is_flag=True, default=False)
 @click.option('--nmethod', help="Normalization method used to normalize intensities for all samples (options: qnorm)",
               default="qnorm")
@@ -107,9 +108,8 @@ def get_reference_name(reference_spectrum: str) -> str:
 @click.option("--log2", help="Transform to log2 the peptide intensity values before normalization", is_flag=True)
 @click.option("--violin", help="Use violin plot instead of boxplot for distribution representations", is_flag=True)
 @click.option("--qc_report", help="PDF file to store multiple QC images", default="StreamPeptideNorm-QCprofile.pdf")
-def peptide_normalization(msstats: str, sdrf: str, remove_ids: str, remove_decoy_contaminants: bool, output: str,
-                          skip_normalization: bool,
-                          min_aa: int, min_unique: int, nmethod: str, compress: bool,
+def peptide_normalization(msstats: str, sdrf: str, remove_ids: str, remove_decoy_contaminants: bool, remove_low_frequency_peptides: bool, 
+                          output: str, skip_normalization: bool, min_aa: int, min_unique: int, nmethod: str, compress: bool,
                           chunksize: int, log2: bool, violin: bool, qc_report: str) -> None:
     """Intensity normalization of stream processing peptide performed from MSstats
 
@@ -393,7 +393,8 @@ def peptide_normalization(msstats: str, sdrf: str, remove_ids: str, remove_decoy
         dataset_df = pd.read_csv(f"ibaqpy_temp/{sample}.csv", sep=',')
         norm_df = normalization(dataset_df, label, sample, skip_normalization, nmethod)
         sample_peptides = norm_df[PEPTIDE_CANONICAL].unique().tolist()
-        peptides_count = {peptide: peptides_count.get(peptide, 0) + 1 for peptide in sample_peptides}
+        if remove_low_frequency_peptides:
+            peptides_count = {peptide: peptides_count.get(peptide, 0) + 1 for peptide in sample_peptides}
         norm_df.to_csv(f"ibaqpy_temp/{sample}.csv", sep=",", index=False)
         if sample in plot_samples:
             norm_intensities_df = pd.concat([norm_intensities_df, norm_df])
@@ -409,23 +410,25 @@ def peptide_normalization(msstats: str, sdrf: str, remove_ids: str, remove_decoy
                         title="Peptidoform intensity distribution after normalization, method: " + nmethod,
                         violin=violin)
     pdf.savefig(box)
-    del norm_intensities_df
+    del norm_intensities_df, strong_proteins
 
-    sample_number = len(sample_names)
-    min_sample = 1 if sample_number > 1 else 0
-    peptides_count = {k: v / sample_number for k, v in peptides_count.items() if
-                      v / sample_number >= 0.2 and v > min_sample}
-    strong_peptides = list(peptides_count.keys())
-    del peptides_count, strong_proteins
-
-    # Filter low-frequency peptides
     print("IBAQPY WARNING: Writing normalized intensities into CSV...")
+    if remove_low_frequency_peptides:
+        sample_number = len(sample_names)
+        min_sample = 1 if sample_number > 1 else 0
+        peptides_count = {k: v / sample_number for k, v in peptides_count.items() if
+                        v / sample_number >= 0.2 and v > min_sample}
+        strong_peptides = list(peptides_count.keys())
+        del peptides_count
+
     final_norm_intensities_df = pd.DataFrame()
     for sample in sample_names:
         dataset_df = pd.read_csv(f"ibaqpy_temp/{sample}.csv", sep=',')
-        # Filter low-frequency peptides, which indicate whether the peptide occurs less than 20% in all samples or
-        # only in one sample
-        dataset_df = dataset_df[dataset_df[PEPTIDE_CANONICAL].isin(strong_peptides)]
+        if remove_low_frequency_peptides:
+            # Filter low-frequency peptides, which indicate whether the peptide occurs less than 20% in all samples or
+            # only in one sample
+            dataset_df = dataset_df[dataset_df[PEPTIDE_CANONICAL].isin(strong_peptides)]
+            del strong_peptides
         dataset_df = dataset_df[[PEPTIDE_CANONICAL, PROTEIN_NAME, SAMPLE_ID, NORM_INTENSITY, CONDITION]]
         write_mode = "a" if os.path.exists(output) else "w"
         header = False if os.path.exists(output) else True
@@ -433,7 +436,7 @@ def peptide_normalization(msstats: str, sdrf: str, remove_ids: str, remove_decoy
         dataset_df.to_csv(f"ibaqpy_temp/{sample}.csv", sep=',', index=False)
         if sample in plot_samples:
             final_norm_intensities_df = pd.concat([final_norm_intensities_df, dataset_df])
-    del strong_peptides
+
     # Save final normalized intensities QC plots
     log_after_norm = nmethod == "msstats" or nmethod == "qnorm" or (
             (nmethod == "quantile" or nmethod == "robust") and not log2)
