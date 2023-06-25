@@ -226,6 +226,7 @@ def impute_peptide_intensities(dataset_df, field, class_field):
 @click.option("--min_unique", help="Minimum number of unique peptides to filter proteins", default=2)
 @click.option("--remove_ids", help="Remove specific protein ids from the analysis using a file with one id per line")
 @click.option("--remove_decoy_contaminants", help="Remove decoy and contaminants proteins from the analysis",is_flag=True, default=False)
+@click.option("--remove_low_frequency_peptides", help="Remove peptides that are present in less than 20% of the samples",is_flag=True, default=False)
 @click.option("--output", help="Peptide intensity file including other all properties for normalization")
 @click.option("--skip_normalization", help="Skip normalization step", is_flag=True, default=False)
 @click.option('--nmethod', help="Normalization method used to normalize intensities for all samples (options: qnorm)",
@@ -241,8 +242,9 @@ def impute_peptide_intensities(dataset_df, field, class_field):
               is_flag=True)
 @click.option("--qc_report", help="PDF file to store multiple QC images", default="peptideNorm-QCprofile.pdf")
 def peptide_normalization(msstats: str, sdrf: str, min_aa: int, min_unique: int, remove_ids: str,
-                          remove_decoy_contaminants: bool, output: str, skip_normalization: bool,
-                          nmethod: str, pnormalization: bool, compress: bool, log2: bool,
+                          remove_decoy_contaminants: bool, remove_low_frequency_peptides: bool,
+                          output: str, skip_normalization: bool, nmethod: str,
+                          pnormalization: bool, compress: bool, log2: bool,
                           violin: bool, verbose: bool, qc_report: str) -> None:
 
 
@@ -422,9 +424,10 @@ def peptide_normalization(msstats: str, sdrf: str, min_aa: int, min_unique: int,
         plt.show()
         pdf.savefig(box)
 
-    print("Peptides before removing low frequency peptides: " + str(len(dataset_df.index)))
-    dataset_df = remove_low_frequency_peptides(dataset_df, 0.20)
-    print_dataset_size(dataset_df, "Peptides after remove low frequency peptides: ", verbose)
+    if remove_low_frequency_peptides:
+        print("Peptides before removing low frequency peptides: " + str(len(dataset_df.index)))
+        dataset_df = remove_low_frequency_peptides(dataset_df, 0.20)
+        print_dataset_size(dataset_df, "Peptides after remove low frequency peptides: ", verbose)
 
     # Perform imputation using Random Forest in Peptide Intensities
     # TODO: Check if this is necessary (Probably we can do some research if imputation at peptide level is necessary
