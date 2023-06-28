@@ -182,8 +182,7 @@ def peptide_normalization(msstats: str, sdrf: str, remove_ids: str, remove_decoy
     if not os.path.exists("ibaqpy_temp/"):
         os.mkdir("ibaqpy_temp/")
     msstats_chunks = pd.read_csv(msstats, sep=',', compression=compression_method, dtype={CONDITION: 'category',
-                                                                                          ISOTOPE_LABEL_TYPE: 'category'},
-                                 chunksize=chunksize)
+                                 ISOTOPE_LABEL_TYPE: 'category'}, chunksize=chunksize)
     unique_peptides = {}
     canonical_dict = {}
     group_intensities = {}
@@ -212,7 +211,7 @@ def peptide_normalization(msstats: str, sdrf: str, remove_ids: str, remove_decoy
                 [PROTEIN_NAME, PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, INTENSITY, REFERENCE, CONDITION, RUN,
                  BIOREPLICATE, FRACTION, FRAGMENT_ION, ISOTOPE_LABEL_TYPE]]
 
-        # Merged the SDRF with Resulted file
+        # Merged the SDRF with the Resulted file
         if label == "LFQ":
             msstats_df[REFERENCE] = msstats_df[REFERENCE].apply(remove_extension_file)
             result_df = pd.merge(msstats_df, sdrf_df[['source name', REFERENCE]], how='left', on=[REFERENCE])
@@ -255,7 +254,6 @@ def peptide_normalization(msstats: str, sdrf: str, remove_ids: str, remove_decoy
     print(f"Number of strong proteins: {len(strong_proteins)}")
 
     # TODO: Filter proteins with less unique peptides than min_unique (default: 2)
-    # Create a PdfPages object to receive images
     plot_samples = random.sample(sample_names, min(len(sample_names), 20))
     plot_width = 10 + len(plot_samples) * 0.5
     pdf = PdfPages(qc_report)

@@ -287,7 +287,7 @@ def peptide_normalization(msstats: str, sdrf: str, min_aa: int, min_unique: int,
             [PROTEIN_NAME, PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, INTENSITY, REFERENCE, CONDITION, RUN,
              BIOREPLICATE, FRACTION, FRAGMENT_ION, ISOTOPE_LABEL_TYPE]]
 
-    # Merged the SDRF with Resulted file
+    # Merged the SDRF with the Resulted file
     labels = set(sdrf_df['comment[label]'])
     if CHANNEL not in msstats_df.columns:
         msstats_df[REFERENCE] = msstats_df[REFERENCE].apply(remove_extension_file)
@@ -328,7 +328,7 @@ def peptide_normalization(msstats: str, sdrf: str, min_aa: int, min_unique: int,
         print("Warning: Only support label free, TMT and ITRAQ experiment!")
         exit(1)
 
-    # Remove the intermediate variables, and free the memory
+    # Remove the intermediate variables and free the memory
     del msstats_df, sdrf_df
     gc.collect()
 
