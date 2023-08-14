@@ -254,7 +254,7 @@ def get_mbr_hit(scan: str):
 def parse_uniprot_accession(uniprot_id: str) -> str:
     """
     Parse the uniprot accession from the uniprot id in the form of
-    tr|CONTAMINANT_Q3SX28|CONTAMINANT_TPM2_BOVIN and convert to CONTAMINANT_TPM2_BOVIN
+    tr|CONTAMINANT_Q3SX28|CONTAMINANT_TPM2_BOVIN and convert to CONTAMINANT_Q3SX28
     :param uniprot_id: uniprot id
     :return: uniprot accession
     """
@@ -262,7 +262,7 @@ def parse_uniprot_accession(uniprot_id: str) -> str:
     result_uniprot_list = []
     for accession in uniprot_list:
         if accession.count("|") == 2:
-            accession = accession.split("|")[2]
+            accession = accession.split("|")[1]
         result_uniprot_list.append(accession)
     return ";".join(result_uniprot_list)
 
