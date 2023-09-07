@@ -62,7 +62,7 @@ class Combiner:
 
         # Keep only rows within covariate_to_keep, you can keep tissue or tissue part you want.
         if covariate_to_keep:
-            self.df = self.df[self.df[self.covariate].isin(groups_to_keep)]
+            self.df = self.df[self.df[self.covariate].isin(covariate_to_keep)]
 
         # keep columns with at least 30% of non-missing values in each covariate_index group
         self.df = filter_missing_value_by_group(self.df,
