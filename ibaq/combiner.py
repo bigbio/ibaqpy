@@ -3,8 +3,10 @@ from pathlib import Path
 import os
 import pandas as pd
 import numpy as np
-import itertools
-from ibaq.utils import *
+from ibaq.utils import folder_retrieval, generate_meta, fill_samples, impute_missing_values, \
+    split_df_by_column, filter_missing_value_by_group, compute_pca, get_batch_info_from_sample_names, \
+    remove_single_sample_batches, plot_pca, apply_batch_correction, find_clusters, \
+    iterative_outlier_removal
 from ibaq.ibaqpy_commons import load_sdrf, load_feature
 
 logging.basicConfig(format="%(asctime)s [%(funcName)s] - %(message)s", level=logging.DEBUG)

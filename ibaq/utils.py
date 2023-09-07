@@ -24,7 +24,7 @@ def folder_retrieval(folder: str) -> dict:
         try:
             results["sdrf"].extend([f"{folder}{item}/{i}" for i in os.listdir(f"{folder}{item}/") if i.endswith(".sdrf.tsv")])
             results["ibaq"].extend([f"{folder}{item}/{i}" for i in os.listdir(f"{folder}{item}/") if i.endswith("ibaq.csv") or i.endswith("ibaq.parquet")])
-        except:
+        except Exception as e:
             if item.endswith(".sdrf.tsv"):
                 results["sdrf"].append(folder + item)
             elif item.endswith("ibaq.csv"):
@@ -60,7 +60,7 @@ def generate_meta(sdrf_df: pd.DataFrame) -> pd.DataFrame:
     elif len(organism_part) == 0:
         print("Missing characteristics[organism part], please check your SDRF!")
         exit(1)
-    
+
     meta_df = sdrf_df[["source name"] + organism_part]
     meta_df = meta_df.drop_duplicates()
 
@@ -75,7 +75,7 @@ def generate_meta(sdrf_df: pd.DataFrame) -> pd.DataFrame:
             a = "tissue"
             b = "tissue_part"
         meta_df.rename(columns={"source name": "sample_id", organism_part[0]: a, organism_part[1]: b}, inplace=True)
-    
+
     meta_df["batch"] = pxd
     meta_df = meta_df[["sample_id", "batch", "tissue", "tissue_part"]]
     meta_df = meta_df.drop_duplicates()
