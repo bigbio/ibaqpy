@@ -39,7 +39,7 @@ def cli():
 def datasets_merge(
     ctx,
     data_folder: str,
-    output: str,  
+    output: str,
     covariate: str,
     organism: str,
     covariate_to_keep: list,

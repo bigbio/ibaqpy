@@ -1,5 +1,4 @@
 import logging
-from typing import List, Optional, Union
 from pathlib import Path
 import os
 import pandas as pd
@@ -57,7 +56,7 @@ class Combiner:
         # Keep only columns 'sample_id' and covariate from df_metadata
         if self.covariate:
             if len(self.metadata[self.covariate].unique()) < 2:
-                raise SystemExit(f"{covariate} should contain at least two different covariates!")
+                raise SystemExit(f"{self.covariate} should contain at least two different covariates!")
 
         # Keep only rows within covariate_to_keep, you can keep tissue or tissue part you want.
         if covariate_to_keep:
@@ -126,7 +125,7 @@ class Combiner:
         plot_pca(
             self.df_pca,
             title="PCA plot of corrected data with outliers removed",
-            output_file=f"1.pca_corrected_outliers_removed.png",
+            output_file="pca_corrected_outliers_removed.png",
         )
 
 
@@ -148,7 +147,7 @@ class Combiner:
         plot_pca(
             self.df_pca,
             title="PCA plot of uncorrected data",
-            output_file=f"2.pca_uncorrected.png",
+            output_file="pca_uncorrected.png",
         )
 
         # keep samples only in tissue_part from metadata
@@ -192,5 +191,5 @@ class Combiner:
         # plot PC1 vs PC2 with batch information using seaborn
         # put the legend outside the plot
         # save the plot as a png file
-        plot_pca(self.df_pca, title="PCA plot of corrected data", output_file=f"3.pca_corrected.png")
+        plot_pca(self.df_pca, title="PCA plot of corrected data", output_file="pca_corrected.png")
 

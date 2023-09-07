@@ -1,10 +1,7 @@
 # import libraries
-from typing import List, Optional
-
 import os
 import hdbscan
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 from combat.pycombat import pycombat
@@ -27,7 +24,7 @@ def folder_retrieval(folder: str) -> dict:
         try:
             results["sdrf"].extend([f"{folder}{item}/{i}" for i in os.listdir(f"{folder}{item}/") if i.endswith(".sdrf.tsv")])
             results["ibaq"].extend([f"{folder}{item}/{i}" for i in os.listdir(f"{folder}{item}/") if i.endswith("ibaq.csv") or i.endswith("ibaq.parquet")])
-        except Exception as e:
+        except:
             if item.endswith(".sdrf.tsv"):
                 results["sdrf"].append(folder + item)
             elif item.endswith("ibaq.csv"):
@@ -40,7 +37,7 @@ def folder_retrieval(folder: str) -> dict:
         raise SystemExit("No ibaq results founded!")
     if len(results["sdrf"]) != len(results["ibaq"]):
         raise SystemExit("Number of SDRFs should be equal to ibaq results!")
-             
+
     return results
 
 
