@@ -4,6 +4,7 @@ numpy==1.24.3
 click
 pandas==2.0.2
 matplotlib
+pyarrow
 qnorm
 seaborn
 typing_extensions==4.6.3
