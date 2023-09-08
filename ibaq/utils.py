@@ -352,7 +352,7 @@ def apply_batch_correction(
         raise ValueError("Every batch factor should have at least 2 samples.")
 
     # If not None, check if the number of covariates match the number of samples
-    if covs is not None:
+    if covs:
         if len(df.columns) != len(covs):
             raise ValueError(
                 "The number of samples should match the number of covariates."

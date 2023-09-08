@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 class Combiner:
 
-    def __init__(self, data_folder: os.PathLike, covariate: str, organism: str="HUMAN"):
+    def __init__(self, data_folder: os.PathLike, covariate: str=None, organism: str="HUMAN"):
         """Generate concated IbaqNorm and metadata.
         """
         logger.info("Combining SDRFs and ibaq results ...")
@@ -174,14 +174,13 @@ class Combiner:
         self.metadata = self.metadata.reset_index(drop=True)
         self.metadata = self.metadata.set_index("sample_id").reindex(columns, axis=0).reset_index()
         if self.covariate:
-            # get the covariates from metadata as list
+            # get the covariates from metadata as a list
             covariates_index = self.metadata[self.covariate].tolist()
-            print(covariates_index)
         else:
-            covariates_index = None
+            covariates_index = []
 
         # apply batch correction
-        self.df_corrected = apply_batch_correction(self.df, self.batch_index, covs=["tissue_part"] * len(columns))
+        self.df_corrected = apply_batch_correction(self.df, self.batch_index, covs=covariates_index)
         print(self.df_corrected)
 
         # plot PCA of corrected data

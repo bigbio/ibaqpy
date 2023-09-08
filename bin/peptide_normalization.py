@@ -248,15 +248,13 @@ def peptide_normalization(msstats: str, parquet: str, sdrf: str, min_aa: int, mi
                           pnormalization: bool, compress: bool, log2: bool,
                           violin: bool, verbose: bool, qc_report: str) -> None:
 
-    def quit():
+    if output is None:
         print_help_msg(peptide_normalization)
         exit(1)
 
-    if output is None:
-        quit()
-
     if parquet is None and (msstats is None or sdrf is None):
-            quit()
+        print_help_msg(peptide_normalization)
+        exit(1)
 
     compression_method = 'gzip' if compress else None
 
