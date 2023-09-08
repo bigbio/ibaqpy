@@ -11,6 +11,23 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from pandas import DataFrame
 
+FEATURE_COLUMNS = [
+    "protein_accessions",
+    "peptidoform",
+    "sequence",
+    "charge",
+    "fragment_ion",
+    "isotope_label_type",
+    "channel",
+    "condition",
+    "biological_replicate",
+    "run",
+    "fraction",
+    "intensity",
+    "reference_file_name",
+    "sample_accession"
+]
+
 PROTEIN_NAME = 'ProteinName'
 PEPTIDE_SEQUENCE = 'PeptideSequence'
 PEPTIDE_CANONICAL = "PeptideCanonical"
@@ -38,6 +55,23 @@ IBAQ = 'Ibaq'
 IBAQ_NORMALIZED = 'IbaqNorm'
 IBAQ_LOG = 'IbaqLog'
 IBAQ_PPB = 'IbaqPpb'
+
+parquet_map = {
+    "protein_accessions": PROTEIN_NAME,
+    "peptidoform": PEPTIDE_SEQUENCE,
+    "sequence": PEPTIDE_CANONICAL,
+    "charge": PEPTIDE_CHARGE,
+    "fragment_ion": FRAGMENT_ION,
+    "isotope_label_type": ISOTOPE_LABEL_TYPE,
+    "channel": CHANNEL,
+    "condition": CONDITION,
+    "biological_replicate": BIOREPLICATE,
+    "run": RUN,
+    "fraction": FRACTION,
+    "intensity": INTENSITY,
+    "reference_file_name": REFERENCE,
+    "sample_accession": SAMPLE_ID
+}
 
 TMT16plex = {
     "TMT126": 1,
@@ -218,10 +252,10 @@ def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool =
 
 def remove_extension_file(filename: str) -> str:
     """
-  The filename can have
-  :param filename:
-  :return:
-  """
+    The filename can have
+    :param filename:
+    :return:
+    """
     return filename.replace('.raw', '').replace('.RAW', '').replace('.mzML', '').replace('.wiff', '')
 
 
@@ -243,11 +277,11 @@ def sum_peptidoform_intensities(dataset: DataFrame) -> DataFrame:
 
 def get_mbr_hit(scan: str):
     """
-  This function annotates if the peptide is inferred or not by Match between Runs algorithm (1), 0 if the peptide is
-  identified in the corresponding file.
-  :param scan: scan value
-  :return:
-  """
+    This function annotates if the peptide is inferred or not by Match between Runs algorithm (1), 0 if the peptide is
+    identified in the corresponding file.
+    :param scan: scan value
+    :return:
+    """
     return 1 if pd.isna(scan) else 0
 
 
@@ -269,11 +303,11 @@ def parse_uniprot_accession(uniprot_id: str) -> str:
 
 def get_study_accession(sample_id: str) -> str:
     """
-  Get the project accession from the Sample accession. The function expected a sample accession in the following
-  format PROJECT-SAMPLEID
-  :param sample_id: Sample Accession
-  :return: study accession
-  """
+    Get the project accession from the Sample accession. The function expected a sample accession in the following
+    format PROJECT-SAMPLEID
+    :param sample_id: Sample Accession
+    :return: study accession
+    """
     return sample_id.split('-')[0]
 
 
@@ -289,11 +323,11 @@ def get_reference_name(reference_spectrum: str) -> str:
 
 def get_run_mztab(ms_run: str, metadata: OrderedDict) -> str:
     """
-  Convert the ms_run into a reference file for merging with msstats output
-  :param ms_run: ms_run index in mztab
-  :param metadata:  metadata information in mztab
-  :return: file name
-  """
+    Convert the ms_run into a reference file for merging with msstats output
+    :param ms_run: ms_run index in mztab
+    :param metadata:  metadata information in mztab
+    :return: file name
+    """
     m = re.search(r"\[([A-Za-z0-9_]+)\]", ms_run)
     file_location = metadata['ms_run[' + str(m.group(1)) + "]-location"]
     file_location = remove_extension_file(file_location)
@@ -302,19 +336,47 @@ def get_run_mztab(ms_run: str, metadata: OrderedDict) -> str:
 
 def get_scan_mztab(ms_run: str) -> str:
     """
-  Get the scan number for an mzML spectrum in mzTab. The format of the reference
-  must be controllerType=0 controllerNumber=1 scan=30121
-  :param ms_run: the original ms_run reference in mzTab
-  :return: the scan index
-  """
+    Get the scan number for an mzML spectrum in mzTab. The format of the reference
+    must be controllerType=0 controllerNumber=1 scan=30121
+    :param ms_run: the original ms_run reference in mzTab
+    :return: the scan index
+    """
     reference_parts = ms_run.split()
     return reference_parts[-1]
 
 
 def best_probability_error_bestsearch_engine(probability: float) -> float:
     """
-  Convert probability to a Best search engine score
-  :param probability: probability
-  :return:
-  """
+    Convert probability to a Best search engine score
+    :param probability: probability
+    :return:
+    """
     return 1 - probability
+
+
+def load_sdrf(sdrf_path: str) -> DataFrame:
+    """
+    Load sdrf TSV as a dataframe.
+    :param sdrf_path: Path to SDRF TSV.
+    :return:
+    """
+    if not os.path.exists(sdrf_path):
+        raise FileNotFoundError(f"{sdrf_path} does not exist!")
+    sdrf_df = pd.read_csv(sdrf_path, sep="\t")
+    sdrf_df.columns = [col.lower() for col in sdrf_df.columns]
+    return sdrf_df
+
+
+def load_feature(feature_path: str) -> DataFrame:
+    """
+    Load feature file as a dataframe.
+    :param feature_path: Path to feature file.
+    :return:
+    """
+    suffix = os.path.splitext(feature_path)[1][1:]
+    if suffix == "parquet":
+        return pd.read_parquet(feature_path)
+    elif suffix == "csv":
+        return pd.read_csv(feature_path)
+    else:
+        raise SystemExit(f"{suffix} is not allowed as input, please provide msstats_in or feature parquet.")
