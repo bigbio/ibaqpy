@@ -85,7 +85,7 @@ def plot_tsne(df, x_col, y_col, hue_col, file_name):
     ax.set_xlabel(x_col)
     ax.set_ylabel(y_col)
     ax.set_title(f'{x_col} vs {y_col} with {hue_col} information')
-    # set legend inside the plot left upper corner
+    # set legend inside the plot left an upper corner
     plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     plt.subplots_adjust(right=0.8)
     plt.savefig(file_name)

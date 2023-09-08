@@ -150,9 +150,6 @@ def tsne_visualization(folder: str, pattern: str):
     # plot the t-SNE components tSNE1 vs tSNE2 with batch information using seaborn
     plot_tsne(df_tsne, 'tSNE1', 'tSNE2', 'batch', '5.tsne_plot_with_batch_information.pdf')
 
-
-
-
     print(total_proteins.shape)
 
 if __name__ == '__main__':
