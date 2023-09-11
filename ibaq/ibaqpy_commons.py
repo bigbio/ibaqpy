@@ -1,13 +1,12 @@
+import os
 import re
 from typing import OrderedDict
 
 import click
-import os
 import matplotlib
 import numpy as np
 import pandas as pd
 import seaborn as sns
-
 from matplotlib import pyplot as plt
 from pandas import DataFrame
 
@@ -25,36 +24,36 @@ FEATURE_COLUMNS = [
     "fraction",
     "intensity",
     "reference_file_name",
-    "sample_accession"
+    "sample_accession",
 ]
 
-PROTEIN_NAME = 'ProteinName'
-PEPTIDE_SEQUENCE = 'PeptideSequence'
+PROTEIN_NAME = "ProteinName"
+PEPTIDE_SEQUENCE = "PeptideSequence"
 PEPTIDE_CANONICAL = "PeptideCanonical"
-PEPTIDE_CHARGE = 'PrecursorCharge'
-FRAGMENT_ION = 'FragmentIon'
-PRODUCT_CHARGE = 'ProductCharge'
-ISOTOPE_LABEL_TYPE = 'IsotopeLabelType'
-CHANNEL = 'Channel'
-MIXTRUE = 'Mixture'
-TECHREPMIXTURE = 'TechRepMixture'
-CONDITION = 'Condition'
-BIOREPLICATE = 'BioReplicate'
-RUN = 'Run'
-FRACTION = 'Fraction'
-INTENSITY = 'Intensity'
-NORM_INTENSITY = 'NormIntensity'
-RT = 'Rt'
-REFERENCE = 'Reference'
-SAMPLE_ID = 'SampleID'
-STUDY_ID = 'StudyID'
-SEARCH_ENGINE = 'searchScore'
-SCAN = 'Scan'
-MBR = 'MatchBetweenRuns'
-IBAQ = 'Ibaq'
-IBAQ_NORMALIZED = 'IbaqNorm'
-IBAQ_LOG = 'IbaqLog'
-IBAQ_PPB = 'IbaqPpb'
+PEPTIDE_CHARGE = "PrecursorCharge"
+FRAGMENT_ION = "FragmentIon"
+PRODUCT_CHARGE = "ProductCharge"
+ISOTOPE_LABEL_TYPE = "IsotopeLabelType"
+CHANNEL = "Channel"
+MIXTRUE = "Mixture"
+TECHREPMIXTURE = "TechRepMixture"
+CONDITION = "Condition"
+BIOREPLICATE = "BioReplicate"
+RUN = "Run"
+FRACTION = "Fraction"
+INTENSITY = "Intensity"
+NORM_INTENSITY = "NormIntensity"
+RT = "Rt"
+REFERENCE = "Reference"
+SAMPLE_ID = "SampleID"
+STUDY_ID = "StudyID"
+SEARCH_ENGINE = "searchScore"
+SCAN = "Scan"
+MBR = "MatchBetweenRuns"
+IBAQ = "Ibaq"
+IBAQ_NORMALIZED = "IbaqNorm"
+IBAQ_LOG = "IbaqLog"
+IBAQ_PPB = "IbaqPpb"
 
 parquet_map = {
     "protein_accessions": PROTEIN_NAME,
@@ -70,7 +69,7 @@ parquet_map = {
     "fraction": FRACTION,
     "intensity": INTENSITY,
     "reference_file_name": REFERENCE,
-    "sample_accession": SAMPLE_ID
+    "sample_accession": SAMPLE_ID,
 }
 
 TMT16plex = {
@@ -119,7 +118,14 @@ TMT10plex = {
     "TMT131": 10,
 }
 
-TMT6plex = {"TMT126": 1, "TMT127": 2, "TMT128": 3, "TMT129": 4, "TMT130": 5, "TMT131": 6}
+TMT6plex = {
+    "TMT126": 1,
+    "TMT127": 2,
+    "TMT128": 3,
+    "TMT129": 4,
+    "TMT130": 5,
+    "TMT131": 6,
+}
 
 ITRAQ4plex = {"ITRAQ114": 1, "ITRAQ115": 2, "ITRAQ116": 3, "ITRAQ117": 4}
 
@@ -145,8 +151,9 @@ def print_help_msg(command: click.Command):
         click.echo(command.get_help(ctx))
 
 
-
-def remove_protein_by_ids(dataset: DataFrame, protein_file: str, protein_field=PROTEIN_NAME) -> DataFrame:
+def remove_protein_by_ids(
+    dataset: DataFrame, protein_file: str, protein_field=PROTEIN_NAME
+) -> DataFrame:
     """
     This method reads a file with a list of contaminants and high abudant proteins and
     remove them from the dataset.
@@ -155,15 +162,16 @@ def remove_protein_by_ids(dataset: DataFrame, protein_file: str, protein_field=P
     :param protein_field: protein field
     :return: dataset with the filtered proteins
     """
-    contaminants_reader = open(protein_file, 'r')
+    contaminants_reader = open(protein_file, "r")
     contaminants = contaminants_reader.read().split("\n")
     contaminants = [cont for cont in contaminants if cont.strip()]
-    cregex = '|'.join(contaminants)
+    cregex = "|".join(contaminants)
     return dataset[~dataset[protein_field].str.contains(cregex)]
 
 
-
-def remove_contaminants_decoys(dataset: DataFrame, protein_field=PROTEIN_NAME) -> DataFrame:
+def remove_contaminants_decoys(
+    dataset: DataFrame, protein_field=PROTEIN_NAME
+) -> DataFrame:
     """
     This method reads a file with a list of contaminants and high abudant proteins and
     remove them from the dataset.
@@ -173,9 +181,9 @@ def remove_contaminants_decoys(dataset: DataFrame, protein_field=PROTEIN_NAME) -
     :return: dataset with the filtered proteins
     """
     contaminants = []
-    contaminants.append('CONTAMINANT')
-    contaminants.append('DECOY')
-    cregex = '|'.join(contaminants)
+    contaminants.append("CONTAMINANT")
+    contaminants.append("DECOY")
+    cregex = "|".join(contaminants)
     return dataset[~dataset[protein_field].str.contains(cregex)]
 
 
@@ -190,8 +198,14 @@ def get_canonical_peptide(peptide_sequence: str) -> str:
     return clean_peptide
 
 
-def plot_distributions(dataset: DataFrame, field: str, class_field: str, title: str = "", log2: bool = True,
-                       width: float = 10) -> matplotlib.pyplot:
+def plot_distributions(
+    dataset: DataFrame,
+    field: str,
+    class_field: str,
+    title: str = "",
+    log2: bool = True,
+    width: float = 10,
+) -> matplotlib.pyplot:
     """
     Print the quantile plot for the dataset
     :param dataset: DataFrame
@@ -202,23 +216,30 @@ def plot_distributions(dataset: DataFrame, field: str, class_field: str, title: 
     :param width: size of the plot
     :return:
     """
-    pd.set_option('mode.chained_assignment', None)
+    pd.set_option("mode.chained_assignment", None)
     normalize = dataset[[field, class_field]]
     if log2:
         normalize[field] = np.log2(normalize[field])
     normalize.dropna(subset=[field], inplace=True)
-    data_wide = normalize.pivot(columns=class_field,
-                                values=field)
+    data_wide = normalize.pivot(columns=class_field, values=field)
     # plotting multiple density plot
     data_wide.plot.kde(figsize=(width, 8), linewidth=2, legend=False)
     plt.title(title)
-    pd.set_option('mode.chained_assignment', 'warn')
+    pd.set_option("mode.chained_assignment", "warn")
 
     return plt.gcf()
 
 
-def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool = False, width: float = 10,
-                  rotation: int = 30, title: str = "", violin: bool = False) -> matplotlib.pyplot:
+def plot_box_plot(
+    dataset: DataFrame,
+    field: str,
+    class_field: str,
+    log2: bool = False,
+    width: float = 10,
+    rotation: int = 30,
+    title: str = "",
+    violin: bool = False,
+) -> matplotlib.pyplot:
     """
     Plot a box plot of two values field and classes field
     :param violin: Also add violin on top of box plot
@@ -231,21 +252,33 @@ def plot_box_plot(dataset: DataFrame, field: str, class_field: str, log2: bool =
     :param title: Title of the box plot
     :return:
     """
-    pd.set_option('mode.chained_assignment', None)
+    pd.set_option("mode.chained_assignment", None)
     normalized = dataset[[field, class_field]]
-    np.seterr(divide='ignore')
+    np.seterr(divide="ignore")
     plt.figure(figsize=(width, 14))
     if log2:
         normalized[field] = np.log2(normalized[field])
 
     if violin:
-        chart = sns.violinplot(x=class_field, y=field, data=normalized, boxprops=dict(alpha=.3), palette="muted")
+        chart = sns.violinplot(
+            x=class_field,
+            y=field,
+            data=normalized,
+            boxprops=dict(alpha=0.3),
+            palette="muted",
+        )
     else:
-        chart = sns.boxplot(x=class_field, y=field, data=normalized, boxprops=dict(alpha=.3), palette="muted")
+        chart = sns.boxplot(
+            x=class_field,
+            y=field,
+            data=normalized,
+            boxprops=dict(alpha=0.3),
+            palette="muted",
+        )
 
     chart.set(title=title)
-    chart.set_xticklabels(chart.get_xticklabels(), rotation=rotation, ha='right')
-    pd.set_option('mode.chained_assignment', 'warn')
+    chart.set_xticklabels(chart.get_xticklabels(), rotation=rotation, ha="right")
+    pd.set_option("mode.chained_assignment", "warn")
 
     return plt.gcf()
 
@@ -256,7 +289,12 @@ def remove_extension_file(filename: str) -> str:
     :param filename:
     :return:
     """
-    return filename.replace('.raw', '').replace('.RAW', '').replace('.mzML', '').replace('.wiff', '')
+    return (
+        filename.replace(".raw", "")
+        .replace(".RAW", "")
+        .replace(".mzML", "")
+        .replace(".wiff", "")
+    )
 
 
 def sum_peptidoform_intensities(dataset: DataFrame) -> DataFrame:
@@ -266,11 +304,16 @@ def sum_peptidoform_intensities(dataset: DataFrame) -> DataFrame:
     :return: dataframe with the intensities
     """
     dataset = dataset[dataset[NORM_INTENSITY].notna()]
-    normalize_df = dataset.groupby([PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION], observed=True)[NORM_INTENSITY].sum()
+    normalize_df = dataset.groupby(
+        [PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION], observed=True
+    )[NORM_INTENSITY].sum()
     normalize_df = normalize_df.reset_index()
-    normalize_df = pd.merge(normalize_df,
-                            dataset[[PROTEIN_NAME, PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION]], how='left',
-                            on=[PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION])
+    normalize_df = pd.merge(
+        normalize_df,
+        dataset[[PROTEIN_NAME, PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION]],
+        how="left",
+        on=[PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION],
+    )
 
     return normalize_df
 
@@ -308,7 +351,7 @@ def get_study_accession(sample_id: str) -> str:
     :param sample_id: Sample Accession
     :return: study accession
     """
-    return sample_id.split('-')[0]
+    return sample_id.split("-")[0]
 
 
 def get_reference_name(reference_spectrum: str) -> str:
@@ -318,7 +361,7 @@ def get_reference_name(reference_spectrum: str) -> str:
     :param reference_spectrum:
     :return: reference name
     """
-    return re.split(r'\.mzML|\.MZML|\.raw|\.RAW', reference_spectrum)[0]
+    return re.split(r"\.mzML|\.MZML|\.raw|\.RAW", reference_spectrum)[0]
 
 
 def get_run_mztab(ms_run: str, metadata: OrderedDict) -> str:
@@ -329,7 +372,7 @@ def get_run_mztab(ms_run: str, metadata: OrderedDict) -> str:
     :return: file name
     """
     m = re.search(r"\[([A-Za-z0-9_]+)\]", ms_run)
-    file_location = metadata['ms_run[' + str(m.group(1)) + "]-location"]
+    file_location = metadata["ms_run[" + str(m.group(1)) + "]-location"]
     file_location = remove_extension_file(file_location)
     return os.path.basename(file_location)
 
@@ -379,4 +422,6 @@ def load_feature(feature_path: str) -> DataFrame:
     elif suffix == "csv":
         return pd.read_csv(feature_path)
     else:
-        raise SystemExit(f"{suffix} is not allowed as input, please provide msstats_in or feature parquet.")
+        raise SystemExit(
+            f"{suffix} is not allowed as input, please provide msstats_in or feature parquet."
+        )

@@ -1,13 +1,21 @@
 # import libraries
+import logging
 import os
-import hdbscan
+from typing import List, Optional, Union
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from combat.pycombat import pycombat
 from sklearn.decomposition import PCA
 from sklearn.impute import KNNImputer
-from typing import List, Optional, Union
+
+import hdbscan
+from combat.pycombat import pycombat
+
+logging.basicConfig(
+    format="%(asctime)s [%(funcName)s] - %(message)s", level=logging.DEBUG
+)
+logger = logging.getLogger(__name__)
 
 
 def folder_retrieval(folder: str) -> dict:
@@ -22,9 +30,22 @@ def folder_retrieval(folder: str) -> dict:
     items = os.listdir(folder)
     for item in items:
         try:
-            results["sdrf"].extend([f"{folder}{item}/{i}" for i in os.listdir(f"{folder}{item}/") if i.endswith(".sdrf.tsv")])
-            results["ibaq"].extend([f"{folder}{item}/{i}" for i in os.listdir(f"{folder}{item}/") if i.endswith("ibaq.csv") or i.endswith("ibaq.parquet")])
+            results["sdrf"].extend(
+                [
+                    f"{folder}{item}/{i}"
+                    for i in os.listdir(f"{folder}{item}/")
+                    if i.endswith(".sdrf.tsv")
+                ]
+            )
+            results["ibaq"].extend(
+                [
+                    f"{folder}{item}/{i}"
+                    for i in os.listdir(f"{folder}{item}/")
+                    if i.endswith("ibaq.csv") or i.endswith("ibaq.parquet")
+                ]
+            )
         except Exception as e:
+            logger.warning(f"Error: {e}")
             if item.endswith(".sdrf.tsv"):
                 results["sdrf"].append(folder + item)
             elif item.endswith("ibaq.csv"):
@@ -53,9 +74,15 @@ def generate_meta(sdrf_df: pd.DataFrame) -> pd.DataFrame:
     """
     sdrf_df.columns = [col.lower() for col in sdrf_df.columns]
     pxd = sdrf_df["source name"].values[0].split("-")[0]
-    organism_part = [col for col in sdrf_df.columns if col.startswith("characteristics[organism part]")]
+    organism_part = [
+        col
+        for col in sdrf_df.columns
+        if col.startswith("characteristics[organism part]")
+    ]
     if len(organism_part) > 2:
-        print(f"{pxd} Please provide a maximum of 2 characteristics[organism part], one for tissue name and the other for tissue part!")
+        print(
+            f"{pxd} Please provide a maximum of 2 characteristics[organism part], one for tissue name and the other for tissue part!"
+        )
         exit(1)
     elif len(organism_part) == 0:
         print("Missing characteristics[organism part], please check your SDRF!")
@@ -74,7 +101,14 @@ def generate_meta(sdrf_df: pd.DataFrame) -> pd.DataFrame:
         else:
             a = "tissue"
             b = "tissue_part"
-        meta_df.rename(columns={"source name": "sample_id", organism_part[0]: a, organism_part[1]: b}, inplace=True)
+        meta_df.rename(
+            columns={
+                "source name": "sample_id",
+                organism_part[0]: a,
+                organism_part[1]: b,
+            },
+            inplace=True,
+        )
 
     meta_df["batch"] = pxd
     meta_df = meta_df[["sample_id", "batch", "tissue", "tissue_part"]]
@@ -84,7 +118,9 @@ def generate_meta(sdrf_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def fill_samples(df, proteins):
-    df = pd.pivot_table(df, index="ProteinName", columns="SampleID", values=["IbaqNorm"])
+    df = pd.pivot_table(
+        df, index="ProteinName", columns="SampleID", values=["IbaqNorm"]
+    )
     df = df.reindex(proteins)
     df.columns = [pair[1] for pair in df.columns]
     df.index.rename(None, inplace=True)
@@ -129,9 +165,9 @@ def impute_missing_values(
 
     if isinstance(data, pd.DataFrame):
         # If it's a single DataFrame, transform it and return immediately
-        return pd.DataFrame(imputer.fit_transform(data),
-                            columns=data.columns,
-                            index=data.index)
+        return pd.DataFrame(
+            imputer.fit_transform(data), columns=data.columns, index=data.index
+        )
     else:
         # Otherwise, use list comprehension to apply the imputer to each DataFrame
         return [
@@ -183,7 +219,7 @@ def filter_missing_value_by_group(df_input, col, non_missing_percent_to_keep):
     """
     return df_input.groupby(col, as_index=False).filter(
         lambda x: len(x) < non_missing_percent_to_keep * len(df_input)
-        )
+    )
 
 
 # function to compute principal components
@@ -447,7 +483,6 @@ def iterative_outlier_removal(
     batch_dict = dict(zip(df.columns, batch))
 
     for i in range(n_iter):
-
         print("Running iteration: ", i + 1)
 
         # compute principal components

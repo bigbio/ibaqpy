@@ -7,9 +7,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from ibaq.ibaqpy_commons import PROTEIN_NAME, SAMPLE_ID, IBAQ_NORMALIZED, IBAQ_LOG
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+
+from ibaq.ibaqpy_commons import (IBAQ_LOG, IBAQ_NORMALIZED, PROTEIN_NAME,
+                                 SAMPLE_ID)
 
 
 # function to compute principal components
@@ -45,17 +47,19 @@ def compute_pca(df, n_components=5) -> pd.DataFrame:
     y = np.cumsum(pca.explained_variance_ratio_)
 
     plt.ylim(0.0, 1.1)
-    plt.plot(xi, y, marker='o', linestyle='--', color='b')
+    plt.plot(xi, y, marker="o", linestyle="--", color="b")
 
-    plt.xlabel('Number of Components')
-    plt.xticks(np.arange(0, n_components, step=1))  # change from 0-based array index to 1-based human-readable label
-    plt.ylabel('Cumulative variance (%)')
-    plt.title('The number of components needed to explain variance')
+    plt.xlabel("Number of Components")
+    plt.xticks(
+        np.arange(0, n_components, step=1)
+    )  # change from 0-based array index to 1-based human-readable label
+    plt.ylabel("Cumulative variance (%)")
+    plt.title("The number of components needed to explain variance")
 
-    plt.axhline(y=0.95, color='r', linestyle='-')
-    plt.text(0.5, 0.85, '95% cut-off threshold', color='red', fontsize=16)
+    plt.axhline(y=0.95, color="r", linestyle="-")
+    plt.text(0.5, 0.85, "95% cut-off threshold", color="red", fontsize=16)
 
-    ax.grid(axis='x')
+    ax.grid(axis="x")
     plt.show()
 
     return df_pca
@@ -94,10 +98,15 @@ def compute_tsne(df_pca, n_components=2, perplexity=30, learning_rate=200, n_ite
      df_tsne = compute_tsne(df_pca)
     """
 
-    tsne = TSNE(n_components=n_components, perplexity=perplexity, learning_rate=learning_rate, n_iter=n_iter)
+    tsne = TSNE(
+        n_components=n_components,
+        perplexity=perplexity,
+        learning_rate=learning_rate,
+        n_iter=n_iter,
+    )
     tsne_results = tsne.fit_transform(np.asarray(df_pca))
 
-    tsne_cols = [f'tSNE{i + 1}' for i in range(n_components)]
+    tsne_cols = [f"tSNE{i + 1}" for i in range(n_components)]
 
     df_tsne = pd.DataFrame(data=tsne_results, columns=tsne_cols)
     df_tsne.index = df_pca.index
@@ -106,19 +115,29 @@ def compute_tsne(df_pca, n_components=2, perplexity=30, learning_rate=200, n_ite
 
 def plot_tsne(df, x_col, y_col, hue_col, file_name):
     fig, ax = plt.subplots(1, 1, figsize=(20, 10))
-    sns.scatterplot(x=x_col, y=y_col, hue=hue_col, data=df, ax=ax, markers=["o","+","x"])
+    sns.scatterplot(
+        x=x_col, y=y_col, hue=hue_col, data=df, ax=ax, markers=["o", "+", "x"]
+    )
     ax.set_xlabel(x_col)
     ax.set_ylabel(y_col)
-    ax.set_title(f'{x_col} vs {y_col} with {hue_col} information')
+    ax.set_title(f"{x_col} vs {y_col} with {hue_col} information")
     # set legend inside the plot left an upper corner
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0., fontsize=8)
+    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.0, fontsize=8)
     plt.subplots_adjust(right=0.8)
     plt.savefig(file_name)
 
 
 @click.command()
-@click.option("-f", "--folder", help="Folder that contains all the protein files", required=True)
-@click.option("-o", "--pattern", help="Protein file pattern", required=False, default="proteins.tsv")
+@click.option(
+    "-f", "--folder", help="Folder that contains all the protein files", required=True
+)
+@click.option(
+    "-o",
+    "--pattern",
+    help="Protein file pattern",
+    required=False,
+    default="proteins.tsv",
+)
 def tsne_visualization(folder: str, pattern: str):
     """
     Generate t-SNE plots from protein files in a folder.
@@ -131,26 +150,38 @@ def tsne_visualization(folder: str, pattern: str):
     # get the files into pandas selected columns
     # (Proteins accession, Sample ID, Reanalysis accession, Intensity)
 
-    dfs = [] # list of dataframes
+    dfs = []  # list of dataframes
 
     for f in files:
         reanalysis = (f.split("/")[-1].split("_")[0]).replace("-proteins.tsv", "")
-        dfs += [pd.read_csv(f, usecols=[PROTEIN_NAME, SAMPLE_ID, IBAQ_LOG], sep=",").assign(reanalysis=reanalysis)]
+        dfs += [
+            pd.read_csv(f, usecols=[PROTEIN_NAME, SAMPLE_ID, IBAQ_LOG], sep=",").assign(
+                reanalysis=reanalysis
+            )
+        ]
 
     total_proteins = pd.concat(dfs, ignore_index=True)
 
-    normalize_df = pd.pivot_table(total_proteins, index=[SAMPLE_ID, "reanalysis"], columns=PROTEIN_NAME, values=IBAQ_LOG)
+    normalize_df = pd.pivot_table(
+        total_proteins,
+        index=[SAMPLE_ID, "reanalysis"],
+        columns=PROTEIN_NAME,
+        values=IBAQ_LOG,
+    )
     normalize_df = normalize_df.fillna(0)
     df_pca = compute_pca(normalize_df, n_components=30)
     df_tsne = compute_tsne(df_pca)
 
     batch = df_tsne.index.get_level_values("reanalysis").tolist()
-    df_tsne['batch'] = batch
+    df_tsne["batch"] = batch
 
     # plot the t-SNE components tSNE1 vs tSNE2 with batch information using seaborn
-    plot_tsne(df_tsne, 'tSNE1', 'tSNE2', 'batch', '5.tsne_plot_with_batch_information.pdf')
+    plot_tsne(
+        df_tsne, "tSNE1", "tSNE2", "batch", "5.tsne_plot_with_batch_information.pdf"
+    )
 
     print(total_proteins.shape)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     tsne_visualization()

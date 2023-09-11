@@ -10,26 +10,47 @@ from matplotlib.backends.backend_pdf import PdfPages
 from pyopenms import *
 
 from bin.compute_ibaq import print_help_msg
-from ibaq.ibaqpy_commons import PROTEIN_NAME, INTENSITY, SAMPLE_ID, CONDITION, remove_contaminants_decoys
-from ibaq.ibaqpy_commons import plot_distributions, plot_box_plot
+from ibaq.ibaqpy_commons import (CONDITION, INTENSITY, PROTEIN_NAME, SAMPLE_ID,
+                                 plot_box_plot, plot_distributions,
+                                 remove_contaminants_decoys)
 
 
 @click.command()
 @click.option("-f", "--fasta", help="Protein database")
-@click.option("--contaminants", help="Contaminants and high abundant proteins to be removed")
-@click.option("-p", "--peptides",
-              help="Peptide identifications with intensities following the peptide intensity output")
+@click.option(
+    "--contaminants", help="Contaminants and high abundant proteins to be removed"
+)
+@click.option(
+    "-p",
+    "--peptides",
+    help="Peptide identifications with intensities following the peptide intensity output",
+)
 @click.option("-r", "--ruler", help="Whether to use ProteomicRuler", is_flag=True)
 @click.option("-n", "--ploidy", help="Ploidy number", default=2)
 @click.option("-c", "--cpc", help="Cellular protein concentration(g/L)", default=200)
 @click.option("-o", "--output", help="Output file with the proteins and other values")
-@click.option("--verbose",
-              help="Print addition information about the distributions of the intensities, number of peptides remove "
-                   "after normalization, etc.",
-              is_flag=True)
-@click.option("--qc_report", help="PDF file to store multiple QC images", default="TPA-QCprofile.pdf")
-def tpa_compute(fasta: str, contaminants: str, peptides: str, ruler: bool, ploidy: int, cpc: float,
-                output: str, verbose: bool, qc_report: str) -> None:
+@click.option(
+    "--verbose",
+    help="Print addition information about the distributions of the intensities, number of peptides remove "
+    "after normalization, etc.",
+    is_flag=True,
+)
+@click.option(
+    "--qc_report",
+    help="PDF file to store multiple QC images",
+    default="TPA-QCprofile.pdf",
+)
+def tpa_compute(
+    fasta: str,
+    contaminants: str,
+    peptides: str,
+    ruler: bool,
+    ploidy: int,
+    cpc: float,
+    output: str,
+    verbose: bool,
+    qc_report: str,
+) -> None:
     """
     This command computes the protein copies and concentrations according to a file output of peptides with the
     format described in peptide_contaminants_file_generation.py.
@@ -48,7 +69,9 @@ def tpa_compute(fasta: str, contaminants: str, peptides: str, ruler: bool, ploid
         print_help_msg(tpa_compute)
         exit(1)
 
-    data = pd.read_csv(peptides, sep=",", usecols=[PROTEIN_NAME, INTENSITY, SAMPLE_ID, CONDITION])
+    data = pd.read_csv(
+        peptides, sep=",", usecols=[PROTEIN_NAME, INTENSITY, SAMPLE_ID, CONDITION]
+    )
     print("Remove contaminants...")
     data = remove_contaminants_decoys(data, contaminants)
     data[INTENSITY] = data[INTENSITY].astype("float")
@@ -56,7 +79,9 @@ def tpa_compute(fasta: str, contaminants: str, peptides: str, ruler: bool, ploid
     data = data[data[INTENSITY] > 0]
     print(data.head())
 
-    res = pd.DataFrame(data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION])[INTENSITY].sum())
+    res = pd.DataFrame(
+        data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION])[INTENSITY].sum()
+    )
     res = res.reset_index()
     proteins = res[PROTEIN_NAME].unique().tolist()
     proteins = sum([i.split(";") for i in proteins], [])
@@ -72,12 +97,15 @@ def tpa_compute(fasta: str, contaminants: str, peptides: str, ruler: bool, ploid
             mw_dict[name] = mw
 
     res = res[res[PROTEIN_NAME].isin(mw_dict.keys())]
+
     # calculate TPA for every protein group
     def get_protein_group_mw(group: str) -> float:
         mw_list = [mw_dict[i] for i in group.split(";")]
         return sum(mw_list)
 
-    res["MolecularWeight"] = res.apply(lambda x: get_protein_group_mw(x[PROTEIN_NAME]), axis=1)
+    res["MolecularWeight"] = res.apply(
+        lambda x: get_protein_group_mw(x[PROTEIN_NAME]), axis=1
+    )
     res["MolecularWeight"] = res["MolecularWeight"].fillna(1)
     res["MolecularWeight"] = res["MolecularWeight"].replace(0, 1)
     res["TPA"] = res[INTENSITY] / res["MolecularWeight"]
@@ -85,10 +113,20 @@ def tpa_compute(fasta: str, contaminants: str, peptides: str, ruler: bool, ploid
     if verbose:
         plot_width = len(set(res[SAMPLE_ID])) * 0.5 + 10
         pdf = PdfPages(qc_report)
-        density = plot_distributions(res, "TPA", SAMPLE_ID, log2=True, width=plot_width, title="TPA Distribution")
+        density = plot_distributions(
+            res, "TPA", SAMPLE_ID, log2=True, width=plot_width, title="TPA Distribution"
+        )
         plt.show()
         pdf.savefig(density)
-        box = plot_box_plot(res, "TPA", SAMPLE_ID, log2=True, width=plot_width, title="TPA Distribution", violin=False)
+        box = plot_box_plot(
+            res,
+            "TPA",
+            SAMPLE_ID,
+            log2=True,
+            width=plot_width,
+            title="TPA Distribution",
+            violin=False,
+        )
         plt.show()
         pdf.savefig(box)
 
@@ -98,7 +136,9 @@ def tpa_compute(fasta: str, contaminants: str, peptides: str, ruler: bool, ploid
         average_base_pair_mass = 617.96  # 615.8771
 
         organism = res.loc[0, PROTEIN_NAME].split("_")[1].lower()
-        histone_df = pd.read_json(open(os.path.split(__file__)[0] + os.sep + "histones.json", "rb")).T
+        histone_df = pd.read_json(
+            open(os.path.split(__file__)[0] + os.sep + "histones.json", "rb")
+        ).T
         target_histones = histone_df[histone_df["name"] == organism.lower()]
         genome_size = target_histones["genome_size"].values[0]
         histones_list = target_histones["histone_entries"].values[0]
@@ -112,11 +152,17 @@ def tpa_compute(fasta: str, contaminants: str, peptides: str, ruler: bool, ploid
             return tuple([copy, moles, weight])
 
         def proteomic_ruler(df):
-            histone_intensity = df[df[PROTEIN_NAME].isin(histones_list)][INTENSITY].sum()
+            histone_intensity = df[df[PROTEIN_NAME].isin(histones_list)][
+                INTENSITY
+            ].sum()
             histone_intensity = histone_intensity if histone_intensity > 0 else 1
             df[["Copy", "Moles[nmol]", "Weight[ng]"]] = df.apply(
-                lambda x: calculate(x[INTENSITY], histone_intensity, x["MolecularWeight"]), axis=1,
-                result_type="expand")
+                lambda x: calculate(
+                    x[INTENSITY], histone_intensity, x["MolecularWeight"]
+                ),
+                axis=1,
+                result_type="expand",
+            )
             volume = df["Weight[ng]"].sum() * 1e-9 / cpc  # unit L
             df["Concentration[nM]"] = df["Moles[nmol]"] / volume  # unit nM
             return df
@@ -124,25 +170,44 @@ def tpa_compute(fasta: str, contaminants: str, peptides: str, ruler: bool, ploid
         res = res.groupby([CONDITION]).apply(proteomic_ruler)
 
         if verbose:
-            density = plot_distributions(res, "Copy", SAMPLE_ID, log2=True, title="Copy numbers Distribution")
+            density = plot_distributions(
+                res, "Copy", SAMPLE_ID, log2=True, title="Copy numbers Distribution"
+            )
             plt.show()
             pdf.savefig(density)
-            box = plot_box_plot(res, "Copy", SAMPLE_ID, log2=True, title="Copy numbers Distribution",
-                                violin=False)
+            box = plot_box_plot(
+                res,
+                "Copy",
+                SAMPLE_ID,
+                log2=True,
+                title="Copy numbers Distribution",
+                violin=False,
+            )
             plt.show()
             pdf.savefig(box)
 
-            density = plot_distributions(res, "Concentration[nM]", SAMPLE_ID, log2=True,
-                                         title="Concentration[nM] Distribution")
+            density = plot_distributions(
+                res,
+                "Concentration[nM]",
+                SAMPLE_ID,
+                log2=True,
+                title="Concentration[nM] Distribution",
+            )
             plt.show()
             pdf.savefig(density)
-            box = plot_box_plot(res, "Concentration[nM]", SAMPLE_ID, log2=True, title="Concentration[nM] Distribution",
-                                violin=False)
+            box = plot_box_plot(
+                res,
+                "Concentration[nM]",
+                SAMPLE_ID,
+                log2=True,
+                title="Concentration[nM] Distribution",
+                violin=False,
+            )
             plt.show()
             pdf.savefig(box)
             pdf.close()
         res.to_csv(output, index=False)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     tpa_compute()
