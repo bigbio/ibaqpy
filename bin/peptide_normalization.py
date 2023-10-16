@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import gc
-
+import uuid
 import click
 import matplotlib.pyplot as plt
 import numpy as np
@@ -35,34 +35,22 @@ from ibaq.ibaqpy_commons import (
     TMT11plex,
     TMT16plex,
     get_canonical_peptide,
-    get_reference_name,
+    get_spectrum_prefix,
     get_study_accession,
     parquet_map,
     parse_uniprot_accession,
     plot_box_plot,
     plot_distributions,
     remove_contaminants_decoys,
-    remove_extension_file,
     remove_protein_by_ids,
     sum_peptidoform_intensities,
+    get_peptidoform_normalize_intensities,
+    average_peptide_intensities,
+    print_help_msg,
 )
 
 
-def print_dataset_size(dataset: DataFrame, message: str, verbose: bool) -> None:
-    if verbose:
-        print(message + str(len(dataset.index)))
-
-
-def print_help_msg(command) -> None:
-    """
-    Print help information
-    :param command: command to print helps
-    :return: print help
-    """
-    with click.Context(command) as ctx:
-        click.echo(command.get_help(ctx))
-
-
+# TODO: The following two func are useless.
 def remove_outliers_iqr(dataset: DataFrame):
     """
     This method removes outliers from the dataframe inplace, the variable used for the outlier removal is Intensity
@@ -86,6 +74,11 @@ def remove_missing_values(normalize_df: DataFrame, ratio: float = 0.3) -> DataFr
     n_samples = len(normalize_df.columns)
     normalize_df = normalize_df.dropna(thresh=round(n_samples * ratio))
     return normalize_df
+
+
+def print_dataset_size(dataset: DataFrame, message: str, verbose: bool) -> None:
+    if verbose:
+        print(message + str(len(dataset.index)))
 
 
 def intensity_normalization(
@@ -158,53 +151,6 @@ def intensity_normalization(
         return normalize_df
 
     return dataset
-
-
-def get_peptidoform_normalize_intensities(
-    dataset: DataFrame, higher_intensity: bool = True
-) -> DataFrame:
-    """
-    Select the best peptidoform for the same sample and the same replicates. A peptidoform is the combination of
-    a (PeptideSequence + Modifications) + Charge state.
-    :param dataset: dataset including all properties
-    :param higher_intensity: select based on normalize intensity, if false based on best scored peptide
-    :return:
-    """
-    dataset = dataset[dataset[NORM_INTENSITY].notna()]
-    if higher_intensity:
-        dataset = dataset.loc[
-            dataset.groupby(
-                [PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE],
-                observed=True,
-            )[NORM_INTENSITY].idxmax()
-        ].reset_index(drop=True)
-    else:
-        dataset = dataset.loc[
-            dataset.groupby(
-                [PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE],
-                observed=True,
-            )[SEARCH_ENGINE].idxmax()
-        ].reset_index(drop=True)
-    return dataset
-
-
-def average_peptide_intensities(dataset: DataFrame) -> DataFrame:
-    """
-    Median the intensities of all the peptidoforms for a specific peptide sample combination.
-    :param dataset: Dataframe containing all the peptidoforms
-    :return: New dataframe
-    """
-    dataset_df = dataset.groupby(
-        [PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION], observed=True
-    )[NORM_INTENSITY].median()
-    dataset_df = dataset_df.reset_index()
-    dataset_df = pd.merge(
-        dataset_df,
-        dataset[[PROTEIN_NAME, PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION]],
-        how="left",
-        on=[PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION],
-    )
-    return dataset_df
 
 
 def remove_low_frequency_peptides_(
@@ -411,7 +357,7 @@ def impute_peptide_intensities(dataset_df, field, class_field):
 @click.option(
     "--qc_report",
     help="PDF file to store multiple QC images",
-    default="peptideNorm-QCprofile.pdf",
+    default=f"peptideNorm-QCprofile-{str(uuid.uuid4())}.pdf",
 )
 def peptide_normalization(
     msstats: str,
@@ -469,7 +415,7 @@ def peptide_normalization(
 
         # Read the sdrf file
         sdrf_df = pd.read_csv(sdrf, sep="\t", compression=compression_method)
-        sdrf_df[REFERENCE] = sdrf_df["comment[data file]"].apply(remove_extension_file)
+        sdrf_df[REFERENCE] = sdrf_df["comment[data file]"].apply(get_spectrum_prefix)
         print(sdrf_df)
 
         if FRACTION not in feature_df.columns:
@@ -493,7 +439,7 @@ def peptide_normalization(
         # Merged the SDRF with the Resulted file
         labels = set(sdrf_df["comment[label]"])
         if CHANNEL not in feature_df.columns:
-            feature_df[REFERENCE] = feature_df[REFERENCE].apply(remove_extension_file)
+            feature_df[REFERENCE] = feature_df[REFERENCE].apply(get_spectrum_prefix)
             dataset_df = pd.merge(
                 feature_df,
                 sdrf_df[["source name", REFERENCE]],
@@ -522,7 +468,7 @@ def peptide_normalization(
                 .rename(columns={"index": "comment[label]"})
             )
             sdrf_df = sdrf_df.merge(choice, on="comment[label]", how="left")
-            feature_df[REFERENCE] = feature_df[REFERENCE].apply(get_reference_name)
+            feature_df[REFERENCE] = feature_df[REFERENCE].apply(get_spectrum_prefix)
             dataset_df = pd.merge(
                 feature_df,
                 sdrf_df[["source name", REFERENCE, CHANNEL]],
@@ -543,7 +489,7 @@ def peptide_normalization(
                 .rename(columns={"index": "comment[label]"})
             )
             sdrf_df = sdrf_df.merge(choice, on="comment[label]", how="left")
-            feature_df[REFERENCE] = feature_df[REFERENCE].apply(get_reference_name)
+            feature_df[REFERENCE] = feature_df[REFERENCE].apply(get_spectrum_prefix)
             dataset_df = pd.merge(
                 feature_df,
                 sdrf_df[["source name", REFERENCE, CHANNEL]],
