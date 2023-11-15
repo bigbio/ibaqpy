@@ -283,20 +283,6 @@ def plot_box_plot(
     return plt.gcf()
 
 
-def remove_extension_file(filename: str) -> str:
-    """
-    The filename can have
-    :param filename:
-    :return:
-    """
-    return (
-        filename.replace(".raw", "")
-        .replace(".RAW", "")
-        .replace(".mzML", "")
-        .replace(".wiff", "")
-    )
-
-
 def sum_peptidoform_intensities(dataset: DataFrame) -> DataFrame:
     """
     Sum the peptidoform intensities for all peptidofrom across replicates of the same sample.
@@ -314,18 +300,8 @@ def sum_peptidoform_intensities(dataset: DataFrame) -> DataFrame:
         how="left",
         on=[PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION],
     )
-
+    normalize_df.drop_duplicates(inplace=True)
     return normalize_df
-
-
-def get_mbr_hit(scan: str):
-    """
-    This function annotates if the peptide is inferred or not by Match between Runs algorithm (1), 0 if the peptide is
-    identified in the corresponding file.
-    :param scan: scan value
-    :return:
-    """
-    return 1 if pd.isna(scan) else 0
 
 
 def parse_uniprot_accession(uniprot_id: str) -> str:
@@ -354,14 +330,77 @@ def get_study_accession(sample_id: str) -> str:
     return sample_id.split("-")[0]
 
 
-def get_reference_name(reference_spectrum: str) -> str:
+def get_spectrum_prefix(reference_spectrum: str) -> str:
     """
     Get the reference name from Reference column. The function expected a reference name in the following format eg.
-    20150820_Haura-Pilot-TMT1-bRPLC03-2.mzML_controllerType=0 controllerNumber=1 scan=16340
-    :param reference_spectrum:
+    20150820_Haura-Pilot-TMT1-bRPLC03-2.mzML_controllerType=0 controllerNumber=1 scan=16340. This function can also
+    remove suffix of spectrum files.
+    :param reference_spectrum: 
     :return: reference name
     """
-    return re.split(r"\.mzML|\.MZML|\.raw|\.RAW", reference_spectrum)[0]
+    return re.split(r"\.mzML|\.MZML|\.raw|\.RAW|\.d|\.wiff", reference_spectrum)[0]
+
+
+"""
+Common functions when normalizing peptide dataframe
+"""
+def get_peptidoform_normalize_intensities(
+    dataset: DataFrame, higher_intensity: bool = True
+) -> DataFrame:
+    """
+    Select the best peptidoform for the same sample and the same replicates. A peptidoform is the combination of
+    a (PeptideSequence + Modifications) + Charge state.
+    :param dataset: dataset including all properties
+    :param higher_intensity: select based on normalize intensity, if false based on best scored peptide
+    :return:
+    """
+    dataset = dataset[dataset[NORM_INTENSITY].notna()]
+    if higher_intensity:
+        dataset = dataset.loc[
+            dataset.groupby(
+                [PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE],
+                observed=True,
+            )[NORM_INTENSITY].idxmax()
+        ].reset_index(drop=True)
+    else:
+        dataset = dataset.loc[
+            dataset.groupby(
+                [PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE],
+                observed=True,
+            )[SEARCH_ENGINE].idxmax()
+        ].reset_index(drop=True)
+    return dataset
+
+
+def average_peptide_intensities(dataset: DataFrame) -> DataFrame:
+    """
+    Median the intensities of all the peptidoforms for a specific peptide sample combination.
+    :param dataset: Dataframe containing all the peptidoforms
+    :return: New dataframe
+    """
+    dataset_df = dataset.groupby(
+        [PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION], observed=True
+    )[NORM_INTENSITY].median()
+    dataset_df = dataset_df.reset_index()
+    dataset_df = pd.merge(
+        dataset_df,
+        dataset[[PROTEIN_NAME, PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION]],
+        how="left",
+        on=[PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION],
+    )
+    dataset_df.drop_duplicates(inplace=True)
+    return dataset_df
+
+
+# TODO: Useless funcs
+def get_mbr_hit(scan: str):
+    """
+    This function annotates if the peptide is inferred or not by Match between Runs algorithm (1), 0 if the peptide is
+    identified in the corresponding file.
+    :param scan: scan value
+    :return:
+    """
+    return 1 if pd.isna(scan) else 0
 
 
 def get_run_mztab(ms_run: str, metadata: OrderedDict) -> str:
@@ -373,7 +412,7 @@ def get_run_mztab(ms_run: str, metadata: OrderedDict) -> str:
     """
     m = re.search(r"\[([A-Za-z0-9_]+)\]", ms_run)
     file_location = metadata["ms_run[" + str(m.group(1)) + "]-location"]
-    file_location = remove_extension_file(file_location)
+    file_location = get_spectrum_prefix(file_location)
     return os.path.basename(file_location)
 
 
@@ -397,6 +436,9 @@ def best_probability_error_bestsearch_engine(probability: float) -> float:
     return 1 - probability
 
 
+"""
+Functions needed by Combiner
+"""
 def load_sdrf(sdrf_path: str) -> DataFrame:
     """
     Load sdrf TSV as a dataframe.
