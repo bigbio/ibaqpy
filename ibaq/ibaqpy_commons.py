@@ -300,7 +300,7 @@ def sum_peptidoform_intensities(dataset: DataFrame) -> DataFrame:
         how="left",
         on=[PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION],
     )
-
+    normalize_df.drop_duplicates(inplace=True)
     return normalize_df
 
 
@@ -358,13 +358,15 @@ def get_peptidoform_normalize_intensities(
     if higher_intensity:
         dataset = dataset.loc[
             dataset.groupby(
-                [PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE]
+                [PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE],
+                observed=True,
             )[NORM_INTENSITY].idxmax()
         ].reset_index(drop=True)
     else:
         dataset = dataset.loc[
             dataset.groupby(
-                [PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE]
+                [PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE],
+                observed=True,
             )[SEARCH_ENGINE].idxmax()
         ].reset_index(drop=True)
     return dataset
@@ -386,6 +388,7 @@ def average_peptide_intensities(dataset: DataFrame) -> DataFrame:
         how="left",
         on=[PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION],
     )
+    dataset_df.drop_duplicates(inplace=True)
     return dataset_df
 
 

@@ -36,11 +36,15 @@ setup(
         'matplotlib',
         'qnorm',
         'seaborn',
+        'quantmsio',
         'typing_extensions'
     ],
     scripts=['bin/compute_ibaq.py',
              'bin/peptide_normalization.py',
              'bin/peptide_normalization_stream.py',
+             'bin/compute_tpa.py',
+             'bin/datasets_merger.py',
+             'bin/tsne_visualization.py',
              'bin/merge_condition_files.py'],
     classifiers=[
         'Development Status :: 4 - Beta',

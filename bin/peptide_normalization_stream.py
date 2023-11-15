@@ -17,7 +17,7 @@ def read_large_parquet(parquet_path: str, batch_size: int = 100000):
 
 def extract_label_from_sdrf(sdrf_path: str, compression: bool) -> tuple:
     sdrf_df = pd.read_csv(sdrf_path, sep="\t", compression=compression)
-    sdrf_df[REFERENCE] = sdrf_df["comment[data file]"].apply(remove_extension_file)
+    sdrf_df[REFERENCE] = sdrf_df["comment[data file]"].apply(get_spectrum_prefix)
 
     # Determine label type
     labels = set(sdrf_df["comment[label]"])
@@ -256,6 +256,7 @@ def peptide_normalization(
                 [
                     PROTEIN_NAME,
                     PEPTIDE_SEQUENCE,
+                    PEPTIDE_CANONICAL,
                     PEPTIDE_CHARGE,
                     INTENSITY,
                     REFERENCE,
@@ -270,7 +271,7 @@ def peptide_normalization(
 
         # Merged the SDRF with the Resulted file
         if label == "LFQ":
-            msstats_df[REFERENCE] = msstats_df[REFERENCE].apply(remove_extension_file)
+            msstats_df[REFERENCE] = msstats_df[REFERENCE].apply(get_spectrum_prefix)
             result_df = pd.merge(
                 msstats_df,
                 sdrf_df[["source name", REFERENCE]],
@@ -311,7 +312,7 @@ def peptide_normalization(
             result_df[result_df[SAMPLE_ID] == sample].to_csv(
                 file_name, index=False, header=header, mode=write_mode
             )
-        unique_df = result_df.groupby(PEPTIDE_CANONICAL).filter(
+        unique_df = result_df.groupby([PEPTIDE_CANONICAL]).filter(
             lambda x: len(set(x[PROTEIN_NAME])) == 1
         )[[PEPTIDE_CANONICAL, PROTEIN_NAME]]
         unique_dict = dict(zip(unique_df[PEPTIDE_CANONICAL], unique_df[PROTEIN_NAME]))
@@ -621,7 +622,8 @@ def peptide_normalization(
             final_norm_intensities_df = pd.concat(
                 [final_norm_intensities_df, dataset_df]
             )
-    del strong_peptides
+    if remove_low_frequency_peptides:
+        del strong_peptides
 
     # Save final normalized intensities QC plots
     log_after_norm = (

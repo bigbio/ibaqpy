@@ -7,5 +7,6 @@ matplotlib
 pyarrow
 qnorm
 seaborn
+quantmsio
 typing_extensions==4.6.3
 setuptools==67.8.0
