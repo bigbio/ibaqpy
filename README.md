@@ -16,7 +16,7 @@ iBAQ (intensity Based Absolute Quantification) determines the abundance of a pro
 
 - `datasets_merge.py`: Merge ibaq results from multiple datasets. It consists of three steps: missing value imputation, outlier removal, and batch effect removal.
 
-**NOTE**: In all scripts and result files, *uniprot accession* is used as the protein identifier.
+**NOTE:** In all scripts and result files, *uniprot accession* is used as the protein identifier.
 
 ### How to install ibaqpy
 
@@ -121,17 +121,17 @@ Peptide normalization starts from the peptides dataframe. The structure of the i
 - SampleID: Sample ID `(e.g. PXD003947-Sample-3)`
 - StudyID: Study ID `(e.g. PXD003947)`. In most of the cases the study ID is the same as the ProteomeXchange ID.
 
-##### 1. Removing Contaminants and Decoys
+#### 1. Removing Contaminants and Decoys
 
-The first step is to remove contaminants and decoys from the input file. The script `peptide_normalization.py` provides a parameter `--contaminants` for the user to provide a file with a list of protein accessions which represent each contaminant in the file. An example file can be seen in `data/contaminants.txt`. In addition to all the proteins accessions, the tool remove all the proteins with the following prefixes: `CONTAMINANT` and `DECOY`.
+The first step is to remove contaminants and decoys. The script `peptide_normalization.py` provides a parameter `--remove_decoy_contaminants` as a flag to remove all the proteins with the following prefixes: `CONTAMINANT` and `DECOY`. And the user can provide a file with a list of protein accessions which represent each contaminant or high abundant protein in the file. An example file can be seen in `data/contaminants_ids.txt`.
 
-##### 2. Peptidoform Normalization
+#### 2. Peptidoform Normalization
 
 A peptidoform is a combination of a `PeptideSequence(Modifications) + Charge + BioReplicate + Fraction`. In the current version of the file, each row correspond to one peptidoform. 
 
 The current version of the tool uses the parackage [qnorm](https://pypi.org/project/qnorm/) to normalize the intensities for each peptidofrom. **qnorm** implements a quantile normalization method. 
 
-##### 3. Peptidoform to Peptide Summarization
+#### 3. Peptidoform to Peptide Summarization
 
 For each peptidoform a peptide sequence (canonical) with not modification is generated. The intensity of all peptides group by biological replicate are `sum`. 
 
@@ -139,7 +139,7 @@ Then, the intensities of the peptides across different biological replicates are
 
 At the end of this step, for each peptide, the corresponding protein + the intensity of the peptide is stored. 
 
-##### 4. Peptide Intensity Imputation and Normalization
+#### 4. Peptide Intensity Imputation and Normalization
 
 Before the final two steps (peptide normalization and imputation), the algorithm removes all peptides that are source of missing values significantly. The algorithm removes all peptides that have more than 80% of missing values and peptides that do not appear in more than 1 sample. 
 
@@ -189,15 +189,15 @@ Options:
   --help                Show this message and exit.
 ```
 
-##### 1. Performs the Enzymatic Digestion
+#### 1. Performs the Enzymatic Digestion
 The current version of this tool uses OpenMS method to load fasta file, and use [ProteaseDigestion](https://openms.de/current_doxygen/html/classOpenMS_1_1ProteaseDigestion.html) to enzyme digestion of protein sequences, and finally get the theoretical peptide number of each protein.
 
-##### 2. Calculate the IBAQ Value
+#### 2. Calculate the IBAQ Value
 First, peptide intensity dataframe was grouped according to protein name, sample name and condition. The protein intensity of each group was summed. Finally, the sum of the intensity of the protein is divided by the number of theoretical peptides.
 
 If protein-group exists in the peptide intensity dataframe, the intensity of all proteins in the protein-group is summed based on the above steps, and then multiplied by the number of proteins in the protein-group.
 
-###### 3. IBAQ Normalization  
+#### 3. IBAQ Normalization  
 Normalize the ibaq values using the total ibaq of the sample. The resulted ibaq values are then multiplied by 100'000'000 (PRIDE database noramalization), for the ibaq ppb and log10 shifted by 10 (ProteomicsDB)
 
 ### Compute TPA - compute_tpa.py
@@ -241,7 +241,7 @@ Options:
   --help                Show this message and exit.
 ```
 
-##### 1. Calculate the TPA Value
+#### 1. Calculate the TPA Value
 The OpenMS tool was used to calculate the theoretical molecular mass of each protein. Similar to the calculation of IBAQ, the TPA value of protein-group was the sum of its intensity divided by the sum of the theoretical molecular mass.
 
 #### 2. Calculate the Cellular Protein Copy Number and Concentration
@@ -296,15 +296,15 @@ Options:
   --help                          Show this message and exit.
 ```
 
-##### 1. Impute Missing Values
+#### 1. Impute Missing Values
 Remove proteins missing more than 30% of all samples. Users can keep tissue parts interested, and data will be converted to a expression matrix (samples as columns, proteins as rows), then missing values will be imputed with `KNNImputer`. 
 
-##### 2. Remove Outliers
+#### 2. Remove Outliers
 When outliers are removed, multiple hierarchical clustering is performed using `hdbscan.HDBSCAN`, where outliers are labeled -1 in the PCA plot. When clustering is performed, the default cluster minimum value and the minimum number of neighbors of the core point are the minimum number of samples in all datasets.
 
-**Users can skip this step and do outliers removal manually.*
+*Users can skip this step and do outliers removal manually.*
 
-##### 3. Batch Effect Correction
+#### 3. Batch Effect Correction
 Using `pycombat` for batch effect correction, and batch is set to `datasets` (refers specifically to PXD ids) and the covariate should be `tissue_part`.
 
 ### Credits 
