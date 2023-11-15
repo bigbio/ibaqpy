@@ -17,6 +17,5 @@ dependencies:
   - pip:
       - git+https://github.com/Maarten-vd-Sande/qnorm
   - seaborn
-  - quantmsio
   - typing_extensions
   - setuptools

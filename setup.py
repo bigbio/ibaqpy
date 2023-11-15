@@ -36,7 +36,6 @@ setup(
         'matplotlib',
         'qnorm',
         'seaborn',
-        'quantmsio',
         'typing_extensions'
     ],
     scripts=['bin/compute_ibaq.py',
