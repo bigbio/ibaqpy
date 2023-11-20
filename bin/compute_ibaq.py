@@ -43,13 +43,17 @@ def normalize_ibaq(res: DataFrame) -> DataFrame:
     return res
 
 
-def parse_uniprot_accession(identifier: str) -> str:
+def get_accession(identifier: str) -> str:
     """
-    Parse the uniprot accession from the identifier  (e.g. sp|P12345|PROT_NAME)
-    :param identifier: Uniprot identifier
-    :return:
+    Get protein accession from the identifier  (e.g. sp|P12345|PROT_NAME)
+    :param identifier: Protein identifier
+    :return: Protein accession
     """
-    return identifier.split("|")[1]
+    identifier_lst = identifier.split("|")
+    if len(identifier_lst) == 1:
+        return identifier_lst[0]
+    else:
+        return identifier_lst[1]
 
 
 @click.command()
@@ -144,8 +148,8 @@ def ibaq_compute(
         digest = list()  # type: list[str]
         digestor.digest(AASequence().fromString(entry.sequence), digest, min_aa, max_aa)
         digestuniq = set(digest)
-        # TODO: We keep uniprot accessions rather than names.
-        protein_name = parse_uniprot_accession(entry.identifier)
+        # TODO: Try to get protein accessions from multiple databases.
+        protein_name = get_accession(entry.identifier)
         uniquepepcounts[protein_name] = len(digestuniq)
         protein_accessions.append(protein_name)
 

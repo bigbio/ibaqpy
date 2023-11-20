@@ -341,9 +341,7 @@ def get_spectrum_prefix(reference_spectrum: str) -> str:
     return re.split(r"\.mzML|\.MZML|\.raw|\.RAW|\.d|\.wiff", reference_spectrum)[0]
 
 
-"""
-Common functions when normalizing peptide dataframe
-"""
+# Common functions when normalizing peptide dataframe
 def get_peptidoform_normalize_intensities(
     dataset: DataFrame, higher_intensity: bool = True
 ) -> DataFrame:
@@ -436,9 +434,7 @@ def best_probability_error_bestsearch_engine(probability: float) -> float:
     return 1 - probability
 
 
-"""
-Functions needed by Combiner
-"""
+# Functions needed by Combiner
 def load_sdrf(sdrf_path: str) -> DataFrame:
     """
     Load sdrf TSV as a dataframe.
