@@ -151,6 +151,19 @@ def print_help_msg(command: click.Command):
         click.echo(command.get_help(ctx))
 
 
+def get_accession(identifier: str) -> str:
+    """
+    Get protein accession from the identifier  (e.g. sp|P12345|PROT_NAME)
+    :param identifier: Protein identifier
+    :return: Protein accession
+    """
+    identifier_lst = identifier.split("|")
+    if len(identifier_lst) == 1:
+        return identifier_lst[0]
+    else:
+        return identifier_lst[1]
+
+
 def remove_protein_by_ids(
     dataset: DataFrame, protein_file: str, protein_field=PROTEIN_NAME
 ) -> DataFrame:
@@ -217,7 +230,7 @@ def plot_distributions(
     :return:
     """
     pd.set_option("mode.chained_assignment", None)
-    normalize = dataset[[field, class_field]]
+    normalize = dataset[[field, class_field]].reset_index(drop=True)
     if log2:
         normalize[field] = np.log2(normalize[field])
     normalize.dropna(subset=[field], inplace=True)

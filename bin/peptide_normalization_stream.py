@@ -140,7 +140,7 @@ def extract_label_from_sdrf(sdrf_path: str, compression: bool) -> tuple:
 @click.option(
     "--qc_report",
     help="PDF file to store multiple QC images",
-    default=f"StreamPeptideNorm-QCprofile-{str(uuid.uuid4())}.pdf",
+    default=f"StreamPeptideNorm-QCprofile.pdf",
 )
 def peptide_normalization(
     msstats: str,
@@ -201,7 +201,6 @@ def peptide_normalization(
         msstats_chunks = read_large_parquet(parquet, batch_size=chunksize)
 
     # TODO: Stream processing to obtain strong proteins with more than 2 uniqe peptides
-    # if not os.path.exists("ibaqpy_temp/"):
     temp = f"Temp-{str(uuid.uuid4())}/"
     os.mkdir(temp)
     print(f"IBAQPY WARNING: Writing files into {temp}...")

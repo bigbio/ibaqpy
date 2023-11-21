@@ -198,7 +198,7 @@ First, peptide intensity dataframe was grouped according to protein name, sample
 If protein-group exists in the peptide intensity dataframe, the intensity of all proteins in the protein-group is summed based on the above steps, and then multiplied by the number of proteins in the protein-group.
 
 #### 3. IBAQ Normalization  
-Normalize the ibaq values using the total ibaq of the sample. The resulted ibaq values are then multiplied by 100'000'000 (PRIDE database noramalization), for the ibaq ppb and log10 shifted by 10 (ProteomicsDB)
+Normalize the ibaq values using the total ibaq of the sample. The resulted ibaq values are then multiplied by 100'000'000 (PRIDE database noramalization), for the ibaq ppb and log10 shifted by 10 (ProteomicsDB).
 
 ### Compute TPA - compute_tpa.py
 The total protein approach (TPA) is a label- and standard-free method for absolute protein quantitation of proteins using large-scale proteomic data. In the current version of the tool, the TPA value is the total intensity of the protein divided by its theoretical molecular mass.
@@ -206,7 +206,7 @@ The total protein approach (TPA) is a label- and standard-free method for absolu
 [ProteomicRuler](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4256500/) is a method for protein copy number and concentration estimation that does not require the use of isotope labeled standards. It uses the mass spectrum signal of histones as a "proteomic ruler" because it is proportional to the amount of DNA in the sample, which in turn depends on cell count. Thus, this approach can add an absolute scale to the mass spectrometry readout and allow estimates of the copy number of individual proteins in each cell.
 
 ```asciidoc
-python compute_tpa.py --fasta Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta --contaminants contaminants_ids.tsv --peptides PXD003947-peptides.csv --ruler --ploidy 2 --cpc 200 --output PXD003947-tpa.tsv
+python compute_tpa.py --fasta Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta --organism 'human' --peptides PXD003947-peptides.csv --ruler --ploidy 2 --cpc 200 --output PXD003947-tpa.tsv --verbose
 ```
 
 ```asciidoc
@@ -218,7 +218,7 @@ Usage: compute_tpa.py [OPTIONS]
 
   :param fasta: Fasta file used to perform the peptide identification
   :param peptides: Peptide intensity file
-  :param contaminants: Contaminants file
+  :param organism: Organism source of the data
   :param ruler: Whether to compute protein copy number, weight and concentration.
   :param ploidy: Ploidy number
   :param cpc: Cellular protein concentration(g/L)
@@ -230,7 +230,7 @@ Usage: compute_tpa.py [OPTIONS]
 Options:
   -f, --fasta TEXT      Protein database to compute IBAQ values  [required]
   -p, --peptides TEXT   Peptide identifications with intensities following the peptide intensity output  [required]
-  --contaminants        Contaminants and high abundant proteins to be removed
+  -m, --organism        Organism source of the data.
   -r, --ruler           Calculate protein copy number and concentration according to ProteomicRuler
   -n, --ploidy          Ploidy number (default: 2)
   -c, --cpc             Cellular protein concentration(g/L) (default: 200)

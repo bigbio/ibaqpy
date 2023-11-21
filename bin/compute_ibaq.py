@@ -13,7 +13,7 @@ from pyopenms import *
 from ibaq.ibaqpy_commons import (CONDITION, IBAQ, IBAQ_LOG, IBAQ_NORMALIZED,
                                  IBAQ_PPB, NORM_INTENSITY, PROTEIN_NAME,
                                  SAMPLE_ID, plot_box_plot, plot_distributions,
-                                 print_help_msg)
+                                 print_help_msg, get_accession)
 
 
 def normalize(group):
@@ -41,19 +41,6 @@ def normalize_ibaq(res: DataFrame) -> DataFrame:
     res[IBAQ_PPB] = res[IBAQ_NORMALIZED].apply(lambda x: x * 100000000)
 
     return res
-
-
-def get_accession(identifier: str) -> str:
-    """
-    Get protein accession from the identifier  (e.g. sp|P12345|PROT_NAME)
-    :param identifier: Protein identifier
-    :return: Protein accession
-    """
-    identifier_lst = identifier.split("|")
-    if len(identifier_lst) == 1:
-        return identifier_lst[0]
-    else:
-        return identifier_lst[1]
 
 
 @click.command()
