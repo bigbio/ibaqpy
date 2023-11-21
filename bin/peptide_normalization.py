@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 import gc
-import uuid
 import click
 import matplotlib.pyplot as plt
 import numpy as np
@@ -357,7 +356,7 @@ def impute_peptide_intensities(dataset_df, field, class_field):
 @click.option(
     "--qc_report",
     help="PDF file to store multiple QC images",
-    default=f"peptideNorm-QCprofile-{str(uuid.uuid4())}.pdf",
+    default="peptideNorm-QCprofile.pdf",
 )
 def peptide_normalization(
     msstats: str,

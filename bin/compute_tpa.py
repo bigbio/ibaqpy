@@ -10,16 +10,25 @@ from matplotlib.backends.backend_pdf import PdfPages
 from pyopenms import *
 
 from bin.compute_ibaq import print_help_msg
-from ibaq.ibaqpy_commons import (CONDITION, INTENSITY, PROTEIN_NAME, SAMPLE_ID,
+from ibaq.ibaqpy_commons import (CONDITION, NORM_INTENSITY, PROTEIN_NAME, SAMPLE_ID,
                                  plot_box_plot, plot_distributions,
-                                 remove_contaminants_decoys)
+                                 remove_contaminants_decoys, get_accession)
+
+
+def handle_nonstandard_aa(aa_seq: str) -> (list, str):
+    """Any nonstandard amoni acid will be removed.
+
+    :param aa_seq: Protein sequences from multiple database.
+    :return: One list contains nonstandard amoni acids and one remain sequence.
+    """
+    standard_aa = 'ARNDBCEQZGHILKMFPSTWYV'
+    nonstandard_aa_lst = [aa for aa in aa_seq if aa not in standard_aa]
+    considered_seq = ''.join([aa for aa in aa_seq if aa in standard_aa])
+    return nonstandard_aa_lst, considered_seq
 
 
 @click.command()
 @click.option("-f", "--fasta", help="Protein database")
-@click.option(
-    "--contaminants", help="Contaminants and high abundant proteins to be removed"
-)
 @click.option(
     "-p",
     "--peptides",
@@ -27,6 +36,7 @@ from ibaq.ibaqpy_commons import (CONDITION, INTENSITY, PROTEIN_NAME, SAMPLE_ID,
 )
 @click.option("-r", "--ruler", help="Whether to use ProteomicRuler", is_flag=True)
 @click.option("-n", "--ploidy", help="Ploidy number", default=2)
+@click.option("-m", "--organism", help="Organism source of the data", default="human")
 @click.option("-c", "--cpc", help="Cellular protein concentration(g/L)", default=200)
 @click.option("-o", "--output", help="Output file with the proteins and other values")
 @click.option(
@@ -42,9 +52,9 @@ from ibaq.ibaqpy_commons import (CONDITION, INTENSITY, PROTEIN_NAME, SAMPLE_ID,
 )
 def tpa_compute(
     fasta: str,
-    contaminants: str,
     peptides: str,
     ruler: bool,
+    organism: str,
     ploidy: int,
     cpc: float,
     output: str,
@@ -55,9 +65,9 @@ def tpa_compute(
     This command computes the protein copies and concentrations according to a file output of peptides with the
     format described in peptide_contaminants_file_generation.py.
     :param fasta: Fasta file used to perform the peptide identification.
-    :param contaminants: Contaminants file.
     :param peptides: Peptide intensity file without normalization.
     :param ruler: Whether to compute protein copies, weight and concentration.
+    :param organism: Organism source of the data.
     :param ploidy: Ploidy number.
     :param cpc: Cellular protein concentration(g/L).
     :param output: Output format containing the TPA values, protein copy numbers and concentrations.
@@ -70,17 +80,15 @@ def tpa_compute(
         exit(1)
 
     data = pd.read_csv(
-        peptides, sep=",", usecols=[PROTEIN_NAME, INTENSITY, SAMPLE_ID, CONDITION]
+        peptides, sep=",", usecols=[PROTEIN_NAME, NORM_INTENSITY, SAMPLE_ID, CONDITION]
     )
-    print("Remove contaminants...")
-    data = remove_contaminants_decoys(data, contaminants)
-    data[INTENSITY] = data[INTENSITY].astype("float")
-    data = data.dropna(subset=[INTENSITY])
-    data = data[data[INTENSITY] > 0]
+    data[NORM_INTENSITY] = data[NORM_INTENSITY].astype("float")
+    data = data.dropna(subset=[NORM_INTENSITY])
+    data = data[data[NORM_INTENSITY] > 0]
     print(data.head())
 
     res = pd.DataFrame(
-        data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION])[INTENSITY].sum()
+        data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION])[NORM_INTENSITY].sum()
     )
     res = res.reset_index()
     proteins = res[PROTEIN_NAME].unique().tolist()
@@ -91,10 +99,16 @@ def tpa_compute(
     fasta_proteins = list()  # type: list[FASTAEntry]
     FASTAFile().load(fasta, fasta_proteins)
     for entry in fasta_proteins:
-        accession, name = entry.identifier.split("|")[1:]
-        if name in proteins:
-            mw = AASequence().fromString(entry.sequence).getMonoWeight()
-            mw_dict[name] = mw
+        accession = get_accession(entry.identifier)
+        if accession in proteins:
+            try:
+                mw = AASequence().fromString(entry.sequence).getMonoWeight()
+                mw_dict[accession] = mw
+            except:
+                error_aa, seq = handle_nonstandard_aa(entry.sequence)
+                mw = AASequence().fromString(seq).getMonoWeight()
+                mw_dict[accession] = mw
+                print(f"Nonstandard amimo acids found in {accession}: {error_aa}, ignored!")
 
     res = res[res[PROTEIN_NAME].isin(mw_dict.keys())]
 
@@ -108,7 +122,7 @@ def tpa_compute(
     )
     res["MolecularWeight"] = res["MolecularWeight"].fillna(1)
     res["MolecularWeight"] = res["MolecularWeight"].replace(0, 1)
-    res["TPA"] = res[INTENSITY] / res["MolecularWeight"]
+    res["TPA"] = res[NORM_INTENSITY] / res["MolecularWeight"]
     # Print the distribution of the protein TPA values
     if verbose:
         plot_width = len(set(res[SAMPLE_ID])) * 0.5 + 10
@@ -135,7 +149,7 @@ def tpa_compute(
         avogadro = 6.02214129e23
         average_base_pair_mass = 617.96  # 615.8771
 
-        organism = res.loc[0, PROTEIN_NAME].split("_")[1].lower()
+        organism = organism.lower()
         histone_df = pd.read_json(
             open(os.path.split(__file__)[0] + os.sep + "histones.json", "rb")
         ).T
@@ -153,12 +167,12 @@ def tpa_compute(
 
         def proteomic_ruler(df):
             histone_intensity = df[df[PROTEIN_NAME].isin(histones_list)][
-                INTENSITY
+                NORM_INTENSITY
             ].sum()
             histone_intensity = histone_intensity if histone_intensity > 0 else 1
             df[["Copy", "Moles[nmol]", "Weight[ng]"]] = df.apply(
                 lambda x: calculate(
-                    x[INTENSITY], histone_intensity, x["MolecularWeight"]
+                    x[NORM_INTENSITY], histone_intensity, x["MolecularWeight"]
                 ),
                 axis=1,
                 result_type="expand",
@@ -171,7 +185,7 @@ def tpa_compute(
 
         if verbose:
             density = plot_distributions(
-                res, "Copy", SAMPLE_ID, log2=True, title="Copy numbers Distribution"
+                res, "Copy", SAMPLE_ID, width=plot_width, log2=True, title="Copy numbers Distribution"
             )
             plt.show()
             pdf.savefig(density)
@@ -179,6 +193,7 @@ def tpa_compute(
                 res,
                 "Copy",
                 SAMPLE_ID,
+                width=plot_width,
                 log2=True,
                 title="Copy numbers Distribution",
                 violin=False,
@@ -190,6 +205,7 @@ def tpa_compute(
                 res,
                 "Concentration[nM]",
                 SAMPLE_ID,
+                width=plot_width,
                 log2=True,
                 title="Concentration[nM] Distribution",
             )
@@ -199,6 +215,7 @@ def tpa_compute(
                 res,
                 "Concentration[nM]",
                 SAMPLE_ID,
+                width=plot_width,
                 log2=True,
                 title="Concentration[nM] Distribution",
                 violin=False,
