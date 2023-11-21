@@ -307,6 +307,10 @@ When outliers are removed, multiple hierarchical clustering is performed using `
 #### 3. Batch Effect Correction
 Using `pycombat` for batch effect correction, and batch is set to `datasets` (refers specifically to PXD ids) and the covariate should be `tissue_part`.
 
+### Citation
+
+Wang H, Dai C, Pfeuffer J, Sachsenberg T, Sanchez A, Bai M, Perez-Riverol Y. Tissue-based absolute quantification using large-scale TMT and LFQ experiments. Proteomics. 2023 Oct;23(20):e2300188. doi: [10.1002/pmic.202300188](https://analyticalsciencejournals.onlinelibrary.wiley.com/doi/10.1002/pmic.202300188). Epub 2023 Jul 24. PMID: 37488995.
+
 ### Credits 
 
 - Julianus Pfeuffer
