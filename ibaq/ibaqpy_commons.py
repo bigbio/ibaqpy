@@ -207,7 +207,7 @@ def get_canonical_peptide(peptide_sequence: str) -> str:
     :return: peptide sequence
     """
     clean_peptide = re.sub("[\(\[].*?[\)\]]", "", peptide_sequence)
-    clean_peptide = clean_peptide.replace(".", "")
+    clean_peptide = clean_peptide.replace(".", "").replace("-", "")
     return clean_peptide
 
 
