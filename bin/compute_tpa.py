@@ -9,9 +9,8 @@ import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 from pyopenms import *
 
-from bin.compute_ibaq import print_help_msg
 from ibaq.ibaqpy_commons import (CONDITION, NORM_INTENSITY, PROTEIN_NAME, SAMPLE_ID,
-                                 plot_box_plot, plot_distributions,
+                                 plot_box_plot, plot_distributions, print_help_msg,
                                  remove_contaminants_decoys, get_accession)
 
 
