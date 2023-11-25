@@ -315,6 +315,7 @@ def intensity_normalization(
             dataset,
             index=[
                 PEPTIDE_SEQUENCE,
+                PEPTIDE_CANONICAL,
                 PEPTIDE_CHARGE,
                 FRACTION,
                 RUN,
@@ -333,6 +334,7 @@ def intensity_normalization(
         normalize_df = normalize_df.melt(
             id_vars=[
                 PEPTIDE_SEQUENCE,
+                PEPTIDE_CANONICAL,
                 PEPTIDE_CHARGE,
                 FRACTION,
                 RUN,
@@ -637,7 +639,8 @@ def peptide_normalization(
         )
         dataset_df = dataset_df[dataset_df[PROTEIN_NAME].isin(strong_proteins)]
 
-        print_dataset_size(dataset_df, "Number of peptides: ", verbose)
+        print(f"Number of unique peptides: {len(unique_peptides)}")
+        print(f"Number of strong proteins: {len(strong_proteins)}")
 
         print("Logarithmic if specified..")
         dataset_df.loc[dataset_df.Intensity == 0, INTENSITY] = 1
@@ -721,32 +724,22 @@ def peptide_normalization(
             )
             plt.show()
             pdf.savefig(box)
-
-        print("Select the best peptidoform across fractions...")
         print(
-            "Number of peptides before peptidofrom selection: "
+            "Number of peptides after normalization: "
             + str(len(dataset_df.index))
         )
+        print("Select the best peptidoform across fractions...")
         dataset_df = get_peptidoform_normalize_intensities(dataset_df)
         print(
             "Number of peptides after peptidofrom selection: "
             + str(len(dataset_df.index))
         )
 
-        # Add the peptide sequence canonical without the modifications
-        if PEPTIDE_CANONICAL not in dataset_df.columns:
-            print("Add Canonical peptides to the dataframe...")
-            dataset_df[PEPTIDE_CANONICAL] = dataset_df[PEPTIDE_SEQUENCE].apply(
-                lambda x: get_canonical_peptide(x)
-            )
-
         print("Sum all peptidoforms per Sample...")
-        print("Number of peptides before sum selection: " + str(len(dataset_df.index)))
         dataset_df = sum_peptidoform_intensities(dataset_df)
-        print("Number of peptides after sum: " + str(len(dataset_df.index)))
+        print("Number of peptides after selection: " + str(len(dataset_df.index)))
 
         print("Average all peptidoforms per Peptide/Sample...")
-        print("Number of peptides before average: " + str(len(dataset_df.index)))
         dataset_df = average_peptide_intensities(dataset_df)
         print("Number of peptides after average: " + str(len(dataset_df.index)))
 
@@ -779,10 +772,6 @@ def peptide_normalization(
             pdf.savefig(box)
 
         if remove_low_frequency_peptides:
-            print(
-                "Peptides before removing low frequency peptides: "
-                + str(len(dataset_df.index))
-            )
             print(dataset_df)
             dataset_df = remove_low_frequency_peptides_(dataset_df, 0.20)
             print_dataset_size(
@@ -855,10 +844,11 @@ def peptide_normalization(
         # TODO: Stream processing to obtain strong proteins with more than 2 uniqe peptides
         temp = f"Temp-{str(uuid.uuid4())}/"
         os.mkdir(temp)
-        print(f"IBAQPY WARNING: Writing files into {temp}...")
+        print(f"INFO: Writing files into {temp}...")
         unique_peptides = {}
         group_intensities = {}
         quantile = {}
+        print("INFO: First iteration to get unique peptides and strong proteins...")
         for msstats_df in msstats_chunks:
             if parquet is None:
                 msstats_df = msstats_common_process(msstats_df)
@@ -872,7 +862,6 @@ def peptide_normalization(
                 file_name = f"{temp}/{sample}.csv"
                 write_mode = "a" if os.path.exists(file_name) else "w"
                 header = False if os.path.exists(file_name) else True
-                print(result_df[SAMPLE_ID])
                 result_df[result_df[SAMPLE_ID] == sample].to_csv(
                     file_name, index=False, header=header, mode=write_mode
                 )
@@ -905,13 +894,11 @@ def peptide_normalization(
         pdf = PdfPages(qc_report)
         original_intensities_df = pd.DataFrame()
 
+        print("INFO: Second iteration to filter data and prepare normalization...")
+        print("Logarithmic if specified..")
         for sample in sample_names:
-            print(
-                f"{sample} -> Filter out proteins containing unique peptides fewer than {min_unique}.."
-            )
             msstats_df = pd.read_csv(f"{temp}/{sample}.csv", sep=",")
             msstats_df = msstats_df[msstats_df[PROTEIN_NAME].isin(strong_proteins)]
-            print(f"{sample} -> Logarithmic if specified..")
             msstats_df.loc[msstats_df.Intensity == 0, INTENSITY] = 1
             msstats_df[NORM_INTENSITY] = (
                 np.log2(msstats_df[INTENSITY]) if log2 else msstats_df[INTENSITY]
@@ -987,20 +974,15 @@ def peptide_normalization(
         pdf.savefig(box)
         del original_intensities_df
 
-        def normalization(dataset_df, label, sample, skip_normalization, nmethod):
+        def normalization(dataset_df, label, sample, skip_normalization, nmethod, record):
             # Remove high abundant and contaminants proteins and the outliers
             if remove_ids is not None:
-                print(f"{sample} -> Remove contaminants...")
                 dataset_df = remove_protein_by_ids(dataset_df, remove_ids)
             if remove_decoy_contaminants:
-                print(f"{sample} -> Remove decoy and contaminants...")
                 dataset_df = remove_contaminants_decoys(dataset_df)
-            print(
-                f"{sample} -> Peptides after contaminants removal: {len(dataset_df[PEPTIDE_SEQUENCE].unique().tolist())}"
-            )
+            record[0] += len(dataset_df.index)
 
             if not skip_normalization:
-                print(f"{sample} -> Normalize intensities.. ")
                 field = NORM_INTENSITY
                 if nmethod == "msstats":
                     # For ISO normalization
@@ -1041,60 +1023,27 @@ def peptide_normalization(
                         else np.nan,
                         axis=1,
                     )
-
-            print(f"{sample} -> Select the best peptidoform across fractions...")
-            print(
-                f"{sample} -> Number of peptides before peptidofrom selection: "
-                + str(len(dataset_df.index))
-            )
+            record[1] += len(dataset_df.index)
             dataset_df = get_peptidoform_normalize_intensities(dataset_df)
-            print(
-                f"{sample} -> Number of peptides after peptidofrom selection: "
-                + str(len(dataset_df.index))
-            )
-
-            # Add the peptide sequence canonical without the modifications
-            if PEPTIDE_CANONICAL not in dataset_df.columns:
-                print(f"{sample} -> Add Canonical peptides to the dataframe...")
-                dataset_df[PEPTIDE_CANONICAL] = dataset_df[PEPTIDE_SEQUENCE].apply(
-                    get_canonical_peptide
-                )
-
-            print(f"{sample} -> Sum all peptidoforms per Sample...")
-            print(
-                f"{sample} -> Number of peptides before sum selection: "
-                + str(len(dataset_df.index))
-            )
+            dataset_df = dataset_df[dataset_df[NORM_INTENSITY].notna()]
+            record[2] += len(dataset_df.index)
             dataset_df = sum_peptidoform_intensities(dataset_df)
-            print(
-                f"{sample} -> Number of peptides after sum: "
-                + str(len(dataset_df.index))
-            )
-
-            print(f"{sample} -> Average all peptidoforms per Peptide/Sample...")
-            print(
-                f"{sample} -> Number of peptides before average: "
-                + str(len(dataset_df.index))
-            )
+            record[3] += len(dataset_df.index)
             dataset_df = average_peptide_intensities(dataset_df)
-            print(
-                f"{sample} -> Number of peptides after average: "
-                + str(len(dataset_df.index))
-            )
+            record[4] += len(dataset_df.index)
 
             dataset_df = dataset_df.drop_duplicates()
-            dataset_df = dataset_df[dataset_df[NORM_INTENSITY].notna()]
-            return dataset_df
+            return dataset_df, record
 
         # TODO: Peptide intensity normalization
         peptides_count = {}
+        size_record = [0] * 5
         norm_intensities_df = pd.DataFrame()
         if not skip_normalization:
             if nmethod == "qnorm":
                 norm_intensity = {k: v[0] for k, v in quantile.items()}
             elif nmethod == "msstats":
                 # For ISO normalization
-                print(f"Label -> {label}")
                 if label in ["TMT", "ITRAQ"]:
                     median_baseline = np.median(
                         list(set(sum(group_intensities.values(), [])))
@@ -1118,11 +1067,12 @@ def peptide_normalization(
                         key: np.median(values)
                         for key, values in group_intensities.items()
                     }
+        print("INFO: Third iteration to normalize and counting peptides frequency...")
         for sample in sample_names:
             dataset_df = pd.read_csv(f"{temp}/{sample}.csv", sep=",")
             if len(dataset_df) != 0:
-                norm_df = normalization(
-                    dataset_df, label, sample, skip_normalization, nmethod
+                norm_df, size_record = normalization(
+                    dataset_df, label, sample, skip_normalization, nmethod, size_record
                 )
             else:
                 continue
@@ -1136,6 +1086,11 @@ def peptide_normalization(
             if sample in plot_samples:
                 norm_intensities_df = pd.concat([norm_intensities_df, norm_df])
         del group_intensities, quantile
+        print(f"Peptides after contaminants removal: {size_record[0]}")
+        print(f"Number of peptides after normalization: {size_record[1]}")
+        print(f"Number of peptides after peptidofrom selection: {size_record[2]}")
+        print(f"Number of peptides after selection: {size_record[3]}")
+        print(f"Number of peptides after average: {size_record[4]}")
         # Save normalized intensities QC plots
         norm_intensities_df = norm_intensities_df.reset_index(drop=True)
         log_after_norm = (
@@ -1168,7 +1123,7 @@ def peptide_normalization(
         pdf.savefig(box)
         del norm_intensities_df, strong_proteins
 
-        print("IBAQPY WARNING: Writing normalized intensities into CSV...")
+        print("INFO: Writing normalized intensities into CSV...")
         if remove_low_frequency_peptides:
             sample_number = len(sample_names)
             min_sample = 1 if sample_number > 1 else 0
@@ -1181,6 +1136,7 @@ def peptide_normalization(
             del peptides_count
 
         final_norm_intensities_df = pd.DataFrame()
+        size_record = 0
         for sample in sample_names:
             dataset_df = pd.read_csv(f"{temp}/{sample}.csv", sep=",")
             if remove_low_frequency_peptides:
@@ -1189,6 +1145,7 @@ def peptide_normalization(
                 dataset_df = dataset_df[
                     dataset_df[PEPTIDE_CANONICAL].isin(strong_peptides)
                 ]
+            size_record += len(dataset_df.index)
             dataset_df = dataset_df[
                 [PEPTIDE_CANONICAL, PROTEIN_NAME, SAMPLE_ID, NORM_INTENSITY, CONDITION]
             ]
@@ -1200,9 +1157,11 @@ def peptide_normalization(
                 final_norm_intensities_df = pd.concat(
                     [final_norm_intensities_df, dataset_df]
                 )
+        print(f"Peptides after remove low frequency peptides: {size_record}")
         if remove_low_frequency_peptides:
             del strong_peptides
 
+        # TODO: No peptides intensity normalization applied in stream processing.
         # Save final normalized intensities QC plots
         log_after_norm = (
             nmethod == "msstats"
