@@ -268,6 +268,7 @@ def data_common_process(data_df: pd.DataFrame, min_aa: int) -> pd.DataFrame:
                 FRAGMENT_ION,
                 ISOTOPE_LABEL_TYPE,
                 STUDY_ID,
+                SAMPLE_ID,
             ]
         ]
     data_df[CONDITION] = pd.Categorical(data_df[CONDITION])
@@ -345,7 +346,9 @@ def intensity_normalization(
             ]
         )
         normalize_df.rename(columns={"value": NORM_INTENSITY}, inplace=True)
-        print(dataset.head())
+        normalize_df = normalize_df[normalize_df[NORM_INTENSITY].notna()]
+        normalize_df = normalize_df.drop_duplicates()
+        print(normalize_df.head())
         return normalize_df
 
     return dataset
@@ -371,12 +374,10 @@ def remove_low_frequency_peptides_(
     )
     # Count the number of null values in each row
     null_count = normalize_df.isnull().sum(axis=1)
-
     # Find the rows that have null values above the threshold
     rows_to_drop = null_count[
         null_count >= (1 - percentage_samples) * normalize_df.shape[1]
     ].index
-
     # Drop the rows with too many null values
     normalize_df = normalize_df.drop(rows_to_drop)
 
@@ -771,7 +772,7 @@ def peptide_normalization(
             plt.show()
             pdf.savefig(box)
 
-        if remove_low_frequency_peptides:
+        if remove_low_frequency_peptides and len(sample_names) > 1:
             print(dataset_df)
             dataset_df = remove_low_frequency_peptides_(dataset_df, 0.20)
             print_dataset_size(
@@ -840,6 +841,7 @@ def peptide_normalization(
                 parquet, batch_size=chunksize
             )
             msstats_chunks = read_large_parquet(parquet, batch_size=chunksize)
+        sample_number = len(sample_names)
 
         # TODO: Stream processing to obtain strong proteins with more than 2 uniqe peptides
         temp = f"Temp-{str(uuid.uuid4())}/"
@@ -1023,16 +1025,16 @@ def peptide_normalization(
                         else np.nan,
                         axis=1,
                     )
+            dataset_df = dataset_df.drop_duplicates()
+            dataset_df = dataset_df[dataset_df[NORM_INTENSITY].notna()]
             record[1] += len(dataset_df.index)
             dataset_df = get_peptidoform_normalize_intensities(dataset_df)
-            dataset_df = dataset_df[dataset_df[NORM_INTENSITY].notna()]
             record[2] += len(dataset_df.index)
             dataset_df = sum_peptidoform_intensities(dataset_df)
             record[3] += len(dataset_df.index)
             dataset_df = average_peptide_intensities(dataset_df)
             record[4] += len(dataset_df.index)
 
-            dataset_df = dataset_df.drop_duplicates()
             return dataset_df, record
 
         # TODO: Peptide intensity normalization
@@ -1077,7 +1079,7 @@ def peptide_normalization(
             else:
                 continue
             sample_peptides = norm_df[PEPTIDE_CANONICAL].unique().tolist()
-            if remove_low_frequency_peptides:
+            if remove_low_frequency_peptides and sample_number > 1:
                 peptides_count = {
                     peptide: peptides_count.get(peptide, 0) + 1
                     for peptide in sample_peptides
@@ -1124,13 +1126,11 @@ def peptide_normalization(
         del norm_intensities_df, strong_proteins
 
         print("INFO: Writing normalized intensities into CSV...")
-        if remove_low_frequency_peptides:
-            sample_number = len(sample_names)
-            min_sample = 1 if sample_number > 1 else 0
+        if remove_low_frequency_peptides and sample_number > 1:
             peptides_count = {
                 k: v / sample_number
                 for k, v in peptides_count.items()
-                if v / sample_number >= 0.2 and v > min_sample
+                if v / sample_number >= 0.80
             }
             strong_peptides = list(peptides_count.keys())
             del peptides_count
@@ -1139,7 +1139,7 @@ def peptide_normalization(
         size_record = 0
         for sample in sample_names:
             dataset_df = pd.read_csv(f"{temp}/{sample}.csv", sep=",")
-            if remove_low_frequency_peptides:
+            if remove_low_frequency_peptides and sample_number > 1:
                 # Filter low-frequency peptides, which indicate whether the peptide occurs less than 20% in all samples or
                 # only in one sample
                 dataset_df = dataset_df[
