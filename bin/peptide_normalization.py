@@ -620,7 +620,7 @@ def peptide_normalization(
             del feature_df, sdrf_df
             gc.collect()
         else:
-            dataset_df = pd.read_parquet(parquet)[FEATURE_COLUMNS]
+            dataset_df = pd.read_parquet(parquet)[PARQUET_COLUMNS]
             dataset_df = parquet_common_process(dataset_df, label, choice)
 
         dataset_df = data_common_process(dataset_df, min_aa)
