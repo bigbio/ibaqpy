@@ -1,11 +1,12 @@
 #!/usr/bin/env python
-
+import logging
 import os
 import random
 import uuid
 from matplotlib.backends.backend_pdf import PdfPages
 import pyarrow.parquet as pq
 from ibaq.ibaqpy_commons import *
+import swifter
 
 
 def read_large_parquet(parquet_path: str, batch_size: int = 100000):
@@ -269,9 +270,7 @@ def peptide_normalization(
         else:
             msstats_df = msstats_df[FEATURE_COLUMNS]
             msstats_df = msstats_df.rename(columns=parquet_map)
-            msstats_df[PROTEIN_NAME] = msstats_df.apply(
-                lambda x: ",".join(x[PROTEIN_NAME]), axis=1
-            )
+            msstats_df[PROTEIN_NAME] = msstats_df.swifter.apply(lambda x: ",".join(x[PROTEIN_NAME]), axis=1 )
             if label == "LFQ":
                 msstats_df.drop(CHANNEL, inplace=True, axis=1)
             else:
@@ -287,12 +286,9 @@ def peptide_normalization(
                 lambda x: inner_canonical_dict[x[PEPTIDE_SEQUENCE]], axis=1
             )
         # Filter peptides with less amino acids than min_aa (default: 7)
-        msstats_df = msstats_df[
-            msstats_df.apply(lambda x: len(x[PEPTIDE_CANONICAL]) >= min_aa, axis=1)
+        msstats_df = msstats_df[msstats_df.swifter.apply(lambda x: len(x[PEPTIDE_CANONICAL]) >= min_aa, axis=1)
         ]
-        msstats_df[PROTEIN_NAME] = msstats_df[PROTEIN_NAME].apply(
-            parse_uniprot_accession
-        )
+        msstats_df[PROTEIN_NAME] = msstats_df[PROTEIN_NAME].swifter.apply(parse_uniprot_accession)
 
         if FRACTION not in msstats_df.columns:
             msstats_df[FRACTION] = 1
@@ -353,9 +349,8 @@ def peptide_normalization(
             file_name = f"{temp}/{sample}.csv"
             write_mode = "a" if os.path.exists(file_name) else "w"
             header = False if os.path.exists(file_name) else True
-            result_df[result_df[SAMPLE_ID] == sample].to_csv(
-                file_name, index=False, header=header, mode=write_mode
-            )
+            result_df[result_df[SAMPLE_ID] == sample].to_csv(file_name, index=False, header=header, mode=write_mode)
+            logging.info("Print the file: {}".format(file_name))
         unique_df = result_df.groupby([PEPTIDE_CANONICAL]).filter(
             lambda x: len(set(x[PROTEIN_NAME])) == 1
         )[[PEPTIDE_CANONICAL, PROTEIN_NAME]]
