@@ -90,9 +90,9 @@ Options:
                                   properties for normalization
   --skip_normalization            Skip normalization step
   --nmethod TEXT                  Normalization method used to normalize
-                                  intensities for all samples (options: qnorm)
+                                  intensities for all samples (options: msstats, quantile, qnorm)
   --pnormalization                Normalize the peptide intensities using
-                                  different methods (options: qnorm)
+                                  different methods (options: quantile, qnorm)
   --compress                      Read the input peptides file in compress
                                   gzip file
   --log2                          Transform to log2 the peptide intensity
@@ -131,7 +131,7 @@ The first step is to remove contaminants and decoys. The script `peptide_normali
 
 A peptidoform is a combination of a `PeptideSequence(Modifications) + Charge + BioReplicate + Fraction`. In the current version of the file, each row correspond to one peptidoform. 
 
-The current version of the tool uses the parackage [qnorm](https://pypi.org/project/qnorm/) to normalize the intensities for each peptidofrom. **qnorm** implements a quantile normalization method. 
+The current version of the tool uses the parackage [qnorm](https://pypi.org/project/qnorm/) to normalize the intensities for each peptidofrom. **qnorm** implements a quantile normalization method. However, the current version of qnorm can not handle NA values which will lead to cause more NA values in data. We suggest users to use default method 'quantile' instead for now.
 
 #### 3. Peptidoform to Peptide Summarization
 
