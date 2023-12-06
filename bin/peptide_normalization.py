@@ -279,6 +279,8 @@ def data_common_process(data_df: pd.DataFrame, min_aa: int) -> pd.DataFrame:
     return data_df
 
 
+# TODO: Here we present a method to apply quantile normalization. However,
+# this function runs slowly and needs to be improved.
 def quantile_normalize(
     data: pd.DataFrame, index: pd.core.indexes, cols: pd.core.indexes
 ) -> pd.DataFrame:
@@ -358,6 +360,9 @@ def intensity_normalization(
             normalize_df = quantile_normalize(
                 normalize_df, normalize_df.index, normalize_df.columns
             )
+        # TODO: When restoring the pivot table here, the previous grouping caused
+        # the dataframe to produce a large number of rows with NORM_INTENSITY of
+        # NA at melt. This results in an unbearable memory consumption.
         normalize_df = normalize_df.reset_index()
         normalize_df = normalize_df.melt(
             id_vars=[
@@ -457,7 +462,9 @@ def peptide_intensity_normalization(
             normalize_df, normalize_df.index, normalize_df.columns
         )
     else:
-        exit("Peptide intensity normalization works only with qnorm or quantile methods!")
+        exit(
+            "Peptide intensity normalization works only with qnorm or quantile methods!"
+        )
     normalize_df = normalize_df.reset_index()
     normalize_df = normalize_df.melt(
         id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION]
