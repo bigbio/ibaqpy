@@ -1,6 +1,5 @@
 import os
 import re
-from typing import OrderedDict
 
 import click
 import matplotlib
@@ -10,7 +9,7 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 from pandas import DataFrame
 
-FEATURE_COLUMNS = [
+PARQUET_COLUMNS = [
     "protein_accessions",
     "peptidoform",
     "sequence",
@@ -401,50 +400,6 @@ def average_peptide_intensities(dataset: DataFrame) -> DataFrame:
     )
     dataset_df.drop_duplicates(inplace=True)
     return dataset_df
-
-
-# TODO: Useless funcs
-def get_mbr_hit(scan: str):
-    """
-    This function annotates if the peptide is inferred or not by Match between Runs algorithm (1), 0 if the peptide is
-    identified in the corresponding file.
-    :param scan: scan value
-    :return:
-    """
-    return 1 if pd.isna(scan) else 0
-
-
-def get_run_mztab(ms_run: str, metadata: OrderedDict) -> str:
-    """
-    Convert the ms_run into a reference file for merging with msstats output
-    :param ms_run: ms_run index in mztab
-    :param metadata:  metadata information in mztab
-    :return: file name
-    """
-    m = re.search(r"\[([A-Za-z0-9_]+)\]", ms_run)
-    file_location = metadata["ms_run[" + str(m.group(1)) + "]-location"]
-    file_location = get_spectrum_prefix(file_location)
-    return os.path.basename(file_location)
-
-
-def get_scan_mztab(ms_run: str) -> str:
-    """
-    Get the scan number for an mzML spectrum in mzTab. The format of the reference
-    must be controllerType=0 controllerNumber=1 scan=30121
-    :param ms_run: the original ms_run reference in mzTab
-    :return: the scan index
-    """
-    reference_parts = ms_run.split()
-    return reference_parts[-1]
-
-
-def best_probability_error_bestsearch_engine(probability: float) -> float:
-    """
-    Convert probability to a Best search engine score
-    :param probability: probability
-    :return:
-    """
-    return 1 - probability
 
 
 # Functions needed by Combiner

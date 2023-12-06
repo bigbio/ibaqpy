@@ -6,6 +6,7 @@ pandas==2.0.2
 matplotlib
 pyarrow
 qnorm
+scipy>=1.10
 seaborn
 typing_extensions==4.6.3
 setuptools==67.8.0
