@@ -25,7 +25,6 @@ from ibaq.ibaqpy_commons import (
     REFERENCE,
     RUN,
     SAMPLE_ID,
-    SEARCH_ENGINE,
     STUDY_ID,
     ITRAQ4plex,
     ITRAQ8plex,
