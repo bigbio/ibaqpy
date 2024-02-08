@@ -182,7 +182,7 @@ def remove_protein_by_ids(
     return dataset[~dataset[protein_field].str.contains(cregex)]
 
 
-def remove_contaminants_decoys(
+def remove_contaminants_entrapments_decoys(
     dataset: DataFrame, protein_field=PROTEIN_NAME
 ) -> DataFrame:
     """
@@ -195,6 +195,7 @@ def remove_contaminants_decoys(
     """
     contaminants = []
     contaminants.append("CONTAMINANT")
+    contaminants.append("ENTRAPMENT")
     contaminants.append("DECOY")
     cregex = "|".join(contaminants)
     return dataset[~dataset[protein_field].str.contains(cregex)]

@@ -461,7 +461,7 @@ def peptide_normalization(
             dataset_df = remove_protein_by_ids(dataset_df, remove_ids)
         if remove_decoy_contaminants:
             print(f"{sample} -> Remove decoy and contaminants...")
-            dataset_df = remove_contaminants_decoys(dataset_df)
+            dataset_df = remove_contaminants_entrapments_decoys(dataset_df)
         print(
             f"{sample} -> Peptides after contaminants removal: {len(dataset_df[PEPTIDE_SEQUENCE].unique().tolist())}"
         )
