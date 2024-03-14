@@ -30,7 +30,6 @@ from ibaq.ibaqpy_commons import (
     REFERENCE,
     RUN,
     SAMPLE_ID,
-    SEARCH_ENGINE,
     STUDY_ID,
     TMT16plex,
     TMT11plex,
@@ -45,7 +44,7 @@ from ibaq.ibaqpy_commons import (
     parse_uniprot_accession,
     plot_box_plot,
     plot_distributions,
-    remove_contaminants_decoys,
+    remove_contaminants_entrapments_decoys,
     remove_protein_by_ids,
     sum_peptidoform_intensities,
     get_peptidoform_normalize_intensities,
@@ -782,7 +781,7 @@ def peptide_normalization(
             dataset_df = remove_protein_by_ids(dataset_df, remove_ids)
         if remove_decoy_contaminants:
             print("Remove decoy and contaminants...")
-            dataset_df = remove_contaminants_decoys(dataset_df)
+            dataset_df = remove_contaminants_entrapments_decoys(dataset_df)
 
         print_dataset_size(dataset_df, "Peptides after contaminants removal: ", verbose)
         print("Normalize intensities.. ")
@@ -984,7 +983,7 @@ def peptide_normalization(
             if remove_ids is not None:
                 msstats_df = remove_protein_by_ids(msstats_df, remove_ids)
             if remove_decoy_contaminants:
-                msstats_df = remove_contaminants_decoys(msstats_df)
+                msstats_df = remove_contaminants_entrapments_decoys(msstats_df)
                 norm_record[0] += len(msstats_df)
             msstats_df = msstats_df.rename(columns={INTENSITY: NORM_INTENSITY})
             if log2:
