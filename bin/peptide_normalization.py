@@ -933,7 +933,7 @@ def peptide_normalization(
                 msstats_df = msstats_common_process(msstats_df)
                 msstats_df = merge_sdrf(label, sdrf_df, msstats_df)
             else:
-                msstats_df = parquet_common_process(msstats_df)
+                msstats_df = parquet_common_process(msstats_df, label, choice)
             result_df = data_common_process(msstats_df, min_aa)
 
             # Write CSVs by Sample ID
