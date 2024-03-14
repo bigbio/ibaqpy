@@ -38,8 +38,7 @@ def normalize_ibaq(res: DataFrame) -> DataFrame:
     )
 
     # Normalization used by PRIDE Team (no log transformation) (ibaq/total_ibaq) * 100'000'000
-    total_ibaq = res[IBAQ_NORMALIZED].sum()
-    res[IBAQ_PPB] = res[IBAQ_NORMALIZED] / total_ibaq * 100000000
+    res[IBAQ_PPB] = res[IBAQ_NORMALIZED].apply(lambda x: x * 100000000)
 
     return res
 
