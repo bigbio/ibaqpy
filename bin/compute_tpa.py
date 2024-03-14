@@ -11,7 +11,7 @@ from pyopenms import *
 
 from ibaq.ibaqpy_commons import (CONDITION, NORM_INTENSITY, PROTEIN_NAME, SAMPLE_ID,
                                  plot_box_plot, plot_distributions, print_help_msg,
-                                 remove_contaminants_decoys, get_accession)
+                                 remove_contaminants_entrapments_decoys, get_accession)
 
 
 def handle_nonstandard_aa(aa_seq: str) -> (list, str):
