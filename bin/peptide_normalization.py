@@ -30,7 +30,6 @@ from ibaq.ibaqpy_commons import (
     REFERENCE,
     RUN,
     SAMPLE_ID,
-    SEARCH_ENGINE,
     STUDY_ID,
     TMT16plex,
     TMT11plex,
