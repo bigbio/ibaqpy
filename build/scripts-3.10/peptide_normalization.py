@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!D:\venv\quantms\Scripts\python.exe
 import gc
 import click
 import matplotlib.pyplot as plt
@@ -411,6 +411,11 @@ def remove_low_frequency_peptides_(
     normalize_df = normalize_df[
         normalize_df.notnull().sum(axis=1) != 1
     ]
+    """ 
+    normalize_df = normalize_df.reset_index()
+    normalize_df = normalize_df.melt(id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME])
+    normalize_df.rename(columns={"value": NORM_INTENSITY}, inplace=True) 
+    """
     normalize_df = recover_df(normalize_df)
     # recover condition column
     normalize_df = normalize_df.merge(
@@ -448,6 +453,14 @@ def peptide_intensity_normalization(
     )
     # need nomalize?
     normalize_df = recover_df(normalize_df)
+    """ 
+    normalize_df = normalize_df.reset_index()
+    normalize_df = normalize_df.melt(
+        id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION]
+    )
+    normalize_df.rename(columns={"value": NORM_INTENSITY}, inplace=True)
+    normalize_df = normalize_df[normalize_df[NORM_INTENSITY].notna()] 
+    """
     return normalize_df
 
 
@@ -643,7 +656,7 @@ def peptide_normalization(
             del feature_df, sdrf_df
             gc.collect()
         else:
-            dataset_df = pd.read_parquet(parquet,cols=PARQUET_COLUMNS)
+            dataset_df = pd.read_parquet(parquet)[PARQUET_COLUMNS]
             label, sample_names, choice = analyse_feature_df(dataset_df)
             dataset_df = parquet_common_process(dataset_df, label, choice)
 
