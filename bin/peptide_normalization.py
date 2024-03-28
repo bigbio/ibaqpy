@@ -4,15 +4,20 @@ import click
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import qnorm
+from scipy.stats import rankdata
+import os
+import random
+import uuid
 from matplotlib.backends.backend_pdf import PdfPages
 from pandas import DataFrame
+import pyarrow.parquet as pq
+from normalize_methods import normalize
 
 from ibaq.ibaqpy_commons import (
     BIOREPLICATE,
     CHANNEL,
     CONDITION,
-    FEATURE_COLUMNS,
+    PARQUET_COLUMNS,
     FRACTION,
     FRAGMENT_ION,
     INTENSITY,
@@ -26,12 +31,12 @@ from ibaq.ibaqpy_commons import (
     RUN,
     SAMPLE_ID,
     STUDY_ID,
+    TMT16plex,
+    TMT11plex,
+    TMT10plex,
+    TMT6plex,
     ITRAQ4plex,
     ITRAQ8plex,
-    TMT6plex,
-    TMT10plex,
-    TMT11plex,
-    TMT16plex,
     get_canonical_peptide,
     get_spectrum_prefix,
     get_study_accession,
@@ -48,48 +53,281 @@ from ibaq.ibaqpy_commons import (
 )
 
 
-# TODO: The following two func are useless.
-def remove_outliers_iqr(dataset: DataFrame):
-    """
-    This method removes outliers from the dataframe inplace, the variable used for the outlier removal is Intensity
-    :param dataset: Peptide dataframe
-    :return: None
-    """
-    q1 = dataset[INTENSITY].quantile(0.25)
-    q3 = dataset[INTENSITY].quantile(0.75)
-    iqr = q3 - q1
-
-    dataset.query("(@q1 - 1.5 * @iqr) <= Intensity <= (@q3 + 1.5 * @iqr)", inplace=True)
-
-
-def remove_missing_values(normalize_df: DataFrame, ratio: float = 0.3) -> DataFrame:
-    """
-    Remove missing values if the peptide do not have values in the most of the samples
-    :param normalize_df: data frame with the data
-    :param ratio: ratio of samples without intensity values.
-    :return:
-    """
-    n_samples = len(normalize_df.columns)
-    normalize_df = normalize_df.dropna(thresh=round(n_samples * ratio))
-    return normalize_df
-
-
 def print_dataset_size(dataset: DataFrame, message: str, verbose: bool) -> None:
     if verbose:
         print(message + str(len(dataset.index)))
 
+def recover_df(df):
+    """
+    This function is aimed to recover data shape.
+    """
+    samples = df.columns.tolist()
+    out = pd.DataFrame()
+    for sample in samples:
+        samples_df = df[sample].dropna()
+        samples_df = samples_df.reset_index()
+        samples_df['SampleID'] = sample
+        samples_df.rename(columns={
+            sample:NORM_INTENSITY
+        },inplace=True)
+        out = pd.concat([out,samples_df])
+    return out
+
+def analyse_sdrf(sdrf_path: str, compression: bool) -> tuple:
+    """
+    This function is aimed to parse SDRF and return four objects:
+    1. sdrf_df: A dataframe with channels and references annoted.
+    2. label: Label type of the experiment. LFQ, TMT or iTRAQ.
+    3. sample_names: A list contains all sample names.
+    4. choice: A dictionary caontains key-values between channel
+        names and numbers.
+    :param sdrf_path: File path of SDRF.
+    :param compression: Whether compressed.
+    :return:
+    """
+    sdrf_df = pd.read_csv(sdrf_path, sep="\t", compression=compression)
+    sdrf_df[REFERENCE] = sdrf_df["comment[data file]"].apply(get_spectrum_prefix)
+
+    labels = set(sdrf_df["comment[label]"])
+    # Determine label type
+    label, choice = get_label(labels)
+    if label == "TMT":
+        choice_df = (
+            pd.DataFrame.from_dict(choice, orient="index", columns=[CHANNEL])
+            .reset_index()
+            .rename(columns={"index": "comment[label]"})
+        )
+        sdrf_df = sdrf_df.merge(choice_df, on="comment[label]", how="left")
+    elif label == "ITRAQ":
+        choice_df = (
+            pd.DataFrame.from_dict(choice, orient="index", columns=[CHANNEL])
+            .reset_index()
+            .rename(columns={"index": "comment[label]"})
+        )
+        sdrf_df = sdrf_df.merge(choice_df, on="comment[label]", how="left")
+    sample_names = sdrf_df["source name"].unique().tolist()
+
+    return sdrf_df, label, sample_names, choice
+
+
+def analyse_feature_df(feature_df: pd.DataFrame) -> tuple:
+    """Return label type, sample names and choice dict by iterating parquet.
+
+    :param parquet_path: Feature parquet path.
+    :param batch_size: Iterate batch size, defaults to 100000
+    :return: Label type, sample names and choice dict
+    """
+    samples = feature_df["sample_accession"].unique().tolist()
+    labels = feature_df["isotope_label_type"].unique().tolist()
+    # Determine label type
+    label, choice = get_label(labels)
+
+    return label, samples, choice
+
+
+def analyse_feature_parquet(parquet_path: str, batch_size: int = 100000) -> tuple:
+    """Return label type, sample names and choice dict by iterating parquet.
+
+    :param parquet_path: Feature parquet path.
+    :param batch_size: Iterate batch size, defaults to 100000
+    :return: Label type, sample names and choice dict
+    """
+    parquet_chunks = read_large_parquet(parquet_path, batch_size)
+    labels, samples = list(), list()
+    for chunk in parquet_chunks:
+        samples.extend(chunk["sample_accession"].unique().tolist())
+        labels.extend(chunk["isotope_label_type"].unique().tolist())
+        samples = list(set(samples))
+        labels = list(set(labels))
+    # Determine label type
+    label, choice = get_label(labels)
+
+    return label, samples, choice
+
+
+def read_large_parquet(parquet_path: str, batch_size: int = 100000):
+    parquet_file = pq.ParquetFile(parquet_path)
+    for batch in parquet_file.iter_batches(batch_size=batch_size):
+        batch_df = batch.to_pandas()
+        yield batch_df
+
+
+def get_label(labels: list) -> (str, dict):
+    """Return label type and choice dict according to labels list.
+
+    :param labels: Labels from SDRF.
+    :return: Tuple contains label type and choice dict.
+    """
+    choice = None
+    if len(labels) == 1:
+        label = "LFQ"
+    elif "TMT" in ",".join(labels) or "tmt" in ",".join(labels):
+        if (
+            len(labels) > 11
+            or "TMT134N" in labels
+            or "TMT133C" in labels
+            or "TMT133N" in labels
+            or "TMT132C" in labels
+            or "TMT132N" in labels
+        ):
+            choice = TMT16plex
+        elif len(labels) == 11 or "TMT131C" in labels:
+            choice = TMT11plex
+        elif len(labels) > 6:
+            choice = TMT10plex
+        else:
+            choice = TMT6plex
+        label = "TMT"
+    elif "ITRAQ" in ",".join(labels) or "itraq" in ",".join(labels):
+        if len(labels) > 4:
+            choice = ITRAQ8plex
+        else:
+            choice = ITRAQ4plex
+        label = "ITRAQ"
+    else:
+        exit("Warning: Only support label free, TMT and ITRAQ experiment!")
+    return label, choice
+
+
+def msstats_common_process(data_df: pd.DataFrame) -> pd.DataFrame:
+    """Apply common process on data.
+
+    :param data_df: Feature data in dataframe.
+    :return: Processed data.
+    """
+    data_df.rename(
+        columns={
+            "ProteinName": PROTEIN_NAME,
+            "PeptideSequence": PEPTIDE_SEQUENCE,
+            "PrecursorCharge": PEPTIDE_CHARGE,
+            "Run": RUN,
+            "Condition": CONDITION,
+            "Intensity": INTENSITY,
+        },
+        inplace=True,
+    )
+    data_df[REFERENCE] = data_df[REFERENCE].apply(get_spectrum_prefix)
+
+    return data_df
+
+
+def parquet_common_process(
+    data_df: pd.DataFrame, label: str, choice: dict
+) -> pd.DataFrame:
+    """Apply common process on data.
+
+    :param data_df: Feature data in dataframe.
+    :return: Processed data.
+    """
+    data_df = data_df.rename(columns=parquet_map)
+    data_df[PROTEIN_NAME] = data_df.apply(lambda x: ",".join(x[PROTEIN_NAME]), axis=1)
+    if label == "LFQ":
+        data_df.drop(CHANNEL, inplace=True, axis=1)
+    else:
+        data_df[CHANNEL] = data_df[CHANNEL].map(choice)
+
+    return data_df
+
+
+def merge_sdrf(
+    label: str, sdrf_df: pd.DataFrame, data_df: pd.DataFrame
+) -> pd.DataFrame:
+    if label == "LFQ":
+        result_df = pd.merge(
+            data_df,
+            sdrf_df[["source name", REFERENCE]],
+            how="left",
+            on=[REFERENCE],
+        )
+    elif label == "TMT":
+        result_df = pd.merge(
+            data_df,
+            sdrf_df[["source name", REFERENCE, CHANNEL]],
+            how="left",
+            on=[REFERENCE, CHANNEL],
+        )
+    elif label == "ITRAQ":
+        result_df = pd.merge(
+            data_df,
+            sdrf_df[["source name", REFERENCE, CHANNEL]],
+            how="left",
+            on=[REFERENCE, CHANNEL],
+        )
+    result_df.rename(columns={"source name": SAMPLE_ID}, inplace=True)
+    result_df = result_df[result_df["Condition"] != "Empty"]
+
+    return result_df
+
+
+def data_common_process(data_df: pd.DataFrame, min_aa: int) -> pd.DataFrame:
+    # Remove 0 intensity signals from the data
+    data_df = data_df[data_df[INTENSITY] > 0]
+    data_df = data_df[data_df["Condition"] != "Empty"]
+
+    def map_canonical_seq(data_df: pd.DataFrame) -> (pd.DataFrame, dict):
+        modified_seqs = data_df[PEPTIDE_SEQUENCE].unique().tolist()
+        canonical_seqs = [get_canonical_peptide(i) for i in modified_seqs]
+        inner_canonical_dict = dict(zip(modified_seqs, canonical_seqs))
+        data_df[PEPTIDE_CANONICAL] = data_df[PEPTIDE_SEQUENCE].map(inner_canonical_dict)
+
+        return data_df, inner_canonical_dict
+
+    if PEPTIDE_CANONICAL not in data_df.columns:
+        data_df, inner_canonical_dict = map_canonical_seq(data_df)
+        data_df[PEPTIDE_CANONICAL] = data_df[PEPTIDE_SEQUENCE].map(inner_canonical_dict)
+    # Filter peptides with less amino acids than min_aa (default: 7)
+    data_df = data_df[
+        data_df.apply(lambda x: len(x[PEPTIDE_CANONICAL]) >= min_aa, axis=1)
+    ]
+    data_df[PROTEIN_NAME] = data_df[PROTEIN_NAME].apply(parse_uniprot_accession)
+    data_df[STUDY_ID] = data_df[SAMPLE_ID].apply(get_study_accession)
+    if FRACTION not in data_df.columns:
+        data_df[FRACTION] = 1
+        data_df = data_df[
+            [
+                PROTEIN_NAME,
+                PEPTIDE_SEQUENCE,
+                PEPTIDE_CANONICAL,
+                PEPTIDE_CHARGE,
+                INTENSITY,
+                REFERENCE,
+                CONDITION,
+                RUN,
+                BIOREPLICATE,
+                FRACTION,
+                FRAGMENT_ION,
+                ISOTOPE_LABEL_TYPE,
+                STUDY_ID,
+                SAMPLE_ID,
+            ]
+        ]
+    data_df[CONDITION] = pd.Categorical(data_df[CONDITION])
+    data_df[STUDY_ID] = pd.Categorical(data_df[STUDY_ID])
+    data_df[SAMPLE_ID] = pd.Categorical(data_df[SAMPLE_ID])
+
+    return data_df
 
 def intensity_normalization(
     dataset: DataFrame,
     field: str,
-    class_field: str = "all",
-    scaling_method: str = "msstats",
+    class_field: str,
+    scaling_method: str = "quantile",
 ) -> DataFrame:
+    cols_to_keep = [
+        PROTEIN_NAME,
+        PEPTIDE_CANONICAL,
+        PEPTIDE_SEQUENCE,
+        PEPTIDE_CHARGE,
+        SAMPLE_ID,
+        BIOREPLICATE,
+        CONDITION,
+        NORM_INTENSITY,
+    ]
     # TODO add imputation and/or removal to those two norm strategies
     if scaling_method == "msstats":
         # For TMT normalization
         if "Channel" in dataset.columns:
-            g = dataset.groupby(["Run", "Channel"])[field].apply(np.median)
+            g = dataset.groupby(["Run", "Channel"])[field].apply(np.nanmedian)
             g.name = "RunMedian"
             dataset = dataset.join(g, on=["Run", "Channel"])
             median_baseline = dataset.drop_duplicates(subset=["Run", "Channel", field])[
@@ -99,7 +337,7 @@ def intensity_normalization(
                 dataset[field] - dataset["RunMedian"] + median_baseline
             )
         else:
-            g = dataset.groupby(["Run", "Fraction"])[field].apply(np.median)
+            g = dataset.groupby(["Run", "Fraction"])[field].apply(np.nanmedian)
             g.name = "RunMedian"
             dataset = dataset.join(g, on=["Run", "Fraction"])
             dataset["FractionMedian"] = (
@@ -108,15 +346,16 @@ def intensity_normalization(
             dataset[NORM_INTENSITY] = (
                 dataset[field] - dataset["RunMedian"] + dataset["FractionMedian"]
             )
-        return dataset
+        return dataset[cols_to_keep]
 
-    elif scaling_method == "qnorm":
+    else:
         # pivot to have one col per sample
         print("Transforming to wide format dataset size {}".format(len(dataset.index)))
         normalize_df = pd.pivot_table(
             dataset,
             index=[
                 PEPTIDE_SEQUENCE,
+                PEPTIDE_CANONICAL,
                 PEPTIDE_CHARGE,
                 FRACTION,
                 RUN,
@@ -127,28 +366,18 @@ def intensity_normalization(
             ],
             columns=class_field,
             values=field,
-            aggfunc={field: np.mean},
+            aggfunc={field: np.nanmean},
             observed=True,
         )
-        normalize_df = qnorm.quantile_normalize(normalize_df, axis=1)
-        normalize_df = normalize_df.reset_index()
-        normalize_df = normalize_df.melt(
-            id_vars=[
-                PEPTIDE_SEQUENCE,
-                PEPTIDE_CHARGE,
-                FRACTION,
-                RUN,
-                BIOREPLICATE,
-                PROTEIN_NAME,
-                STUDY_ID,
-                CONDITION,
-            ]
-        )
-        normalize_df.rename(columns={"value": NORM_INTENSITY}, inplace=True)
-        print(dataset.head())
-        return normalize_df
+        normalize_df = normalize(normalize_df,scaling_method)
+        # TODO: When restoring the pivot table here, the previous grouping caused
+        # the dataframe to produce a large number of rows with NORM_INTENSITY of
+        # NA at melt. This results in an unbearable memory consumption.
 
-    return dataset
+        normalize_df = recover_df(normalize_df)
+        normalize_df = normalize_df.drop_duplicates()
+        print(normalize_df.head())
+        return normalize_df[cols_to_keep]
 
 
 def remove_low_frequency_peptides_(
@@ -166,28 +395,23 @@ def remove_low_frequency_peptides_(
         index=[PEPTIDE_CANONICAL, PROTEIN_NAME],
         columns=SAMPLE_ID,
         values=NORM_INTENSITY,
-        aggfunc={NORM_INTENSITY: np.mean},
+        aggfunc={NORM_INTENSITY: np.nanmean},
         observed=True,
     )
     # Count the number of null values in each row
     null_count = normalize_df.isnull().sum(axis=1)
-
     # Find the rows that have null values above the threshold
     rows_to_drop = null_count[
         null_count >= (1 - percentage_samples) * normalize_df.shape[1]
     ].index
-
     # Drop the rows with too many null values
     normalize_df = normalize_df.drop(rows_to_drop)
 
     # Remove rows with non-null values in only one column
     normalize_df = normalize_df[
-        normalize_df.notnull().sum(axis=1) != normalize_df.shape[1] - 1
+        normalize_df.notnull().sum(axis=1) != 1
     ]
-    normalize_df = normalize_df.reset_index()
-    normalize_df = normalize_df.melt(id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME])
-    normalize_df.rename(columns={"value": NORM_INTENSITY}, inplace=True)
-
+    normalize_df = recover_df(normalize_df)
     # recover condition column
     normalize_df = normalize_df.merge(
         dataset_df[[SAMPLE_ID, CONDITION]].drop_duplicates(subset=[SAMPLE_ID]),
@@ -213,26 +437,18 @@ def peptide_intensity_normalization(
     :param scaling_method: method to use for the normalization
     :return:
     """
-    if scaling_method == "qnorm":
-        # pivot to have one col per sample
-        normalize_df = pd.pivot_table(
-            dataset_df,
-            index=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION],
-            columns=class_field,
-            values=field,
-            aggfunc={field: np.mean},
-            observed=True,
-        )
-        normalize_df = qnorm.quantile_normalize(normalize_df, axis=1)
-        normalize_df = normalize_df.reset_index()
-        normalize_df = normalize_df.melt(
-            id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION]
-        )
-        normalize_df.rename(columns={"value": NORM_INTENSITY}, inplace=True)
-        normalize_df = normalize_df[normalize_df[NORM_INTENSITY].notna()]
-        return normalize_df
-
-    return dataset_df
+    # pivot to have one col per sample
+    normalize_df = pd.pivot_table(
+        dataset_df,
+        index=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION],
+        columns=class_field,
+        values=field,
+        aggfunc={field: np.nanmean},
+        observed=True,
+    )
+    # need nomalize?
+    normalize_df = recover_df(normalize_df)
+    return normalize_df
 
 
 def impute_peptide_intensities(dataset_df, field, class_field):
@@ -252,7 +468,7 @@ def impute_peptide_intensities(dataset_df, field, class_field):
             index=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION],
             columns=class_field,
             values=field,
-            aggfunc={field: np.mean},
+            aggfunc={field: np.nanmean},
             observed=True,
         )
 
@@ -290,6 +506,12 @@ def impute_peptide_intensities(dataset_df, field, class_field):
 @click.option(
     "-s", "--sdrf", help="SDRF file import generated by quantms", default=None
 )
+@click.option("--stream", help="Stream processing normalization", is_flag=True)
+@click.option(
+    "--chunksize",
+    help="The number of rows of MSstats or parquet read using pandas streaming",
+    default=1000000,
+)
 @click.option(
     "--min_aa", help="Minimum number of amino acids to filter peptides", default=7
 )
@@ -323,8 +545,8 @@ def impute_peptide_intensities(dataset_df, field, class_field):
 )
 @click.option(
     "--nmethod",
-    help="Normalization method used to normalize intensities for all samples (options: qnorm)",
-    default="qnorm",
+    help="Normalization method used to normalize intensities for all samples (options: quantile, msstats, qnorm)",
+    default="quantile",
 )
 @click.option(
     "--pnormalization",
@@ -361,6 +583,8 @@ def peptide_normalization(
     msstats: str,
     parquet: str,
     sdrf: str,
+    stream: bool,
+    chunksize: int,
     min_aa: int,
     min_unique: int,
     remove_ids: str,
@@ -384,7 +608,17 @@ def peptide_normalization(
         print_help_msg(peptide_normalization)
         exit(1)
 
+    if pnormalization and nmethod not in ["qnorm", "quantile"]:
+        exit(
+            "Peptide intensity normalization works only with qnorm or quantile methods!"
+        )
+
+    if verbose:
+        log_after_norm = not log2
+
+    pd.set_option("display.max_columns", None)
     compression_method = "gzip" if compress else None
+    print("Loading data..")
 
     if parquet is None:
         # Read the msstats file
@@ -395,134 +629,24 @@ def peptide_normalization(
             dtype={CONDITION: "category", ISOTOPE_LABEL_TYPE: "category"},
         )
 
-        feature_df.rename(
-            columns={
-                "ProteinName": PROTEIN_NAME,
-                "PeptideSequence": PEPTIDE_SEQUENCE,
-                "PrecursorCharge": PEPTIDE_CHARGE,
-                "Run": RUN,
-                "Condition": CONDITION,
-                "Intensity": INTENSITY,
-            },
-            inplace=True,
-        )
-
-        feature_df[PROTEIN_NAME] = feature_df[PROTEIN_NAME].apply(
-            parse_uniprot_accession
-        )
-
         # Read the sdrf file
-        sdrf_df = pd.read_csv(sdrf, sep="\t", compression=compression_method)
-        sdrf_df[REFERENCE] = sdrf_df["comment[data file]"].apply(get_spectrum_prefix)
+        sdrf_df, label, sample_names, choice = analyse_sdrf(
+            sdrf, compression_method
+        )
         print(sdrf_df)
 
-        if FRACTION not in feature_df.columns:
-            feature_df[FRACTION] = 1
-            feature_df = feature_df[
-                [
-                    PROTEIN_NAME,
-                    PEPTIDE_SEQUENCE,
-                    PEPTIDE_CHARGE,
-                    INTENSITY,
-                    REFERENCE,
-                    CONDITION,
-                    RUN,
-                    BIOREPLICATE,
-                    FRACTION,
-                    FRAGMENT_ION,
-                    ISOTOPE_LABEL_TYPE,
-                ]
-            ]
-
         # Merged the SDRF with the Resulted file
-        labels = set(sdrf_df["comment[label]"])
-        if CHANNEL not in feature_df.columns:
-            feature_df[REFERENCE] = feature_df[REFERENCE].apply(get_spectrum_prefix)
-            dataset_df = pd.merge(
-                feature_df,
-                sdrf_df[["source name", REFERENCE]],
-                how="left",
-                on=[REFERENCE],
-            )
-        elif "TMT" in ",".join(labels) or "tmt" in ",".join(labels):
-            if (
-                len(labels) > 11
-                or "TMT134N" in labels
-                or "TMT133C" in labels
-                or "TMT133N" in labels
-                or "TMT132C" in labels
-                or "TMT132N" in labels
-            ):
-                choice = TMT16plex
-            elif len(labels) == 11 or "TMT131C" in labels:
-                choice = TMT11plex
-            elif len(labels) > 6:
-                choice = TMT10plex
-            else:
-                choice = TMT6plex
-            choice = (
-                pd.DataFrame.from_dict(choice, orient="index", columns=[CHANNEL])
-                .reset_index()
-                .rename(columns={"index": "comment[label]"})
-            )
-            sdrf_df = sdrf_df.merge(choice, on="comment[label]", how="left")
-            feature_df[REFERENCE] = feature_df[REFERENCE].apply(get_spectrum_prefix)
-            dataset_df = pd.merge(
-                feature_df,
-                sdrf_df[["source name", REFERENCE, CHANNEL]],
-                how="left",
-                on=[REFERENCE, CHANNEL],
-            )
-            # result_df.drop(CHANNEL, axis=1, inplace=True)
-            dataset_df = dataset_df[dataset_df["Condition"] != "Empty"]
-            dataset_df.rename(columns={"Charge": PEPTIDE_CHARGE}, inplace=True)
-        elif "ITRAQ" in ",".join(labels) or "itraq" in ",".join(labels):
-            if len(labels) > 4:
-                choice = ITRAQ8plex
-            else:
-                choice = ITRAQ4plex
-            choice = (
-                pd.DataFrame.from_dict(choice, orient="index", columns=[CHANNEL])
-                .reset_index()
-                .rename(columns={"index": "comment[label]"})
-            )
-            sdrf_df = sdrf_df.merge(choice, on="comment[label]", how="left")
-            feature_df[REFERENCE] = feature_df[REFERENCE].apply(get_spectrum_prefix)
-            dataset_df = pd.merge(
-                feature_df,
-                sdrf_df[["source name", REFERENCE, CHANNEL]],
-                how="left",
-                on=[REFERENCE, CHANNEL],
-            )
-            dataset_df = dataset_df[dataset_df["Condition"] != "Empty"]
-            dataset_df.rename(columns={"Charge": PEPTIDE_CHARGE}, inplace=True)
-        else:
-            print("Warning: Only support label free, TMT and ITRAQ experiment!")
-            exit(1)
-
+        dataset_df = msstats_common_process(feature_df)
+        dataset_df = merge_sdrf(label, sdrf_df, feature_df)
         # Remove the intermediate variables and free the memory
         del feature_df, sdrf_df
         gc.collect()
     else:
-        dataset_df = pd.read_parquet(parquet)[FEATURE_COLUMNS]
-        dataset_df = dataset_df.rename(columns=parquet_map)
-        dataset_df[PROTEIN_NAME] = dataset_df.apply(
-            lambda x: ",".join(x[PROTEIN_NAME]), axis=1
-        )
-        label_type = dataset_df[CHANNEL].unique().tolist()
-        if len(label_type) == 1:
-            dataset_df.drop(CHANNEL, inplace=True, axis=1)
-        dataset_df = dataset_df[dataset_df["Condition"] != "Empty"]
+        dataset_df = pd.read_parquet(parquet,columns=PARQUET_COLUMNS)
+        label, sample_names, choice = analyse_feature_df(dataset_df)
+        dataset_df = parquet_common_process(dataset_df, label, choice)
 
-    # Remove 0 intensity signals from the msstats file
-    dataset_df = dataset_df[dataset_df[INTENSITY] > 0]
-    dataset_df[PEPTIDE_CANONICAL] = dataset_df.apply(
-        lambda x: get_canonical_peptide(x[PEPTIDE_SEQUENCE]), axis=1
-    )
-    # Only peptides with more than min_aa (default: 7) amino acids are retained
-    dataset_df = dataset_df[
-        dataset_df.apply(lambda x: len(x[PEPTIDE_CANONICAL]) >= min_aa, axis=1)
-    ]
+    dataset_df = data_common_process(dataset_df, min_aa)
     # Only proteins with unique peptides number greater than min_unique (default: 2) are retained
     unique_peptides = set(
         dataset_df.groupby(PEPTIDE_CANONICAL)
@@ -532,44 +656,23 @@ def peptide_normalization(
     strong_proteins = set(
         dataset_df[dataset_df[PEPTIDE_CANONICAL].isin(unique_peptides)]
         .groupby(PROTEIN_NAME)
-        .filter(lambda x: len(set(x[PEPTIDE_CANONICAL])) >= min_unique)[PROTEIN_NAME]
+        .filter(lambda x: len(set(x[PEPTIDE_CANONICAL])) >= min_unique)[
+            PROTEIN_NAME
+        ]
         .tolist()
     )
     dataset_df = dataset_df[dataset_df[PROTEIN_NAME].isin(strong_proteins)]
 
-    if msstats:
-        dataset_df.rename(columns={"source name": SAMPLE_ID}, inplace=True)
-    dataset_df[STUDY_ID] = dataset_df[SAMPLE_ID].apply(get_study_accession)
-    dataset_df = dataset_df.filter(
-        items=[
-            PEPTIDE_SEQUENCE,
-            PEPTIDE_CHARGE,
-            FRACTION,
-            RUN,
-            BIOREPLICATE,
-            PROTEIN_NAME,
-            STUDY_ID,
-            CONDITION,
-            SAMPLE_ID,
-            INTENSITY,
-        ]
-    )
-    dataset_df[CONDITION] = pd.Categorical(dataset_df[CONDITION])
-    dataset_df[STUDY_ID] = pd.Categorical(dataset_df[STUDY_ID])
-    dataset_df[SAMPLE_ID] = pd.Categorical(dataset_df[SAMPLE_ID])
-
-    pd.set_option("display.max_columns", None)
-    print("Loading data..")
-    print_dataset_size(dataset_df, "Number of peptides: ", verbose)
+    print(f"Number of unique peptides: {len(unique_peptides)}")
+    print(f"Number of strong proteins: {len(strong_proteins)}")
 
     print("Logarithmic if specified..")
-    dataset_df.loc[dataset_df.Intensity == 0, INTENSITY] = 1
-    dataset_df[NORM_INTENSITY] = (
-        np.log2(dataset_df[INTENSITY]) if log2 else dataset_df[INTENSITY]
-    )
-    dataset_df.drop(INTENSITY, axis=1, inplace=True)
+    dataset_df = dataset_df.rename(columns={INTENSITY: NORM_INTENSITY})
+    if log2:
+        dataset_df[NORM_INTENSITY] = np.log2(dataset_df[NORM_INTENSITY])
 
     # Print the distribution of the original peptide intensities from quantms analysis
+    """
     if verbose:
         sample_names = set(dataset_df[SAMPLE_ID])
         plot_width = len(sample_names) * 0.5 + 10
@@ -582,7 +685,7 @@ def peptide_normalization(
             width=plot_width,
             title="Original peptidoform intensity distribution (no normalization)",
         )
-        plt.show()
+        #plt.show() 
         pdf.savefig(density)
         box = plot_box_plot(
             dataset_df,
@@ -594,7 +697,8 @@ def peptide_normalization(
             violin=violin,
         )
         plt.show()
-        pdf.savefig(box)
+        pdf.savefig(box) 
+        """
 
     # Remove high abundant and contaminants proteins and the outliers
     if remove_ids is not None:
@@ -605,7 +709,6 @@ def peptide_normalization(
         dataset_df = remove_contaminants_entrapments_decoys(dataset_df)
 
     print_dataset_size(dataset_df, "Peptides after contaminants removal: ", verbose)
-
     print("Normalize intensities.. ")
     # dataset_df = dataset_df.dropna(how="any")
     if not skip_normalization:
@@ -616,22 +719,18 @@ def peptide_normalization(
             scaling_method=nmethod,
         )
     if verbose:
-        log_after_norm = (
-            nmethod == "msstats"
-            or nmethod == "qnorm"
-            or ((nmethod == "quantile" or nmethod == "robust") and not log2)
-        )
+        """   
         density = plot_distributions(
             dataset_df,
             NORM_INTENSITY,
             SAMPLE_ID,
-            log2=log_after_norm,
+            #log2=log_after_norm,
             width=plot_width,
             title="Peptidoform intensity distribution after normalization, method: "
             + nmethod,
         )
-        plt.show()
-        pdf.savefig(density)
+        #plt.show()
+        pdf.savefig(density)          
         box = plot_box_plot(
             dataset_df,
             NORM_INTENSITY,
@@ -643,40 +742,25 @@ def peptide_normalization(
             violin=violin,
         )
         plt.show()
-        pdf.savefig(box)
-
+        pdf.savefig(box) 
+        """
+    print("Number of peptides after normalization: " + str(len(dataset_df.index)))
     print("Select the best peptidoform across fractions...")
-    print(
-        "Number of peptides before peptidofrom selection: " + str(len(dataset_df.index))
-    )
     dataset_df = get_peptidoform_normalize_intensities(dataset_df)
     print(
-        "Number of peptides after peptidofrom selection: " + str(len(dataset_df.index))
+        "Number of peptides after peptidofrom selection: "
+        + str(len(dataset_df.index))
     )
 
-    # Add the peptide sequence canonical without the modifications
-    if PEPTIDE_CANONICAL not in dataset_df.columns:
-        print("Add Canonical peptides to the dataframe...")
-        dataset_df[PEPTIDE_CANONICAL] = dataset_df[PEPTIDE_SEQUENCE].apply(
-            lambda x: get_canonical_peptide(x)
-        )
-
     print("Sum all peptidoforms per Sample...")
-    print("Number of peptides before sum selection: " + str(len(dataset_df.index)))
     dataset_df = sum_peptidoform_intensities(dataset_df)
-    print("Number of peptides after sum: " + str(len(dataset_df.index)))
+    print("Number of peptides after selection: " + str(len(dataset_df.index)))
 
     print("Average all peptidoforms per Peptide/Sample...")
-    print("Number of peptides before average: " + str(len(dataset_df.index)))
     dataset_df = average_peptide_intensities(dataset_df)
     print("Number of peptides after average: " + str(len(dataset_df.index)))
-
-    if verbose:
-        log_after_norm = (
-            nmethod == "msstats"
-            or nmethod == "qnorm"
-            or ((nmethod == "quantile" or nmethod == "robust") and not log2)
-        )
+    """ 
+    if verbose:  
         density = plot_distributions(
             dataset_df,
             NORM_INTENSITY,
@@ -698,18 +782,14 @@ def peptide_normalization(
         )
         plt.show()
         pdf.savefig(box)
+    """   
 
-    if remove_low_frequency_peptides:
-        print(
-            "Peptides before removing low frequency peptides: "
-            + str(len(dataset_df.index))
-        )
+    if remove_low_frequency_peptides and len(sample_names) > 1:
         print(dataset_df)
         dataset_df = remove_low_frequency_peptides_(dataset_df, 0.20)
         print_dataset_size(
             dataset_df, "Peptides after remove low frequency peptides: ", verbose
         )
-
     # Perform imputation using Random Forest in Peptide Intensities
     # TODO: Check if this is necessary (Probably we can do some research if imputation at peptide level is necessary
     # if impute:
@@ -723,13 +803,8 @@ def peptide_normalization(
             class_field=SAMPLE_ID,
             scaling_method=nmethod,
         )
-
+    """ 
     if verbose:
-        log_after_norm = (
-            nmethod == "msstats"
-            or nmethod == "qnorm"
-            or ((nmethod == "quantile" or nmethod == "robust") and not log2)
-        )
         density = plot_distributions(
             dataset_df,
             NORM_INTENSITY,
@@ -752,9 +827,11 @@ def peptide_normalization(
         plt.show()
         pdf.savefig(box)
         pdf.close()
+    """ 
 
     print("Save the normalized peptide intensities...")
     dataset_df.to_csv(output, index=False, sep=",")
+    
 
 
 if __name__ == "__main__":
