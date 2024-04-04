@@ -11,7 +11,8 @@ import uuid
 from matplotlib.backends.backend_pdf import PdfPages
 from pandas import DataFrame
 import pyarrow.parquet as pq
-from normalize_methods import normalize
+from parquet import Feature
+from normalize_methods import normalize,normalize_run
 
 from ibaq.ibaqpy_commons import (
     BIOREPLICATE,
@@ -71,6 +72,7 @@ def recover_df(df):
             sample:NORM_INTENSITY
         },inplace=True)
         out = pd.concat([out,samples_df])
+    out.reset_index(inplace=True,drop=True)
     return out
 
 def analyse_sdrf(sdrf_path: str, compression: bool) -> tuple:
@@ -280,7 +282,7 @@ def data_common_process(data_df: pd.DataFrame, min_aa: int) -> pd.DataFrame:
         data_df.apply(lambda x: len(x[PEPTIDE_CANONICAL]) >= min_aa, axis=1)
     ]
     data_df[PROTEIN_NAME] = data_df[PROTEIN_NAME].apply(parse_uniprot_accession)
-    data_df[STUDY_ID] = data_df[SAMPLE_ID].apply(get_study_accession)
+    #data_df[STUDY_ID] = data_df[SAMPLE_ID].apply(get_study_accession)
     if FRACTION not in data_df.columns:
         data_df[FRACTION] = 1
         data_df = data_df[
@@ -290,19 +292,16 @@ def data_common_process(data_df: pd.DataFrame, min_aa: int) -> pd.DataFrame:
                 PEPTIDE_CANONICAL,
                 PEPTIDE_CHARGE,
                 INTENSITY,
-                REFERENCE,
                 CONDITION,
                 RUN,
                 BIOREPLICATE,
                 FRACTION,
-                FRAGMENT_ION,
                 ISOTOPE_LABEL_TYPE,
-                STUDY_ID,
                 SAMPLE_ID,
             ]
         ]
     data_df[CONDITION] = pd.Categorical(data_df[CONDITION])
-    data_df[STUDY_ID] = pd.Categorical(data_df[STUDY_ID])
+    #data_df[STUDY_ID] = pd.Categorical(data_df[STUDY_ID])
     data_df[SAMPLE_ID] = pd.Categorical(data_df[SAMPLE_ID])
 
     return data_df
@@ -389,7 +388,8 @@ def remove_low_frequency_peptides_(
     :param percentage_samples: percentage of samples
     :return:
     """
-
+    #= dataset_df[[SAMPLE_ID, CONDITION]].drop_duplicates(subset=[SAMPLE_ID])
+    c_map = dataset_df[[SAMPLE_ID, CONDITION]].drop_duplicates(subset=[SAMPLE_ID]).set_index(SAMPLE_ID).to_dict()[CONDITION]
     normalize_df = pd.pivot_table(
         dataset_df,
         index=[PEPTIDE_CANONICAL, PROTEIN_NAME],
@@ -398,6 +398,8 @@ def remove_low_frequency_peptides_(
         aggfunc={NORM_INTENSITY: np.nanmean},
         observed=True,
     )
+    del dataset_df
+    gc.collect()
     # Count the number of null values in each row
     null_count = normalize_df.isnull().sum(axis=1)
     # Find the rows that have null values above the threshold
@@ -411,21 +413,12 @@ def remove_low_frequency_peptides_(
     normalize_df = normalize_df[
         normalize_df.notnull().sum(axis=1) != 1
     ]
-    """ 
-    normalize_df = normalize_df.reset_index()
-    normalize_df = normalize_df.melt(id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME])
-    normalize_df.rename(columns={"value": NORM_INTENSITY}, inplace=True) 
-    """
     normalize_df = recover_df(normalize_df)
     # recover condition column
-    normalize_df = normalize_df.merge(
-        dataset_df[[SAMPLE_ID, CONDITION]].drop_duplicates(subset=[SAMPLE_ID]),
-        on=SAMPLE_ID,
-        how="left",
-    )
+    normalize_df.loc[:,CONDITION] =  normalize_df[SAMPLE_ID].map(c_map)
 
     # Remove rows with null values in NORMALIZE_INTENSITY
-    normalize_df = normalize_df[normalize_df[NORM_INTENSITY].notna()]
+    normalize_df.dropna(subset=[NORM_INTENSITY], inplace=True)
 
     print(normalize_df.head())
     return normalize_df
@@ -453,61 +446,7 @@ def peptide_intensity_normalization(
     )
     # need nomalize?
     normalize_df = recover_df(normalize_df)
-    """ 
-    normalize_df = normalize_df.reset_index()
-    normalize_df = normalize_df.melt(
-        id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION]
-    )
-    normalize_df.rename(columns={"value": NORM_INTENSITY}, inplace=True)
-    normalize_df = normalize_df[normalize_df[NORM_INTENSITY].notna()] 
-    """
     return normalize_df
-
-
-def impute_peptide_intensities(dataset_df, field, class_field):
-    """
-    Impute the missing values using different methods.
-    :param dataset_df: dataframe with the data
-    :param field: field to impute
-    :param class_field: field to use as class
-    :return:
-    """
-    normalize_df = pd.DataFrame()
-    # group by condition to detect missing values
-    for c, g in dataset_df.groupby(CONDITION):
-        # pivot to have one col per sample
-        group_normalize_df = pd.pivot_table(
-            g,
-            index=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION],
-            columns=class_field,
-            values=field,
-            aggfunc={field: np.nanmean},
-            observed=True,
-        )
-
-        # no missing values group -> only one sample
-        if len(group_normalize_df.columns) < 2:
-            group_normalize_df = group_normalize_df.reset_index()
-            group_normalize_df = group_normalize_df.melt(
-                id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION]
-            )
-            group_normalize_df.rename(columns={"value": NORM_INTENSITY}, inplace=True)
-            normalize_df = normalize_df.append(group_normalize_df, ignore_index=True)
-        # else:
-        #     # print ("nothing")
-        #     # Impute the missing values
-        #     # imputer = MissForest(max_iter=5)
-        #     # imputed_data = imputer.fit_transform(group_normalize_df)
-        #     # group_normalize_df = pd.DataFrame(imputed_data, columns=group_normalize_df.columns,
-        #     #                                   index=group_normalize_df.index)
-        #     # # Melt the dataframe
-        #     # group_normalize_df = group_normalize_df.reset_index()
-        #     # group_normalize_df = group_normalize_df.melt(id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION])
-        #     # group_normalize_df.rename(columns={'value': NORM_INTENSITY}, inplace=True)
-        #     # normalize_df = normalize_df.append(group_normalize_df, ignore_index=True)
-
-    return normalize_df
-
 
 @click.command()
 @click.option(
@@ -632,582 +571,119 @@ def peptide_normalization(
     pd.set_option("display.max_columns", None)
     compression_method = "gzip" if compress else None
     print("Loading data..")
+    '''
+    if parquet is None:
+        # Read the msstats file
+        feature_df = pd.read_csv(
+            msstats,
+            sep=",",
+            compression=compression_method,
+            dtype={CONDITION: "category", ISOTOPE_LABEL_TYPE: "category"},
+        )
 
-    if not stream:
-        if parquet is None:
-            # Read the msstats file
-            feature_df = pd.read_csv(
-                msstats,
-                sep=",",
-                compression=compression_method,
-                dtype={CONDITION: "category", ISOTOPE_LABEL_TYPE: "category"},
-            )
+        # Read the sdrf file
+        sdrf_df, label, sample_names, choice = analyse_sdrf(
+            sdrf, compression_method
+        )
+        print(sdrf_df)
 
-            # Read the sdrf file
-            sdrf_df, label, sample_names, choice = analyse_sdrf(
-                sdrf, compression_method
-            )
-            print(sdrf_df)
-
-            # Merged the SDRF with the Resulted file
-            dataset_df = msstats_common_process(feature_df)
-            dataset_df = merge_sdrf(label, sdrf_df, feature_df)
-            # Remove the intermediate variables and free the memory
-            del feature_df, sdrf_df
-            gc.collect()
-        else:
-            dataset_df = pd.read_parquet(parquet)[PARQUET_COLUMNS]
+        # Merged the SDRF with the Resulted file
+        dataset_df = msstats_common_process(feature_df)
+        dataset_df = merge_sdrf(label, sdrf_df, feature_df)
+        # Remove the intermediate variables and free the memory
+        del feature_df, sdrf_df
+        gc.collect()
+    else:
+    '''
+    F = Feature(parquet)
+    #dataset_df = pd.read_parquet(parquet,columns=PARQUET_COLUMNS)
+    header= False
+    for samples,df in F.iter_samples():
+        for sample in samples:
+            dataset_df = df[df['sample_accession']==sample].copy()
+            dataset_df = dataset_df[PARQUET_COLUMNS]
             label, sample_names, choice = analyse_feature_df(dataset_df)
             dataset_df = parquet_common_process(dataset_df, label, choice)
-
-        dataset_df = data_common_process(dataset_df, min_aa)
-        # Only proteins with unique peptides number greater than min_unique (default: 2) are retained
-        unique_peptides = set(
-            dataset_df.groupby(PEPTIDE_CANONICAL)
-            .filter(lambda x: len(set(x[PROTEIN_NAME])) == 1)[PEPTIDE_CANONICAL]
-            .tolist()
-        )
-        strong_proteins = set(
-            dataset_df[dataset_df[PEPTIDE_CANONICAL].isin(unique_peptides)]
-            .groupby(PROTEIN_NAME)
-            .filter(lambda x: len(set(x[PEPTIDE_CANONICAL])) >= min_unique)[
-                PROTEIN_NAME
-            ]
-            .tolist()
-        )
-        dataset_df = dataset_df[dataset_df[PROTEIN_NAME].isin(strong_proteins)]
-
-        print(f"Number of unique peptides: {len(unique_peptides)}")
-        print(f"Number of strong proteins: {len(strong_proteins)}")
-
-        print("Logarithmic if specified..")
-        dataset_df = dataset_df.rename(columns={INTENSITY: NORM_INTENSITY})
-        if log2:
-            dataset_df[NORM_INTENSITY] = np.log2(dataset_df[NORM_INTENSITY])
-
-        # Print the distribution of the original peptide intensities from quantms analysis
-        if verbose:
-            sample_names = set(dataset_df[SAMPLE_ID])
-            plot_width = len(sample_names) * 0.5 + 10
-            pdf = PdfPages(qc_report)
-            density = plot_distributions(
-                dataset_df,
-                NORM_INTENSITY,
-                SAMPLE_ID,
-                log2=not log2,
-                width=plot_width,
-                title="Original peptidoform intensity distribution (no normalization)",
+            dataset_df = data_common_process(dataset_df, min_aa)
+            # Only proteins with unique peptides number greater than min_unique (default: 2) are retained
+            unique_peptides = set(
+                dataset_df.groupby(PEPTIDE_CANONICAL)
+                .filter(lambda x: len(set(x[PROTEIN_NAME])) == 1)[PEPTIDE_CANONICAL]
+                .tolist()
             )
-            #plt.show() 
-            pdf.savefig(density)
-            """
-            box = plot_box_plot(
-                dataset_df,
-                NORM_INTENSITY,
-                SAMPLE_ID,
-                log2=not log2,
-                width=plot_width,
-                title="Original peptidoform intensity distribution (no normalization)",
-                violin=violin,
+            strong_proteins = set(
+                dataset_df[dataset_df[PEPTIDE_CANONICAL].isin(unique_peptides)]
+                .groupby(PROTEIN_NAME)
+                .filter(lambda x: len(set(x[PEPTIDE_CANONICAL])) >= min_unique)[
+                    PROTEIN_NAME
+                ]
+                .tolist()
             )
-            plt.show()
-            pdf.savefig(box) 
+            dataset_df = dataset_df[dataset_df[PROTEIN_NAME].isin(strong_proteins)]
+
+            print(f"Number of unique peptides: {len(unique_peptides)}")
+            print(f"Number of strong proteins: {len(strong_proteins)}")
+
+            print("Logarithmic if specified..")
+            dataset_df.rename(columns={INTENSITY: NORM_INTENSITY},inplace=True)
+            """     
+            if log2:
+                dataset_df[NORM_INTENSITY] = np.log2(dataset_df[NORM_INTENSITY]) 
             """
 
-        # Remove high abundant and contaminants proteins and the outliers
-        if remove_ids is not None:
-            print("Remove proteins from file...")
-            dataset_df = remove_protein_by_ids(dataset_df, remove_ids)
-        if remove_decoy_contaminants:
-            print("Remove decoy and contaminants...")
-            dataset_df = remove_contaminants_entrapments_decoys(dataset_df)
-
-        print_dataset_size(dataset_df, "Peptides after contaminants removal: ", verbose)
-        print("Normalize intensities.. ")
-        # dataset_df = dataset_df.dropna(how="any")
-        if not skip_normalization:
-            dataset_df = intensity_normalization(
-                dataset_df,
-                field=NORM_INTENSITY,
-                class_field=SAMPLE_ID,
-                scaling_method=nmethod,
-            )
-        if verbose:
-            density = plot_distributions(
-                dataset_df,
-                NORM_INTENSITY,
-                SAMPLE_ID,
-                #log2=log_after_norm,
-                width=plot_width,
-                title="Peptidoform intensity distribution after normalization, method: "
-                + nmethod,
-            )
-            #plt.show()
-            pdf.savefig(density)
-            """             
-            box = plot_box_plot(
-                dataset_df,
-                NORM_INTENSITY,
-                SAMPLE_ID,
-                log2=log_after_norm,
-                width=plot_width,
-                title="Peptidoform intensity distribution after normalization, method: "
-                + nmethod,
-                violin=violin,
-            )
-            plt.show()
-            pdf.savefig(box) 
-            """
-        print("Number of peptides after normalization: " + str(len(dataset_df.index)))
-        print("Select the best peptidoform across fractions...")
-        dataset_df = get_peptidoform_normalize_intensities(dataset_df)
-        print(
-            "Number of peptides after peptidofrom selection: "
-            + str(len(dataset_df.index))
-        )
-
-        print("Sum all peptidoforms per Sample...")
-        dataset_df = sum_peptidoform_intensities(dataset_df)
-        print("Number of peptides after selection: " + str(len(dataset_df.index)))
-
-        print("Average all peptidoforms per Peptide/Sample...")
-        dataset_df = average_peptide_intensities(dataset_df)
-        print("Number of peptides after average: " + str(len(dataset_df.index)))
-        if verbose:
-            density = plot_distributions(
-                dataset_df,
-                NORM_INTENSITY,
-                SAMPLE_ID,
-                log2=log_after_norm,
-                width=plot_width,
-                title="Peptide intensity distribution method: " + nmethod,
-            )
-            plt.show()
-            pdf.savefig(density)
-            box = plot_box_plot(
-                dataset_df,
-                NORM_INTENSITY,
-                SAMPLE_ID,
-                log2=log_after_norm,
-                width=plot_width,
-                title="Peptide intensity distribution method: " + nmethod,
-                violin=violin,
-            )
-            plt.show()
-            pdf.savefig(box)
-
-        if remove_low_frequency_peptides and len(sample_names) > 1:
-            print(dataset_df)
-            dataset_df = remove_low_frequency_peptides_(dataset_df, 0.20)
-            print_dataset_size(
-                dataset_df, "Peptides after remove low frequency peptides: ", verbose
-            )
-        # Perform imputation using Random Forest in Peptide Intensities
-        # TODO: Check if this is necessary (Probably we can do some research if imputation at peptide level is necessary
-        # if impute:
-        #     dataset_df = impute_peptide_intensities(dataset_df, field=NORM_INTENSITY, class_field=SAMPLE_ID)
-
-        if pnormalization:
-            print("Normalize at Peptide level...")
-            dataset_df = peptide_intensity_normalization(
-                dataset_df,
-                field=NORM_INTENSITY,
-                class_field=SAMPLE_ID,
-                scaling_method=nmethod,
-            )
-
-        if verbose:
-            density = plot_distributions(
-                dataset_df,
-                NORM_INTENSITY,
-                SAMPLE_ID,
-                log2=log_after_norm,
-                width=plot_width,
-                title="Normalization at peptide level method: " + nmethod,
-            )
-            plt.show()
-            pdf.savefig(density)
-            box = plot_box_plot(
-                dataset_df,
-                NORM_INTENSITY,
-                SAMPLE_ID,
-                log2=log_after_norm,
-                width=plot_width,
-                title="Normalization at peptide level method: " + nmethod,
-                violin=violin,
-            )
-            plt.show()
-            pdf.savefig(box)
-            pdf.close()
-
-        print("Save the normalized peptide intensities...")
-        dataset_df.to_csv(output, index=False, sep=",")
-    else:
-        if parquet is None:
-            sdrf_df, label, sample_names, choice = analyse_sdrf(
-                sdrf, compression_method
-            )
-            msstats_chunks = pd.read_csv(
-                msstats,
-                sep=",",
-                compression=compression_method,
-                dtype={CONDITION: "category", ISOTOPE_LABEL_TYPE: "category"},
-                chunksize=chunksize,
-            )
-        else:
-            label, sample_names, choice = analyse_feature_parquet(
-                parquet, batch_size=chunksize
-            )
-            msstats_chunks = read_large_parquet(parquet, batch_size=chunksize)
-        sample_number = len(sample_names)
-
-        # TODO: Stream processing to obtain strong proteins with more than 2 uniqe peptides
-        temp = f"Temp-{str(uuid.uuid4())}/"
-        os.mkdir(temp)
-        print(f"INFO: Writing files into {temp}...")
-        unique_peptides = {}
-        group_intensities = {}
-        quantile = {}
-        print("INFO: First iteration to get unique peptides and strong proteins...")
-        for msstats_df in msstats_chunks:
-            if parquet is None:
-                msstats_df = msstats_common_process(msstats_df)
-                msstats_df = merge_sdrf(label, sdrf_df, msstats_df)
-            else:
-                msstats_df = parquet_common_process(msstats_df, label, choice)
-            result_df = data_common_process(msstats_df, min_aa)
-
-            # Write CSVs by Sample ID
-            for sample in sample_names:
-                file_name = f"{temp}/{sample}.csv"
-                write_mode = "a" if os.path.exists(file_name) else "w"
-                header = False if os.path.exists(file_name) else True
-                result_df[result_df[SAMPLE_ID] == sample].to_csv(
-                    file_name, index=False, header=header, mode=write_mode
-                )
-            unique_df = result_df.groupby([PEPTIDE_CANONICAL]).filter(
-                lambda x: len(set(x[PROTEIN_NAME])) == 1
-            )[[PEPTIDE_CANONICAL, PROTEIN_NAME]]
-            unique_dict = dict(
-                zip(unique_df[PEPTIDE_CANONICAL], unique_df[PROTEIN_NAME])
-            )
-            for i in unique_dict.keys():
-                if i in unique_peptides.keys() and unique_dict[i] != unique_peptides[i]:
-                    unique_peptides.pop(i)
-                else:
-                    unique_peptides[i] = unique_dict[i]
-
-        proteins_list = list(unique_peptides.values())
-        count_dict = {
-            element: proteins_list.count(element) for element in set(proteins_list)
-        }
-        strong_proteins = [
-            element for element in count_dict if count_dict[element] >= min_unique
-        ]
-        del proteins_list, count_dict
-        print(f"Number of unique peptides: {len(list(unique_peptides.keys()))}")
-        print(f"Number of strong proteins: {len(strong_proteins)}")
-
-        # TODO: Filter proteins with less unique peptides than min_unique (default: 2)
-        plot_samples = random.sample(sample_names, min(len(sample_names), 20))
-        plot_width = 10 + len(plot_samples) * 0.5
-        pdf = PdfPages(qc_report)
-        original_intensities_df = pd.DataFrame()
-
-        print("INFO: Second iteration to filter data and prepare normalization...")
-        print("Logarithmic if specified..")
-        norm_record = [0] * 2
-        for sample in sample_names:
-            msstats_df = pd.read_csv(f"{temp}/{sample}.csv", sep=",")
-            msstats_df = msstats_df[msstats_df[PROTEIN_NAME].isin(strong_proteins)]
             # Remove high abundant and contaminants proteins and the outliers
             if remove_ids is not None:
-                msstats_df = remove_protein_by_ids(msstats_df, remove_ids)
+                print("Remove proteins from file...")
+                dataset_df = remove_protein_by_ids(dataset_df, remove_ids)
             if remove_decoy_contaminants:
-                msstats_df = remove_contaminants_entrapments_decoys(msstats_df)
-                norm_record[0] += len(msstats_df)
-            msstats_df = msstats_df.rename(columns={INTENSITY: NORM_INTENSITY})
-            if log2:
-                msstats_df[NORM_INTENSITY] = np.log2(msstats_df[NORM_INTENSITY])
-            if sample in plot_samples:
-                original_intensities_df = pd.concat(
-                    [original_intensities_df, msstats_df]
-                )
-            if not skip_normalization:
-                if nmethod == "msstats":
-                    if label in ["TMT", "ITRAQ"]:
-                        g = msstats_df.groupby(["Run", "Channel"])
-                    else:
-                        g = msstats_df.groupby(["Run", "Fraction"])
-                    for name, group in g:
-                        group_intensity = group[NORM_INTENSITY].tolist()
-                        if name not in group_intensities:
-                            group_intensities[name] = group_intensity
-                        else:
-                            group_intensities.update(
-                                {
-                                    name: group_intensities[NORM_INTENSITY]
-                                    + group_intensity
-                                }
-                            )
-                elif nmethod == "quantile":
-                    msstats_df = (
-                        msstats_df.groupby(
-                            [
-                                PEPTIDE_SEQUENCE,
-                                PEPTIDE_CANONICAL,
-                                PEPTIDE_CHARGE,
-                                FRACTION,
-                                RUN,
-                                BIOREPLICATE,
-                                PROTEIN_NAME,
-                                STUDY_ID,
-                                CONDITION,
-                            ]
-                        )[NORM_INTENSITY]
-                        .agg(np.nanmean)
-                        .reset_index()
-                    )
-                    rank = msstats_df[NORM_INTENSITY].rank(method="average")
-                    dic = dict(zip(rank, msstats_df[NORM_INTENSITY]))
-                    if len(quantile) == 0:
-                        quantile = {k: (v, 1) for k, v in dic.items()}
-                    else:
-                        # update = min(len(quantile), len(dic))
-                        intersec = set(quantile.keys()) & set(dic.keys())
-                        update = set(dic.keys()) - set(quantile.keys())
-                        quantile.update(
-                            {
-                                i: (quantile[i][0] + dic[i], quantile[i][1] + 1)
-                                for i in intersec
-                            }
-                        )
-                        if len(update) > 0:
-                            quantile.update({k: (dic[k], 1) for k in update})
-                    msstats_df[SAMPLE_ID] = sample
-                else:
-                    exit("Stream process only supports msstats and quantile methods!")
-            msstats_df.to_csv(f"{temp}/{sample}.csv", index=False, sep=",")
-            norm_record[1] += len(msstats_df)
-        if not skip_normalization and nmethod == "quantile":
-            quantile = {k: v[0] / v[1] for k, v in quantile.items()}
-        print(f"Peptides after contaminants removal: {norm_record[0]}")
-        print(f"Number of peptides after normalization: {norm_record[1]}")
-        # Save original intensities QC plots
-        original_intensities_df = original_intensities_df.reset_index(drop=True)
-        density = plot_distributions(
-            original_intensities_df,
-            NORM_INTENSITY,
-            SAMPLE_ID,
-            log2=not log2,
-            width=plot_width,
-            title="Original peptidoform intensity distribution (no normalization)",
-        )
-        pdf.savefig(density)
-        box = plot_box_plot(
-            original_intensities_df,
-            NORM_INTENSITY,
-            SAMPLE_ID,
-            log2=not log2,
-            width=plot_width,
-            title="Original peptidoform intensity distribution (no normalization)",
-            violin=violin,
-        )
-        plt.show()
-        pdf.savefig(box)
-        del original_intensities_df
+                print("Remove decoy and contaminants...")
+                dataset_df = remove_contaminants_entrapments_decoys(dataset_df)
 
-        # TODO: Peptide intensity normalization
-        peptides_count = pd.DataFrame(
-            columns=[PROTEIN_NAME, PEPTIDE_CANONICAL, "count"]
-        )
-        norm_intensities_df = pd.DataFrame()
-        if not skip_normalization and nmethod == "msstats":
-            # For ISO normalization
-            if label in ["TMT", "ITRAQ"]:
-                median_baseline = np.nanmedian(
-                    list(set(sum(group_intensities.values(), [])))
-                )
-                group_intensities = {
-                    key: np.nanmedian(list(values))
-                    for key, values in group_intensities.items()
-                }
-            else:
-                fractions = [i[1] for i in group_intensities.keys()]
-                fraction_median = {}
-                for fraction in fractions:
-                    fraction_keys = [
-                        i for i in group_intensities.keys() if i[1] == fraction
-                    ]
-                    fraction_intensities = []
-                    for key in fraction_keys:
-                        fraction_intensities.extend(group_intensities[key])
-                    fraction_median[fraction] = np.nanmedian(fraction_intensities)
-                group_intensities = {
-                    key: np.nanmedian(values)
-                    for key, values in group_intensities.items()
-                }
-        print("INFO: Third iteration to normalize and counting peptides frequency...")
-        size_record = [0] * 3
-
-        def normalization(
-            dataset_df, label, sample, skip_normalization, nmethod, record
-        ):
+            print_dataset_size(dataset_df, "Peptides after contaminants removal: ", verbose)
+            print("Normalize intensities.. ")
+            dataset_df.loc[:,NORM_INTENSITY] = np.log(dataset_df[NORM_INTENSITY])
+            dataset_df.loc[:,NORM_INTENSITY] = normalize(dataset_df[NORM_INTENSITY],'max_min')
+            dataset_df = normalize_run(dataset_df,sdrf,nmethod)
+            """         
             if not skip_normalization:
-                field = NORM_INTENSITY
-                if nmethod == "msstats":
-                    # For ISO normalization
-                    if label in ["TMT", "ITRAQ"]:
-                        dataset_df.loc[:, NORM_INTENSITY] = dataset_df.apply(
-                            lambda x: x[field]
-                            - group_intensities[(x["Run"], x["Channel"])]
-                            + median_baseline,
-                            axis=1,
-                        )
-                    else:
-                        dataset_df.loc[:, NORM_INTENSITY] = dataset_df.apply(
-                            lambda x: x[field]
-                            - group_intensities[(x["Run"], x["Fraction"])]
-                            + np.nanmedian(
-                                [
-                                    group_intensities[i]
-                                    for i in group_intensities.keys()
-                                    if i[1] == x["Fraction"]
-                                ]
-                            ),
-                            axis=1,
-                        )
-                elif nmethod == "quantile":
-                    rank = dataset_df[NORM_INTENSITY].rank(method="average")
-                    ref_dict = dict(zip(rank, dataset_df[NORM_INTENSITY]))
-                    ref_dict = {v: quantile[k] for k, v in ref_dict.items()}
-                    dataset_df.loc[:, NORM_INTENSITY] = dataset_df.apply(
-                        lambda x: ref_dict.get(x[NORM_INTENSITY], np.nan),
-                        axis=1,
-                    )
-            dataset_df = dataset_df.drop_duplicates()
-            dataset_df = dataset_df[dataset_df[NORM_INTENSITY].notna()]
+                dataset_df = intensity_normalization(
+                    dataset_df,
+                    field=NORM_INTENSITY,
+                    class_field=SAMPLE_ID,
+                    scaling_method=nmethod,
+                ) 
+            """
+            print("Number of peptides after normalization: " + str(len(dataset_df.index)))
+            print("Select the best peptidoform across fractions...")
             dataset_df = get_peptidoform_normalize_intensities(dataset_df)
-            record[0] += len(dataset_df.index)
+            print(
+                "Number of peptides after peptidofrom selection: "
+                + str(len(dataset_df.index))
+            )
+
+            print("Sum all peptidoforms per Sample...")
             dataset_df = sum_peptidoform_intensities(dataset_df)
-            record[1] += len(dataset_df.index)
+            print("Number of peptides after selection: " + str(len(dataset_df.index)))
+
+            print("Average all peptidoforms per Peptide/Sample...")
             dataset_df = average_peptide_intensities(dataset_df)
-            record[2] += len(dataset_df.index)
+            print("Number of peptides after average: " + str(len(dataset_df.index)))
 
-            return dataset_df, record
-
-        for sample in sample_names:
-            dataset_df = pd.read_csv(f"{temp}/{sample}.csv", sep=",")
-            if len(dataset_df) != 0:
-                norm_df, size_record = normalization(
-                    dataset_df, label, sample, skip_normalization, nmethod, size_record
+            if remove_low_frequency_peptides and len(sample_names) > 1:
+                print(dataset_df)
+                dataset_df = remove_low_frequency_peptides_(dataset_df, 0.20)
+                print_dataset_size(
+                    dataset_df, "Peptides after remove low frequency peptides: ", verbose
                 )
+
+
+            print("Save the normalized peptide intensities...")
+            if header:
+                dataset_df.to_csv(output, index=False,header=False,mode='a+')
             else:
-                continue
-            sample_peptides = norm_df[PEPTIDE_CANONICAL].unique().tolist()
-            if remove_low_frequency_peptides and sample_number > 1:
-                sample_peptides = norm_df[
-                    [PROTEIN_NAME, PEPTIDE_CANONICAL]
-                ].drop_duplicates()
-                sample_peptides["count"] = 1
-                peptides_count = (
-                    pd.concat([peptides_count, sample_peptides])
-                    .groupby([PROTEIN_NAME, PEPTIDE_CANONICAL])
-                    .agg(sum)
-                    .reset_index()
-                )
-            norm_df.to_csv(f"{temp}/{sample}.csv", sep=",", index=False)
-            if sample in plot_samples:
-                norm_intensities_df = pd.concat([norm_intensities_df, norm_df])
-        del group_intensities, quantile
-        print(f"Number of peptides after peptidofrom selection: {size_record[0]}")
-        print(f"Number of peptides after selection: {size_record[1]}")
-        print(f"Number of peptides after average: {size_record[2]}")
-        # Save normalized intensities QC plots
-        norm_intensities_df = norm_intensities_df.reset_index(drop=True)
-        density = plot_distributions(
-            norm_intensities_df,
-            NORM_INTENSITY,
-            SAMPLE_ID,
-            log2=log_after_norm,
-            width=plot_width,
-            title="Peptidoform intensity distribution after normalization, method: "
-            + nmethod,
-        )
-        plt.show()
-        pdf.savefig(density)
-        box = plot_box_plot(
-            norm_intensities_df,
-            NORM_INTENSITY,
-            SAMPLE_ID,
-            log2=log_after_norm,
-            width=plot_width,
-            title="Peptidoform intensity distribution after normalization, method: "
-            + nmethod,
-            violin=violin,
-        )
-        plt.show()
-        pdf.savefig(box)
-        del norm_intensities_df, strong_proteins
-
-        print("INFO: Writing normalized intensities into CSV...")
-        if remove_low_frequency_peptides and sample_number > 1:
-            peptides_count = peptides_count.loc[
-                (peptides_count["count"] > 0.20 * sample_number)
-                & (peptides_count["count"] != sample_number - 1)
-            ]
-
-        final_norm_intensities_df = pd.DataFrame()
-        size_record = 0
-        for sample in sample_names:
-            dataset_df = pd.read_csv(f"{temp}/{sample}.csv", sep=",")
-            if remove_low_frequency_peptides and sample_number > 1:
-                # Filter low-frequency peptides, which indicate whether the peptide occurs less than 20% in all samples or
-                # only in one sample
-                dataset_df = dataset_df.merge(
-                    peptides_count[[PEPTIDE_CANONICAL, PROTEIN_NAME]], how="inner"
-                )
-            size_record += len(dataset_df.index)
-            dataset_df = dataset_df[
-                [PEPTIDE_CANONICAL, PROTEIN_NAME, SAMPLE_ID, NORM_INTENSITY, CONDITION]
-            ]
-            write_mode = "a" if os.path.exists(output) else "w"
-            header = False if os.path.exists(output) else True
-            dataset_df.to_csv(output, index=False, header=header, mode=write_mode)
-            dataset_df.to_csv(f"{temp}/{sample}.csv", sep=",", index=False)
-            if sample in plot_samples:
-                final_norm_intensities_df = pd.concat(
-                    [final_norm_intensities_df, dataset_df]
-                )
-        print(f"Peptides after remove low frequency peptides: {size_record}")
-        if remove_low_frequency_peptides:
-            del peptides_count
-
-        # TODO: No peptides intensity normalization applied in stream processing.
-        # Save final normalized intensities QC plots
-        final_norm_intensities_df = final_norm_intensities_df.reset_index(drop=True)
-        density = plot_distributions(
-            final_norm_intensities_df,
-            NORM_INTENSITY,
-            SAMPLE_ID,
-            log2=log_after_norm,
-            width=plot_width,
-            title="Normalization at peptide level method: " + nmethod,
-        )
-        plt.show()
-        pdf.savefig(density)
-        box = plot_box_plot(
-            final_norm_intensities_df,
-            NORM_INTENSITY,
-            SAMPLE_ID,
-            log2=log_after_norm,
-            width=plot_width,
-            title="Normalization at peptide level method: " + nmethod,
-            violin=violin,
-        )
-        plt.show()
-        pdf.savefig(box)
-        pdf.close()
+                dataset_df.to_csv(output, index=False)
+                header = True
+            
 
 
 if __name__ == "__main__":

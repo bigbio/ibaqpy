@@ -14,7 +14,6 @@ PARQUET_COLUMNS = [
     "peptidoform",
     "sequence",
     "charge",
-    "fragment_ion",
     "isotope_label_type",
     "channel",
     "condition",
@@ -22,10 +21,8 @@ PARQUET_COLUMNS = [
     "run",
     "fraction",
     "intensity",
-    "reference_file_name",
     "sample_accession",
 ]
-
 PROTEIN_NAME = "ProteinName"
 PEPTIDE_SEQUENCE = "PeptideSequence"
 PEPTIDE_CANONICAL = "PeptideCanonical"
@@ -302,19 +299,15 @@ def sum_peptidoform_intensities(dataset: DataFrame) -> DataFrame:
     :param dataset: Dataframe to be analyzed
     :return: dataframe with the intensities
     """
-    dataset = dataset[dataset[NORM_INTENSITY].notna()]
-    normalize_df = dataset.groupby(
-        [PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION], observed=True
-    )[NORM_INTENSITY].sum()
-    normalize_df = normalize_df.reset_index()
-    normalize_df = pd.merge(
-        normalize_df,
-        dataset[[PROTEIN_NAME, PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION]],
-        how="left",
-        on=[PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION],
-    )
-    normalize_df.drop_duplicates(inplace=True)
-    return normalize_df
+    dataset.dropna(subset=[NORM_INTENSITY], inplace=True)
+    dataset.drop(['PeptideSequence','PrecursorCharge'],axis=1,inplace=True)
+    dataset = dataset[[PROTEIN_NAME, PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION,NORM_INTENSITY]]
+    dataset.loc[:,'NormIntensity'] = dataset.groupby(
+    [PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION],observed=True
+    )[NORM_INTENSITY].transform('sum')
+    dataset = dataset.drop_duplicates()
+    dataset.reset_index(inplace=True,drop=True)
+    return dataset
 
 
 def parse_uniprot_accession(uniprot_id: str) -> str:
@@ -365,21 +358,22 @@ def get_peptidoform_normalize_intensities(
     :param higher_intensity: select based on normalize intensity, if false based on best scored peptide
     :return:
     """
-    dataset = dataset[dataset[NORM_INTENSITY].notna()]
+    dataset.dropna(subset=[NORM_INTENSITY], inplace=True)
     if higher_intensity:
         dataset = dataset.loc[
             dataset.groupby(
                 [PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE],
                 observed=True,
             )[NORM_INTENSITY].idxmax()
-        ].reset_index(drop=True)
+        ]
     else:
         dataset = dataset.loc[
             dataset.groupby(
                 [PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE],
                 observed=True,
             )[SEARCH_ENGINE].idxmax()
-        ].reset_index(drop=True)
+        ]
+    dataset.reset_index(drop=True,inplace=True)
     return dataset
 
 
@@ -389,18 +383,15 @@ def average_peptide_intensities(dataset: DataFrame) -> DataFrame:
     :param dataset: Dataframe containing all the peptidoforms
     :return: New dataframe
     """
-    dataset_df = dataset.groupby(
-        [PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION], observed=True
-    )[NORM_INTENSITY].median()
-    dataset_df = dataset_df.reset_index()
-    dataset_df = pd.merge(
-        dataset_df,
-        dataset[[PROTEIN_NAME, PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION]],
-        how="left",
-        on=[PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION],
-    )
-    dataset_df.drop_duplicates(inplace=True)
-    return dataset_df
+    dataset.dropna(subset=[NORM_INTENSITY], inplace=True)
+    dataset.drop(['BioReplicate'],axis=1,inplace=True)
+    dataset.loc[:,'NormIntensity'] = dataset.groupby(
+    [PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION],observed=True
+    )[NORM_INTENSITY].transform('median')
+    dataset = dataset.drop_duplicates()
+    dataset.reset_index(inplace=True,drop=True)
+    
+    return dataset
 
 
 # Functions needed by Combiner
