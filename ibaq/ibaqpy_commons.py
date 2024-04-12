@@ -306,22 +306,22 @@ def impute_missing_values(dataset_df, field, class_field):
             )
             group_normalize_df.rename(columns={"value": NORM_INTENSITY}, inplace=True)
             normalize_df = normalize_df.append(group_normalize_df, ignore_index=True)
-        else:
-            print("nothing")
-            # Impute the missing values
-            imputer = MissForest(max_iter=5)
-            imputed_data = imputer.fit_transform(group_normalize_df)
-            group_normalize_df = pd.DataFrame(
-                imputed_data,
-                columns=group_normalize_df.columns,
-                index=group_normalize_df.index,
-            )
-            # Melt the dataframe
-            group_normalize_df = group_normalize_df.reset_index()
-            group_normalize_df = group_normalize_df.melt(
-                id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION]
-            )
-            group_normalize_df.rename(columns={"value": NORM_INTENSITY}, inplace=True)
-            normalize_df = normalize_df.append(group_normalize_df, ignore_index=True)
+        # else:
+        #     print("nothing")
+        #     # Impute the missing values
+        #     imputer = MissForest(max_iter=5)
+        #     imputed_data = imputer.fit_transform(group_normalize_df)
+        #     group_normalize_df = pd.DataFrame(
+        #         imputed_data,
+        #         columns=group_normalize_df.columns,
+        #         index=group_normalize_df.index,
+        #     )
+        #     # Melt the dataframe
+        #     group_normalize_df = group_normalize_df.reset_index()
+        #     group_normalize_df = group_normalize_df.melt(
+        #         id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION]
+        #     )
+        #     group_normalize_df.rename(columns={"value": NORM_INTENSITY}, inplace=True)
+        #     normalize_df = normalize_df.append(group_normalize_df, ignore_index=True)
 
     return normalize_df
