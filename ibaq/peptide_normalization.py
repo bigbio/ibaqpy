@@ -1,15 +1,12 @@
 #!/usr/bin/env python
-import numpy as np
 import pandas as pd
 import os
 import re
 import duckdb
-from ibaq.normalization_methods import normalize_run, normalize
 from ibaq.ibaqpy_commons import (
     BIOREPLICATE,
     CHANNEL,
     CONDITION,
-    PARQUET_COLUMNS,
     FRACTION,
     FRAGMENT_ION,
     INTENSITY,
@@ -333,7 +330,7 @@ class Feature:
         """Return peptides with low frequency"""
         f_table = self.parquet_db.sql(
             """
-                select "sequence","protein_accessions",COUNT(DISTINCT sample_accession) as "count" from parquet_db
+                SELECT "sequence","protein_accessions",COUNT(DISTINCT sample_accession) as "count" from parquet_db
                 GROUP BY "sequence","protein_accessions"
                 """
         ).df()
@@ -434,7 +431,7 @@ class Feature:
         return: A list of samples.
         """
         unique = self.parquet_db.sql(
-            f"SELECT DISTINCT sample_accession FROM parquet_db"
+            "SELECT DISTINCT sample_accession FROM parquet_db"
         ).df()
         return unique["sample_accession"].tolist()
 
@@ -443,7 +440,7 @@ class Feature:
         return: A list of labels.
         """
         unique = self.parquet_db.sql(
-            f"SELECT DISTINCT isotope_label_type FROM parquet_db"
+            "SELECT DISTINCT isotope_label_type FROM parquet_db"
         ).df()
         return unique["isotope_label_type"].tolist()
 
@@ -451,7 +448,7 @@ class Feature:
         """
         return: A list of labels.
         """
-        unique = self.parquet_db.sql(f"SELECT DISTINCT run FROM parquet_db").df()
+        unique = self.parquet_db.sql("SELECT DISTINCT run FROM parquet_db").df()
         try:
             unique["run"] = unique["run"].astype("int")
         except ValueError:

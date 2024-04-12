@@ -1,4 +1,3 @@
-import numpy as np
 import pandas as pd
 from sklearn.preprocessing import quantile_transform
 from ibaq.ibaqpy_commons import SAMPLE_ID, RUN, NORM_INTENSITY
@@ -11,7 +10,7 @@ def normalize_run(df, reps, method):
             runs = df.loc[df[SAMPLE_ID] == sample, RUN].unique().tolist()
             if len(runs) > 1:
                 sample_df = df.loc[df[SAMPLE_ID] == sample, :]
-                map, base = get_normalize_args(sample_df, runs, method)
+                map_, base = get_normalize_args(sample_df, runs, method)
                 for run in runs:
                     run = str(run)
                     run_intensity = df.loc[
@@ -19,7 +18,7 @@ def normalize_run(df, reps, method):
                     ]
                     df.loc[
                         (df[SAMPLE_ID] == sample) & (df[RUN] == run), NORM_INTENSITY
-                    ] = run_intensity / (map[run] / base)
+                    ] = run_intensity / (map_[run] / base)
         return df
     else:
         return df
@@ -37,31 +36,31 @@ def get_normalize_args(df, runs, method):
 
 
 def normalize_mean(df, runs):
-    map = {}
+    map_ = {}
     total = 0
     for run in runs:
         run = str(run)
         run_m = df.loc[df[RUN] == run, NORM_INTENSITY].mean()
-        map[run] = run_m
+        map_[run] = run_m
         total += run_m
     avg = total / len(runs)
-    return map, avg
+    return map_, avg
 
 
 def normalize_median(df, runs):
-    map = {}
+    map_ = {}
     total = 0
     for run in runs:
         run = str(run)
         run_m = df.loc[df[RUN] == run, NORM_INTENSITY].median()
-        map[run] = run_m
+        map_[run] = run_m
         total += run_m
     med = total / len(runs)
-    return map, med
+    return map_, med
 
 
 def normalize_q(df, runs):
-    map = {}
+    map_ = {}
     total = 0
     for run in runs:
         run = str(run)
@@ -70,10 +69,10 @@ def normalize_q(df, runs):
             .quantile([0.75, 0.25], interpolation="linear")
             .mean()
         )
-        map[run] = run_m
+        map_[run] = run_m
         total += run_m
     q = total / len(runs)
-    return map, q
+    return map_, q
 
 
 def normalize(df, method):
@@ -113,8 +112,8 @@ def global_normalize(df):
 
 # max-min
 def max_min_mormalize(df):
-    min = df.min()
-    return (df - min) / (df.max() - min)
+    min_ = df.min()
+    return (df - min_) / (df.max() - min_)
 
 
 # quantile
