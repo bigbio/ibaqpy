@@ -1,7 +1,7 @@
 from unittest import TestCase
 
-from commands.features2peptides import peptide_normalization
-from commands.compute_ibaq import ibaq_compute
+from ibaq.peptide_normalization import peptide_normalization
+from ibaq.compute_ibaq import ibaq_compute
 
 
 class TestIbaqpy(TestCase):
@@ -33,7 +33,6 @@ class TestIbaqpy(TestCase):
             "normalize": True,
             "min_aa": 7,
             "max_aa": 30,
-            "remove_low_frequency_peptides": True,
             "output": __package__ + "PXD003947/PXD003947-ibaq-norm.csv",
             "verbose": True,
             "qc_report": __package__ + "PXD003947/IBAQ-QCprofile.pdf",

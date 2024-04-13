@@ -2,7 +2,9 @@
 import pandas as pd
 import os
 import re
+import numpy as np
 import duckdb
+from ibaq.normalization_methods import normalize_run, normalize
 from ibaq.ibaqpy_commons import (
     BIOREPLICATE,
     CHANNEL,
@@ -21,6 +23,7 @@ from ibaq.ibaqpy_commons import (
     SAMPLE_ID,
     SEARCH_ENGINE,
     STUDY_ID,
+    PARQUET_COLUMNS,
     TMT16plex,
     TMT11plex,
     TMT10plex,
@@ -460,3 +463,107 @@ class Feature:
             )
 
         return unique["run"].tolist()
+
+
+def peptide_normalization(
+    parquet: str,
+    sdrf: str,
+    min_aa: int,
+    min_unique: int,
+    remove_ids: str,
+    remove_decoy_contaminants: bool,
+    remove_low_frequency_peptides: bool,
+    output: str,
+    skip_normalization: bool,
+    nmethod: str,
+    pnmethod: str,
+    log2: bool,
+    save_parquet: bool,
+) -> None:
+    if os.path.exists(output):
+        exit(f"{output} already exist!")
+
+    if parquet is None:
+        print_help_msg(peptide_normalization)
+        exit(1)
+
+    print("Loading data..")
+    F = Feature(parquet)
+    if sdrf:
+        technical_repetitions, label, sample_names, choice = analyse_sdrf(sdrf)
+    else:
+        technical_repetitions, label, sample_names, choice = F.experimental_inference
+    low_frequency_peptides = F.low_frequency_peptides
+    header = False
+    for samples, df in F.iter_samples():
+        for sample in samples:
+            ## TODO: Perform data preprocessing on every sample
+            print(f"{str(sample).upper()}: Data preprocessing...")
+            dataset_df = df[df["sample_accession"] == sample].copy()
+            dataset_df = dataset_df[dataset_df["unique"] == 1]
+            dataset_df = dataset_df[PARQUET_COLUMNS]
+            dataset_df = parquet_common_process(dataset_df, label, choice)
+            dataset_df = data_common_process(dataset_df, min_aa)
+            # Only proteins with unique peptides number greater than min_unique (default: 2) are retained
+            dataset_df = dataset_df.groupby(PROTEIN_NAME).filter(
+                lambda x: len(set(x[PEPTIDE_CANONICAL])) >= min_unique
+            )
+            dataset_df.rename(columns={INTENSITY: NORM_INTENSITY}, inplace=True)
+
+            # Remove high abundant, entrapments, contaminants proteins and the outliers
+            if remove_ids is not None:
+                dataset_df = remove_protein_by_ids(dataset_df, remove_ids)
+            if remove_decoy_contaminants:
+                dataset_df = remove_contaminants_entrapments_decoys(dataset_df)
+
+            if remove_low_frequency_peptides and len(sample_names) > 1:
+                dataset_df.set_index(
+                    [PROTEIN_NAME, PEPTIDE_CANONICAL], drop=True, inplace=True
+                )
+                dataset_df = dataset_df[
+                    ~dataset_df.index.isin(low_frequency_peptides)
+                ].reset_index()
+                print(
+                    f"{str(sample).upper()}: Peptides after remove low frequency peptides: {len(dataset_df.index)}"
+                )
+
+            if log2:
+                dataset_df[NORM_INTENSITY] = np.log2(dataset_df[NORM_INTENSITY])
+
+            # TODO: Normalize at feature level between ms runs (technical repetitions)
+            if not skip_normalization and nmethod != "none":
+                print(f"{str(sample).upper()}: Normalize intensities of features.. ")
+                dataset_df = normalize_run(dataset_df, technical_repetitions, nmethod)
+                print(
+                    f"{str(sample).upper()}: Number of features after normalization: {len(dataset_df.index)}"
+                )
+
+            ## TODO: Assembly features to peptides
+            # Merge peptidoforms across fractions and technical repetitions
+            dataset_df = get_peptidoform_normalize_intensities(dataset_df)
+            print(
+                f"{str(sample).upper()}: Number of peptides after peptidofrom selection: {len(dataset_df.index)}"
+            )
+
+            # Assembly peptidoforms to peptides
+            print(f"{str(sample).upper()}: Sum all peptidoforms per Sample...")
+            dataset_df = sum_peptidoform_intensities(dataset_df)
+            print(
+                f"{str(sample).upper()}: Number of peptides after selection: {len(dataset_df.index)}"
+            )
+
+            # TODO: Normalization at peptide level
+            if not skip_normalization and pnmethod != "none":
+                dataset_df.loc[:, NORM_INTENSITY] = normalize(
+                    dataset_df[NORM_INTENSITY], pnmethod
+                )
+
+            print(f"{str(sample).upper()}: Save the normalized peptide intensities...")
+            if header:
+                dataset_df.to_csv(output, index=False, header=False, mode="a+")
+            else:
+                dataset_df.to_csv(output, index=False)
+                header = True
+
+    if save_parquet:
+        F.csv2parquet(output)

@@ -38,8 +38,8 @@ setup(
         'seaborn',
         'typing_extensions'
     ],
-    scripts=['commands/compute_ibaq.py',
-             'commands/features2peptides.py',
+    scripts=['commands/features2peptides.py',
+             'commands/peptides2proteins.py',
              'commands/compute_tpa.py',
              'commands/datasets_merger.py',
              'commands/tsne_visualization.py',

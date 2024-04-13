@@ -3,7 +3,6 @@
 
 import math
 
-import click
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
@@ -43,43 +42,6 @@ def normalize_ibaq(res: DataFrame) -> DataFrame:
     return res
 
 
-@click.command()
-@click.option("-f", "--fasta", help="Protein database to compute IBAQ values")
-@click.option(
-    "-p",
-    "--peptides",
-    help="Peptide identifications with intensities following the peptide intensity output",
-)
-@click.option(
-    "-e",
-    "--enzyme",
-    help="Enzyme used during the analysis of the dataset (default: Trypsin)",
-    default="Trypsin",
-)
-@click.option(
-    "-n",
-    "--normalize",
-    help="Normalize IBAQ values using by using the total IBAQ of the experiment",
-    is_flag=True,
-)
-@click.option(
-    "--min_aa", help="Minimum number of amino acids to consider a peptide", default=7
-)
-@click.option(
-    "--max_aa", help="Maximum number of amino acids to consider a peptide", default=30
-)
-@click.option("-o", "--output", help="Output file with the proteins and ibaq values")
-@click.option(
-    "--verbose",
-    help="Print addition information about the distributions of the intensities, number of peptides remove "
-    "after normalization, etc.",
-    is_flag=True,
-)
-@click.option(
-    "--qc_report",
-    help="PDF file to store multiple QC images",
-    default="IBAQ-QCprofile.pdf",
-)
 def ibaq_compute(
     fasta: str,
     peptides: str,
@@ -195,7 +157,3 @@ def ibaq_compute(
     # res[CONDITION] = condition.lower()
 
     res.to_csv(output, index=False)
-
-
-if __name__ == "__main__":
-    ibaq_compute()

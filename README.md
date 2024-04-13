@@ -6,15 +6,15 @@
 [![PyPI version](https://badge.fury.io/py/ibaqpy.svg)](https://badge.fury.io/py/ibaqpy)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/ibaqpy)
 
-iBAQ (intensity Based Absolute Quantification) determines the abundance of a protein by dividing the total precursor intensities by the number of theoretically observable peptides of the protein. The TPA (Total Protein Approach) value is determined by summing peptide intensities of each protein and then dividing by the molecular mass to determine the relative concentration of each protein. By using [ProteomicRuler](https://www.sciencedirect.com/science/article/pii/S1535947620337749), it is possible to calculate the protein copy number and absolute concentration. **ibaqpy** compute IBAQ values, TPA values, copy numbers and concentration for proteins starting from a msstats input file (or a feature parquet from [quantmsio](https://github.com/bigbio/quantms.io)) and a SDRF experimental design file. In addition, it supports the merging of iBAQ results from multiple datasets and the elimination of outliers and batch effects. This package provides multiple tools: 
+iBAQ (intensity Based Absolute Quantification) determines the abundance of a protein by dividing the total precursor intensities by the number of theoretically observable peptides of the protein. The TPA (Total Protein Approach) value is determined by summing peptide intensities of each protein and then dividing by the molecular mass to determine the relative concentration of each protein. By using [ProteomicRuler](https://www.sciencedirect.com/science/article/pii/S1535947620337749), it is possible to calculate the protein copy number and absolute concentration. **ibaqpy** compute IBAQ values, TPA values, copy numbers and concentration for proteins starting from a feature parquet from [quantmsio](https://github.com/bigbio/quantms.io) and a [SDRF](https://github.com/bigbio/proteomics-sample-metadata) file. In addition, it supports the merging of iBAQ results from multiple datasets and the elimination of outliers and batch effects. This package provides multiple functions: 
 
-- `peptide_normalization.py`: Generate the peptides dataframe from a msstats input file and a SDRF experimental design file (or directly from a feature parquet), then normalize the peptides dataframe. It includes multiple steps such as peptidoform normalization, peptidorom to peptide summarization, peptide intensity normalization, and imputation. 
+- **Assemble features as peptides**: In features, the differences between different runs and different fractions in the sample were reduced, and then normalized after combining into peptides. See details in `commands/features2peptides`.
 
-- `compute_ibaq.py`: Compute IBAQ values from the output file from script `peptide_normalization.py`.
+- **Assemble peptides as proteins**: In the sample, the protein was combined from its unique peptides, then the iBAQ value was calculated as the Intensity of the protein devided by the theoretical number of unique peptides cut by the enzyme. This command also normalized iBAQ as riBAQ. See details in `commands/peptides2proteins`.
 
-- `compute_tpa.py`: Compute TPA values, protein copy numbers and concentration from the output file from script `peptide_normalization.py`.
+- **Compute TPA**: Compute TPA values, protein copy numbers and concentration from the output file from script `commands/features2peptides`. See details in `commands/compute_tpa.py`.
 
-- `datasets_merge.py`: Merge ibaq results from multiple datasets. It consists of three steps: missing value imputation, outlier removal, and batch effect removal.
+- **Merge projects**: Merge ibaq results from multiple datasets. It consists of three steps: missing value imputation, outlier removal, and batch effect removal. See details in `commands/datasets_merger.py`.
 
 **NOTE:** In all scripts and result files, *uniprot accession* is used as the protein identifier.
 
@@ -52,30 +52,24 @@ You can install the package from code:
 Absolute quantification files has been store in the following url: 
 
 ```
-https://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/
+http://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/quantms-data/
 ```
 
-Inside each project reanalysis folder, the folder proteomicslfq contains the msstats input file with the structure `{Name of the project}_msstats_in.csv`. 
+Inside each project reanalysis folder, the folder proteomicslfq contains the msstats input file with the structure `{Name of the project}.{Random uuid}.feature.parquet	`. 
 
-E.g. http://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/PXD003947/proteomicslfq/PXD003947.sdrf_openms_design_msstats_in.csv 
+E.g. http://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/quantms-data/MSV000079033.1/MSV000079033.1-bd44c7e3-654c-444d-9e21-0f701d6dac94.feature.parquet
 
-### Peptide Normalization - peptide_normalization.py
+### Assemble features as peptides
 
 ```asciidoc
-python peptide_normalization.py --msstats PXD003947.sdrf_openms_design_msstats_in.csv --sdrf PXD003947.sdrf.tsv --remove_ids data/contaminants_ids.tsv --remove_decoy_contaminants --remove_low_frequency_peptides --output PXD003947-peptides-norm.csv
+python commands/features2peptides.py -p tests/PXD003947/PXD003947-featrue.parquet -s tests/PXD003947/PXD003947.sdrf.tsv --remove_ids data/contaminants_ids.tsv --remove_decoy_contaminants --remove_low_frequency_peptides --output tests/PXD003947/PXD003947-peptides-norm.csv --log2 --save_parquet
 ``` 
-
-The command provides an additional `flag` for skip_normalization, pnormalization, compress, log2, violin, verbose. If you use feature parquet as input, you can pass the `--sdrf`.
-
 ```asciidoc
-Usage: peptide_normalization.py [OPTIONS]
+Usage: features2peptides.py [OPTIONS]
 
 Options:
-  -m, --msstats TEXT              MsStats file import generated by quantms
-  -p, --parquet TEXT              Parquet file import generated by quantmsio
+  -p, --parquet TEXT              Parquet file import generated by quantms.io
   -s, --sdrf TEXT                 SDRF file import generated by quantms
-  --stream                        Stream processing normalization
-  --chunksize                     The number of rows of MSstats or parquet read using pandas streaming
   --min_aa INTEGER                Minimum number of amino acids to filter
                                   peptides
   --min_unique INTEGER            Minimum number of unique peptides to filter
@@ -84,29 +78,26 @@ Options:
                                   analysis using a file with one id per line
   --remove_decoy_contaminants     Remove decoy and contaminants proteins from
                                   the analysis
-  --remove_low_frequency_peptides Remove peptides that are present in less
+  --remove_low_frequency_peptides
+                                  Remove peptides that are present in less
                                   than 20% of the samples
   --output TEXT                   Peptide intensity file including other all
                                   properties for normalization
   --skip_normalization            Skip normalization step
   --nmethod TEXT                  Normalization method used to normalize
-                                  intensities for all samples (options: msstats, quantile, qnorm)
-  --pnormalization                Normalize the peptide intensities using
-                                  different methods (options: quantile, qnorm)
-  --compress                      Read the input peptides file in compress
-                                  gzip file
+                                  feature intensities for all samples
+                                  (options: mean, median, iqr, none)
+  --pnmethod TEXT                 Normalization method used to normalize
+                                  peptides intensities for all samples
+                                  (options: mean, median, max, global,
+                                  max_min, none)
   --log2                          Transform to log2 the peptide intensity
                                   values before normalization
-  --violin                        Use violin plot instead of boxplot for
-                                  distribution representations
-  --verbose                       Print addition information about the
-                                  distributions of the intensities, number of
-                                  peptides remove after normalization, etc.
-  --qc_report TEXT                PDF file to store multiple QC images
+  --save_parquet                  Save normalized peptides to parquet
   --help                          Show this message and exit.
 ```
 
-Peptide normalization starts from the peptides dataframe. The structure of the input contains the following columns: 
+Peptide normalization starts from the peptides dataframe extracted from feature parquet. The structure of the input contains the following columns: 
 
 - ProteinName: Protein name
 - PeptideSequence: Peptide sequence including post-translation modifications `(e.g. .(Acetyl)ASPDWGYDDKN(Deamidated)GPEQWSK)`
@@ -123,72 +114,63 @@ Peptide normalization starts from the peptides dataframe. The structure of the i
 - SampleID: Sample ID `(e.g. PXD003947-Sample-3)`
 - StudyID: Study ID `(e.g. PXD003947)`. In most of the cases the study ID is the same as the ProteomeXchange ID.
 
-#### 1. Removing Contaminants and Decoys
+#### 1. Data preprocessing
 
-The first step is to remove contaminants and decoys. The script `peptide_normalization.py` provides a parameter `--remove_decoy_contaminants` as a flag to remove all the proteins with the following prefixes: `CONTAMINANT` and `DECOY`. And the user can provide a file with a list of protein accessions which represent each contaminant or high abundant protein in the file. An example file can be seen in `data/contaminants_ids.txt`.
+In this section, ibaqpy will do: 
+- Remove lines where intensity or study condition is empty
+- Parse the identifier of proteins and retain only unique peptides
+- Low confidence proteins were removed according to the threshold of unique peptides (optional)
+- Filter decoy, contaminants, entrapments, and user-specified proteins (optional)
+- Remove peptides with low frequency if `sample number > 1` (optional)
+- Data logization (optional)
 
-#### 2. Peptidoform Normalization
+#### 2. Feature normalization
 
-A peptidoform is a combination of a `PeptideSequence(Modifications) + Charge + BioReplicate + Fraction`. In the current version of the file, each row correspond to one peptidoform. 
+In this section, ibaqpy corrects the intensity of each MS runs in the sample, eliminating the effect between runs (including technique repetitions). It will do:
 
-The current version of the tool uses the parackage [qnorm](https://pypi.org/project/qnorm/) to normalize the intensities for each peptidofrom. **qnorm** implements a quantile normalization method. However, the current version of qnorm can not handle NA values which will lead to cause more NA values in data. We suggest users to use default method 'quantile' instead for now.
+- When `MS runs > 1` in the sample, the `mean` of all average(`mean`, `median` or `iqr`) in each MS run is calculated(SampleMean)
+- The ratio between SampleMean and the average MS run is used as reference to scale the original intensity
 
-#### 3. Peptidoform to Peptide Summarization
+#### 3. Assembly features to peptides
 
-For each peptidoform a peptide sequence (canonical) with not modification is generated. The intensity of all peptides group by biological replicate are `sum`. 
+A peptidoform is a combination of a `PeptideSequence(Modifications) + Charge + BioReplicate + Fraction`, and a peptide is a combination of a `PeptideSequence(Canonical) + BioReplicate`. ibaqpy will do:
 
-Then, the intensities of the peptides across different biological replicates are summarize using the function `median`. 
+- Select peptidoforms with the highest intensity across different modifications, fractions, and technical repeats
+- Merge peptidoforms across different charges and combined into peptides
 
-At the end of this step, for each peptide, the corresponding protein + the intensity of the peptide is stored. 
+#### 4. Peptide Intensity Normalization
 
-#### 4. Peptide Intensity Imputation and Normalization
+Finally, the intensity of the peptide was normalized globally by `median`, `mean`, `max`, `sum`, or `max_min`.
 
-Before the final two steps (peptide normalization and imputation), the algorithm removes all peptides that are source of missing values significantly. The algorithm removes all peptides that have more than 80% of missing values and peptides that do not appear in more than 1 sample. 
 
-Finally, two extra steps are performed: 
-
-- ``peptide intensity imputation``: Imputation is performed using the package [missingpy](https://pypi.org/project/missingpy/). The algorithm uses a Random Forest algorithm to perform the imputation.
-- ``peptide intensity normalization``: Similar to the normalization of the peptidoform intensities, the peptide intensities are normalized using the package [qnorm](https://pypi.org/project/qnorm/).
-
-### Compute IBAQ - compute_ibaq.py
+### Compute IBAQ
 IBAQ is an absolute quantitative method based on strength that can be used to estimate the relative abundance of proteins in a sample. IBAQ value is the total intensity of a protein divided by the number of theoretical peptides.
 
 ```asciidoc
-python compute_ibaq.py --fasta Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta --peptides PXD003947-peptides.csv --enzyme "Trypsin" --normalize --output PXD003947-ibaq.tsv
+python commands/peptides2proteins.py --fasta tests/PXD003947/Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta --peptides tests/PXD003947/PXD003947-peptides-norm.csv --enzyme Trypsin --output tests/PXD003947/PXD003947-ibaq-norm.csv --normalize --verbose
 ``` 
 
 The command provides an additional `flag` for normalize IBAQ values.
 
 ```asciidoc
-python compute_ibaq.py --help
-Usage: compute_ibaq.py [OPTIONS]
-
-  Compute the IBAQ values for a file output of peptides with the format described in
-  peptide_normalization.py.
-
-  :param min_aa: Minimum number of amino acids to consider a peptide
-  :param max_aa: Maximum number of amino acids to consider a peptide
-  :param fasta: Fasta file used to perform the peptide identification
-  :param peptides: Peptide intensity file
-  :param enzyme: Enzyme used to digest the protein sample
-  :param normalize: use some basic normalization steps
-  :param output: output format containing the ibaq values
-  :param verbose: Print addition information about the distributions of the intensities, 
-                  number of peptides remove after normalization, etc.
-  :param qc_report: PDF file to store multiple QC images
+Usage: peptides2proteins.py [OPTIONS]
 
 Options:
-  -f, --fasta TEXT      Protein database to compute IBAQ values  [required]
-  -p, --peptides TEXT   Peptide identifications with intensities following the peptide intensity output  [required]
-  -e, --enzyme          Enzyme used during the analysis of the dataset (default: Trypsin)
-  -n, --normalize       Normalize IBAQ values using by using the total IBAQ of the experiment
-  --min_aa              Minimum number of amino acids to consider a peptide (default: 7)
-  --max_aa              Maximum number of amino acids to consider a peptide (default: 30)
-  -o, --output TEXT     Output format containing the ibaq values
-  --verbose             Print addition information about the distributions of the intensities, 
-                        number of peptides remove after normalization, etc.
-  --qc_report           PDF file to store multiple QC images (default: "IBAQ-QCprofile.pdf")
-  --help                Show this message and exit.
+  -f, --fasta TEXT     Protein database to compute IBAQ values
+  -p, --peptides TEXT  Peptide identifications with intensities following the
+                       peptide intensity output
+  -e, --enzyme TEXT    Enzyme used during the analysis of the dataset
+                       (default: Trypsin)
+  -n, --normalize      Normalize IBAQ values using by using the total IBAQ of
+                       the experiment
+  --min_aa INTEGER     Minimum number of amino acids to consider a peptide
+  --max_aa INTEGER     Maximum number of amino acids to consider a peptide
+  -o, --output TEXT    Output file with the proteins and ibaq values
+  --verbose            Print addition information about the distributions of
+                       the intensities, number of peptides remove after
+                       normalization, etc.
+  --qc_report TEXT     PDF file to store multiple QC images
+  --help               Show this message and exit.
 ```
 
 #### 1. Performs the Enzymatic Digestion
@@ -202,13 +184,13 @@ If protein-group exists in the peptide intensity dataframe, the intensity of all
 #### 3. IBAQ Normalization  
 Normalize the ibaq values using the total ibaq of the sample. The resulted ibaq values are then multiplied by 100'000'000 (PRIDE database noramalization), for the ibaq ppb and log10 shifted by 10 (ProteomicsDB).
 
-### Compute TPA - compute_tpa.py
+### Compute TPA
 The total protein approach (TPA) is a label- and standard-free method for absolute protein quantitation of proteins using large-scale proteomic data. In the current version of the tool, the TPA value is the total intensity of the protein divided by its theoretical molecular mass.
 
 [ProteomicRuler](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4256500/) is a method for protein copy number and concentration estimation that does not require the use of isotope labeled standards. It uses the mass spectrum signal of histones as a "proteomic ruler" because it is proportional to the amount of DNA in the sample, which in turn depends on cell count. Thus, this approach can add an absolute scale to the mass spectrometry readout and allow estimates of the copy number of individual proteins in each cell.
 
 ```asciidoc
-python compute_tpa.py --fasta Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta --organism 'human' --peptides PXD003947-peptides.csv --ruler --ploidy 2 --cpc 200 --output PXD003947-tpa.tsv --verbose
+python commands/compute_tpa.py --fasta Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta --organism 'human' --peptides PXD003947-peptides.csv --ruler --ploidy 2 --cpc 200 --output PXD003947-tpa.tsv --verbose
 ```
 
 ```asciidoc
@@ -255,12 +237,12 @@ For cellular protein copy number calculation, the uniprot accession of histones 
 
 In the calculation of protein concentration, the volume is calculated according to the cell protein concentration first, and then the protein mass is divided by the volume to calculate the intracellular protein concentration.
 
-### Datasets Merge - datasets_merge.py
+### Datasets Merge
 There are batch effects in protein identification and quantitative results between different studies, which may be caused by differences in experimental techniques, conditional methods, data analysis, etc. Here we provide a method to apply batch effect correction.  First to impute ibaq data, then remove outliers using `hdbscan`, and apply batch effect correction using `pycombat`.
 
 
 ```asciidoc
-python datasets_merge.py datasets_merge --data_folder ../ibaqpy_test/ --output datasets-merge.csv --verbose
+python commands/datasets_merge.py datasets_merge --data_folder ../ibaqpy_test/ --output datasets-merge.csv --verbose
 ``` 
 
 ```asciidoc
