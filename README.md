@@ -8,13 +8,13 @@
 
 iBAQ (intensity Based Absolute Quantification) determines the abundance of a protein by dividing the total precursor intensities by the number of theoretically observable peptides of the protein. The TPA (Total Protein Approach) value is determined by summing peptide intensities of each protein and then dividing by the molecular mass to determine the relative concentration of each protein. By using [ProteomicRuler](https://www.sciencedirect.com/science/article/pii/S1535947620337749), it is possible to calculate the protein copy number and absolute concentration. **ibaqpy** compute IBAQ values, TPA values, copy numbers and concentration for proteins starting from a feature parquet from [quantmsio](https://github.com/bigbio/quantms.io) and a [SDRF](https://github.com/bigbio/proteomics-sample-metadata) file. In addition, it supports the merging of iBAQ results from multiple datasets and the elimination of outliers and batch effects. This package provides multiple functions: 
 
-- **Assemble features as peptides**: In features, the differences between different runs and different fractions in the sample were reduced, and then normalized after combining into peptides. See details in `commands/features2peptides`.
+**Assemble features as peptides**: In features, the differences between different runs and different fractions in the sample were reduced, and then normalized after combining into peptides. See details in `commands/features2peptides`.
 
-- **Assemble peptides as proteins**: In the sample, the protein was combined from its unique peptides, then the iBAQ value was calculated as the Intensity of the protein devided by the theoretical number of unique peptides cut by the enzyme. This command also normalized iBAQ as riBAQ. See details in `commands/peptides2proteins`.
+**Assemble peptides as proteins**: In the sample, the protein was combined from its unique peptides, then the iBAQ value was calculated as the Intensity of the protein devided by the theoretical number of unique peptides cut by the enzyme. This command also normalized iBAQ as riBAQ. See details in `commands/peptides2proteins`.
 
-- **Compute TPA**: Compute TPA values, protein copy numbers and concentration from the output file from script `commands/features2peptides`. See details in `commands/compute_tpa.py`.
+**Compute TPA**: Compute TPA values, protein copy numbers and concentration from the output file from script `commands/features2peptides`. See details in `commands/compute_tpa.py`.
 
-- **Merge projects**: Merge ibaq results from multiple datasets. It consists of three steps: missing value imputation, outlier removal, and batch effect removal. See details in `commands/datasets_merger.py`.
+**Merge projects**: Merge ibaq results from multiple datasets. It consists of three steps: missing value imputation, outlier removal, and batch effect removal. See details in `commands/datasets_merger.py`.
 
 **NOTE:** In all scripts and result files, *uniprot accession* is used as the protein identifier.
 
@@ -97,7 +97,7 @@ Options:
   --help                          Show this message and exit.
 ```
 
-Peptide normalization starts from the peptides dataframe extracted from feature parquet. The structure of the input contains the following columns: 
+Peptide normalization starts from the peptides dataframe extracted from feature parquet. It contains the following columns:
 
 - ProteinName: Protein name
 - PeptideSequence: Peptide sequence including post-translation modifications `(e.g. .(Acetyl)ASPDWGYDDKN(Deamidated)GPEQWSK)`
