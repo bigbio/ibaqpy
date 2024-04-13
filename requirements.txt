@@ -5,6 +5,7 @@ click
 pandas==2.0.2
 matplotlib
 pyarrow
+duckdb==0.10.1
 qnorm
 scipy>=1.10
 seaborn
