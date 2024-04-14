@@ -38,12 +38,12 @@ setup(
         'seaborn',
         'typing_extensions'
     ],
-    scripts=['bin/compute_ibaq.py',
-             'bin/peptide_normalization.py',
-             'bin/compute_tpa.py',
-             'bin/datasets_merger.py',
-             'bin/tsne_visualization.py',
-             'bin/merge_condition_files.py'],
+    scripts=['commands/features2peptides.py',
+             'commands/peptides2proteins.py',
+             'commands/compute_tpa.py',
+             'commands/datasets_merger.py',
+             'commands/tsne_visualization.py',
+             'commands/merge_condition_files.py',],
     classifiers=[
         'Development Status :: 4 - Beta',
         'Environment :: Console',

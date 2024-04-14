@@ -1,16 +1,13 @@
+#!/usr/bin/env python
 import os
-import re
-from typing import OrderedDict
-
 import click
 import matplotlib
 import numpy as np
 import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
-from pandas import DataFrame
 
-FEATURE_COLUMNS = [
+PARQUET_COLUMNS = [
     "protein_accessions",
     "peptidoform",
     "sequence",
@@ -164,56 +161,8 @@ def get_accession(identifier: str) -> str:
         return identifier_lst[1]
 
 
-def remove_protein_by_ids(
-    dataset: DataFrame, protein_file: str, protein_field=PROTEIN_NAME
-) -> DataFrame:
-    """
-    This method reads a file with a list of contaminants and high abudant proteins and
-    remove them from the dataset.
-    :param dataset: Peptide intensity DataFrame
-    :param protein_file: contaminants file
-    :param protein_field: protein field
-    :return: dataset with the filtered proteins
-    """
-    contaminants_reader = open(protein_file, "r")
-    contaminants = contaminants_reader.read().split("\n")
-    contaminants = [cont for cont in contaminants if cont.strip()]
-    cregex = "|".join(contaminants)
-    return dataset[~dataset[protein_field].str.contains(cregex)]
-
-
-def remove_contaminants_entrapments_decoys(
-    dataset: DataFrame, protein_field=PROTEIN_NAME
-) -> DataFrame:
-    """
-    This method reads a file with a list of contaminants and high abudant proteins and
-    remove them from the dataset.
-    :param dataset: Peptide intensity DataFrame
-    :param contaminants_file: contaminants file
-    :param protein_field: protein field
-    :return: dataset with the filtered proteins
-    """
-    contaminants = []
-    contaminants.append("CONTAMINANT")
-    contaminants.append("ENTRAPMENT")
-    contaminants.append("DECOY")
-    cregex = "|".join(contaminants)
-    return dataset[~dataset[protein_field].str.contains(cregex)]
-
-
-def get_canonical_peptide(peptide_sequence: str) -> str:
-    """
-    This function returns a peptide sequence without the modification information
-    :param peptide_sequence: peptide sequence with mods
-    :return: peptide sequence
-    """
-    clean_peptide = re.sub("[\(\[].*?[\)\]]", "", peptide_sequence)
-    clean_peptide = clean_peptide.replace(".", "").replace("-", "")
-    return clean_peptide
-
-
 def plot_distributions(
-    dataset: DataFrame,
+    dataset: pd.DataFrame,
     field: str,
     class_field: str,
     title: str = "",
@@ -245,7 +194,7 @@ def plot_distributions(
 
 
 def plot_box_plot(
-    dataset: DataFrame,
+    dataset: pd.DataFrame,
     field: str,
     class_field: str,
     log2: bool = False,
@@ -297,159 +246,8 @@ def plot_box_plot(
     return plt.gcf()
 
 
-def sum_peptidoform_intensities(dataset: DataFrame) -> DataFrame:
-    """
-    Sum the peptidoform intensities for all peptidofrom across replicates of the same sample.
-    :param dataset: Dataframe to be analyzed
-    :return: dataframe with the intensities
-    """
-    dataset = dataset[dataset[NORM_INTENSITY].notna()]
-    normalize_df = dataset.groupby(
-        [PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION], observed=True
-    )[NORM_INTENSITY].sum()
-    normalize_df = normalize_df.reset_index()
-    normalize_df = pd.merge(
-        normalize_df,
-        dataset[[PROTEIN_NAME, PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION]],
-        how="left",
-        on=[PEPTIDE_CANONICAL, SAMPLE_ID, BIOREPLICATE, CONDITION],
-    )
-    normalize_df.drop_duplicates(inplace=True)
-    return normalize_df
-
-
-def parse_uniprot_accession(uniprot_id: str) -> str:
-    """
-    Parse the uniprot accession from the uniprot id in the form of
-    tr|CONTAMINANT_Q3SX28|CONTAMINANT_TPM2_BOVIN and convert to CONTAMINANT_Q3SX28
-    :param uniprot_id: uniprot id
-    :return: uniprot accession
-    """
-    uniprot_list = uniprot_id.split(";")
-    result_uniprot_list = []
-    for accession in uniprot_list:
-        if accession.count("|") == 2:
-            accession = accession.split("|")[1]
-        result_uniprot_list.append(accession)
-    return ";".join(result_uniprot_list)
-
-
-def get_study_accession(sample_id: str) -> str:
-    """
-    Get the project accession from the Sample accession. The function expected a sample accession in the following
-    format PROJECT-SAMPLEID
-    :param sample_id: Sample Accession
-    :return: study accession
-    """
-    return sample_id.split("-")[0]
-
-
-def get_spectrum_prefix(reference_spectrum: str) -> str:
-    """
-    Get the reference name from Reference column. The function expected a reference name in the following format eg.
-    20150820_Haura-Pilot-TMT1-bRPLC03-2.mzML_controllerType=0 controllerNumber=1 scan=16340. This function can also
-    remove suffix of spectrum files.
-    :param reference_spectrum: 
-    :return: reference name
-    """
-    return re.split(r"\.mzML|\.MZML|\.raw|\.RAW|\.d|\.wiff", reference_spectrum)[0]
-
-
-# Common functions when normalizing peptide dataframe
-def get_peptidoform_normalize_intensities(
-    dataset: DataFrame, higher_intensity: bool = True
-) -> DataFrame:
-    """
-    Select the best peptidoform for the same sample and the same replicates. A peptidoform is the combination of
-    a (PeptideSequence + Modifications) + Charge state.
-    :param dataset: dataset including all properties
-    :param higher_intensity: select based on normalize intensity, if false based on best scored peptide
-    :return:
-    """
-    dataset = dataset[dataset[NORM_INTENSITY].notna()]
-    if higher_intensity:
-        dataset = dataset.loc[
-            dataset.groupby(
-                [PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE],
-                observed=True,
-            )[NORM_INTENSITY].idxmax()
-        ].reset_index(drop=True)
-    else:
-        dataset = dataset.loc[
-            dataset.groupby(
-                [PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE],
-                observed=True,
-            )[SEARCH_ENGINE].idxmax()
-        ].reset_index(drop=True)
-    return dataset
-
-
-def average_peptide_intensities(dataset: DataFrame) -> DataFrame:
-    """
-    Median the intensities of all the peptidoforms for a specific peptide sample combination.
-    :param dataset: Dataframe containing all the peptidoforms
-    :return: New dataframe
-    """
-    dataset_df = dataset.groupby(
-        [PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION], observed=True
-    )[NORM_INTENSITY].median()
-    dataset_df = dataset_df.reset_index()
-    dataset_df = pd.merge(
-        dataset_df,
-        dataset[[PROTEIN_NAME, PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION]],
-        how="left",
-        on=[PEPTIDE_CANONICAL, SAMPLE_ID, CONDITION],
-    )
-    dataset_df.drop_duplicates(inplace=True)
-    return dataset_df
-
-
-# TODO: Useless funcs
-def get_mbr_hit(scan: str):
-    """
-    This function annotates if the peptide is inferred or not by Match between Runs algorithm (1), 0 if the peptide is
-    identified in the corresponding file.
-    :param scan: scan value
-    :return:
-    """
-    return 1 if pd.isna(scan) else 0
-
-
-def get_run_mztab(ms_run: str, metadata: OrderedDict) -> str:
-    """
-    Convert the ms_run into a reference file for merging with msstats output
-    :param ms_run: ms_run index in mztab
-    :param metadata:  metadata information in mztab
-    :return: file name
-    """
-    m = re.search(r"\[([A-Za-z0-9_]+)\]", ms_run)
-    file_location = metadata["ms_run[" + str(m.group(1)) + "]-location"]
-    file_location = get_spectrum_prefix(file_location)
-    return os.path.basename(file_location)
-
-
-def get_scan_mztab(ms_run: str) -> str:
-    """
-    Get the scan number for an mzML spectrum in mzTab. The format of the reference
-    must be controllerType=0 controllerNumber=1 scan=30121
-    :param ms_run: the original ms_run reference in mzTab
-    :return: the scan index
-    """
-    reference_parts = ms_run.split()
-    return reference_parts[-1]
-
-
-def best_probability_error_bestsearch_engine(probability: float) -> float:
-    """
-    Convert probability to a Best search engine score
-    :param probability: probability
-    :return:
-    """
-    return 1 - probability
-
-
 # Functions needed by Combiner
-def load_sdrf(sdrf_path: str) -> DataFrame:
+def load_sdrf(sdrf_path: str) -> pd.DataFrame:
     """
     Load sdrf TSV as a dataframe.
     :param sdrf_path: Path to SDRF TSV.
@@ -462,7 +260,7 @@ def load_sdrf(sdrf_path: str) -> DataFrame:
     return sdrf_df
 
 
-def load_feature(feature_path: str) -> DataFrame:
+def load_feature(feature_path: str) -> pd.DataFrame:
     """
     Load feature file as a dataframe.
     :param feature_path: Path to feature file.
@@ -477,3 +275,53 @@ def load_feature(feature_path: str) -> DataFrame:
         raise SystemExit(
             f"{suffix} is not allowed as input, please provide msstats_in or feature parquet."
         )
+
+
+def impute_missing_values(dataset_df, field, class_field):
+    """
+    Impute the missing values using different methods.
+    :param dataset_df: dataframe with the data
+    :param field: field to impute
+    :param class_field: field to use as class
+    :return:
+    """
+    normalize_df = pd.DataFrame()
+    # group by condition to detect missing values
+    for c, g in dataset_df.groupby(CONDITION):
+        # pivot to have one col per sample
+        group_normalize_df = pd.pivot_table(
+            g,
+            index=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION],
+            columns=class_field,
+            values=field,
+            aggfunc={field: np.nanmean},
+            observed=True,
+        )
+
+        # no missing values group -> only one sample
+        if len(group_normalize_df.columns) < 2:
+            group_normalize_df = group_normalize_df.reset_index()
+            group_normalize_df = group_normalize_df.melt(
+                id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION]
+            )
+            group_normalize_df.rename(columns={"value": NORM_INTENSITY}, inplace=True)
+            normalize_df = normalize_df.append(group_normalize_df, ignore_index=True)
+        # else:
+        #     print("nothing")
+        #     # Impute the missing values
+        #     imputer = MissForest(max_iter=5)
+        #     imputed_data = imputer.fit_transform(group_normalize_df)
+        #     group_normalize_df = pd.DataFrame(
+        #         imputed_data,
+        #         columns=group_normalize_df.columns,
+        #         index=group_normalize_df.index,
+        #     )
+        #     # Melt the dataframe
+        #     group_normalize_df = group_normalize_df.reset_index()
+        #     group_normalize_df = group_normalize_df.melt(
+        #         id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION]
+        #     )
+        #     group_normalize_df.rename(columns={"value": NORM_INTENSITY}, inplace=True)
+        #     normalize_df = normalize_df.append(group_normalize_df, ignore_index=True)
+
+    return normalize_df

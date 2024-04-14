@@ -14,8 +14,7 @@ dependencies:
   - pyarrow
   - click
   - matplotlib
-  - pip:
-      - git+https://github.com/Maarten-vd-Sande/qnorm
+  - duckdb
   - seaborn
   - typing_extensions
   - setuptools

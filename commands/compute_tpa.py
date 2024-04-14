@@ -11,7 +11,7 @@ from pyopenms import *
 
 from ibaq.ibaqpy_commons import (CONDITION, NORM_INTENSITY, PROTEIN_NAME, SAMPLE_ID,
                                  plot_box_plot, plot_distributions, print_help_msg,
-                                 remove_contaminants_entrapments_decoys, get_accession)
+                                 get_accession)
 
 
 def handle_nonstandard_aa(aa_seq: str) -> (list, str):
@@ -150,7 +150,7 @@ def tpa_compute(
 
         organism = organism.lower()
         histone_df = pd.read_json(
-            open(os.path.split(__file__)[0] + os.sep + "histones.json", "rb")
+            open(os.path.split(__file__)[0] + "../data/histones.json", "rb")
         ).T
         target_histones = histone_df[histone_df["name"] == organism.lower()]
         genome_size = target_histones["genome_size"].values[0]
