@@ -8,3 +8,5 @@ res.csv
 venv
 /venv/
 /compute-all.sh
+/ibaqpy.egg-info/
+/ibaqpy_temp/
