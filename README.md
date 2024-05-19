@@ -18,6 +18,8 @@ iBAQ (intensity Based Absolute Quantification) determines the abundance of a pro
 
 **NOTE:** In all scripts and result files, *uniprot accession* is used as the protein identifier.
 
+![Ibaq](./data/ibaqpy.png "IBAQ")
+
 ### How to install ibaqpy
 
 Ibaqpy is available in PyPI and can be installed using pip:

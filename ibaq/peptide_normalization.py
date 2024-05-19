@@ -7,22 +7,18 @@ import duckdb
 from ibaq.normalization_methods import normalize_run, normalize
 from ibaq.ibaqpy_commons import (
     BIOREPLICATE,
+    TECHREPLICATE,
     CHANNEL,
     CONDITION,
     FRACTION,
-    FRAGMENT_ION,
     INTENSITY,
-    ISOTOPE_LABEL_TYPE,
     NORM_INTENSITY,
     PEPTIDE_CANONICAL,
     PEPTIDE_CHARGE,
     PEPTIDE_SEQUENCE,
     PROTEIN_NAME,
-    REFERENCE,
     RUN,
     SAMPLE_ID,
-    SEARCH_ENGINE,
-    STUDY_ID,
     PARQUET_COLUMNS,
     TMT16plex,
     TMT11plex,
@@ -33,27 +29,6 @@ from ibaq.ibaqpy_commons import (
     parquet_map,
     print_help_msg,
 )
-
-
-def get_spectrum_prefix(reference_spectrum: str) -> str:
-    """
-    Get the reference name from Reference column. The function expected a reference name in the following format eg.
-    20150820_Haura-Pilot-TMT1-bRPLC03-2.mzML_controllerType=0 controllerNumber=1 scan=16340. This function can also
-    remove suffix of spectrum files.
-    :param reference_spectrum:
-    :return: reference name
-    """
-    return re.split(r"\.mzML|\.MZML|\.raw|\.RAW|\.d|\.wiff", reference_spectrum)[0]
-
-
-def get_study_accession(sample_id: str) -> str:
-    """
-    Get the project accession from the Sample accession. The function expected a sample accession in the following
-    format PROJECT-SAMPLEID
-    :param sample_id: Sample Accession
-    :return: study accession
-    """
-    return sample_id.split("-")[0]
 
 
 def parse_uniprot_accession(uniprot_id: str) -> str:
@@ -97,7 +72,6 @@ def analyse_sdrf(sdrf_path: str) -> tuple:
     """
     sdrf_df = pd.read_csv(sdrf_path, sep="\t")
     sdrf_df.columns = [i.lower() for i in sdrf_df.columns]
-    sdrf_df[REFERENCE] = sdrf_df["comment[data file]"].apply(get_spectrum_prefix)
 
     labels = set(sdrf_df["comment[label]"])
     # Determine label type
@@ -224,32 +198,55 @@ def data_common_process(data_df: pd.DataFrame, min_aa: int) -> pd.DataFrame:
         data_df.apply(lambda x: len(x[PEPTIDE_CANONICAL]) >= min_aa, axis=1)
     ]
     data_df[PROTEIN_NAME] = data_df[PROTEIN_NAME].apply(parse_uniprot_accession)
-    data_df[STUDY_ID] = data_df[SAMPLE_ID].apply(get_study_accession)
     if FRACTION not in data_df.columns:
         data_df[FRACTION] = 1
-        data_df = data_df[
+    data_df[TECHREPLICATE] = data_df[RUN].str.split("_").str.get(1)
+    data_df[TECHREPLICATE] = data_df[TECHREPLICATE].astype("int")
+    data_df = data_df[
+        [
+            PROTEIN_NAME,
+            PEPTIDE_SEQUENCE,
+            PEPTIDE_CANONICAL,
+            PEPTIDE_CHARGE,
+            INTENSITY,
+            CONDITION,
+            TECHREPLICATE,
+            BIOREPLICATE,
+            FRACTION,
+            SAMPLE_ID,
+        ]
+    ]
+    data_df[CONDITION] = pd.Categorical(data_df[CONDITION])
+    data_df[SAMPLE_ID] = pd.Categorical(data_df[SAMPLE_ID])
+
+    return data_df
+
+
+def merge_fractions(dataset: pd.DataFrame) -> pd.DataFrame:
+    """
+    Merge features across fractions.
+    :param dataset: dataset including all properties
+    :return:
+    """
+    dataset.dropna(subset=[NORM_INTENSITY], inplace=True)
+    dataset = (
+        dataset.groupby(
             [
                 PROTEIN_NAME,
                 PEPTIDE_SEQUENCE,
                 PEPTIDE_CANONICAL,
                 PEPTIDE_CHARGE,
-                INTENSITY,
-                REFERENCE,
                 CONDITION,
-                RUN,
                 BIOREPLICATE,
-                FRACTION,
-                FRAGMENT_ION,
-                ISOTOPE_LABEL_TYPE,
-                STUDY_ID,
+                TECHREPLICATE,
                 SAMPLE_ID,
-            ]
-        ]
-    data_df[CONDITION] = pd.Categorical(data_df[CONDITION])
-    data_df[STUDY_ID] = pd.Categorical(data_df[STUDY_ID])
-    data_df[SAMPLE_ID] = pd.Categorical(data_df[SAMPLE_ID])
-
-    return data_df
+            ],
+            observed=True,
+        )
+        .agg({NORM_INTENSITY: "max"})
+    )
+    dataset.reset_index(inplace=True)
+    return dataset
 
 
 def get_peptidoform_normalize_intensities(
@@ -270,13 +267,13 @@ def get_peptidoform_normalize_intensities(
                 observed=True,
             )[NORM_INTENSITY].idxmax()
         ]
-    else:
-        dataset = dataset.loc[
-            dataset.groupby(
-                [PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE],
-                observed=True,
-            )[SEARCH_ENGINE].idxmax()
-        ]
+    # else:
+    #     dataset = dataset.loc[
+    #         dataset.groupby(
+    #             [PEPTIDE_SEQUENCE, PEPTIDE_CHARGE, SAMPLE_ID, CONDITION, BIOREPLICATE],
+    #             observed=True,
+    #         )[SEARCH_ENGINE].idxmax()
+    #     ]
     dataset.reset_index(drop=True, inplace=True)
     return dataset
 
@@ -453,11 +450,10 @@ class Feature:
         """
         unique = self.parquet_db.sql("SELECT DISTINCT run FROM parquet_db").df()
         try:
+            unique["run"] = unique["run"].str.split("_").str.get(1)
             unique["run"] = unique["run"].astype("int")
-        except ValueError:
-            unique["run"] = unique["run"].str.split("_")[1]
-            unique["run"] = unique["run"].astype("int")
-        else:
+        except ValueError as e:
+            print(e)
             exit(
                 f"Some errors occurred when getting technical repetitions: {Exception}"
             )
@@ -527,11 +523,15 @@ def peptide_normalization(
                     f"{str(sample).upper()}: Peptides after remove low frequency peptides: {len(dataset_df.index)}"
                 )
 
-            if log2:
-                dataset_df[NORM_INTENSITY] = np.log2(dataset_df[NORM_INTENSITY])
+            if len(dataset_df[FRACTION].unique().tolist()) > 1:
+                print(f"{str(sample).upper()}: Merge features across fractions.. ")
+                dataset_df = merge_fractions(dataset_df)
+                print(
+                    f"{str(sample).upper()}: Number of features after merging fractions: {len(dataset_df.index)}"
+                )
 
             # TODO: Normalize at feature level between ms runs (technical repetitions)
-            if not skip_normalization and nmethod != "none":
+            if not skip_normalization and nmethod != "none" and technical_repetitions > 1:
                 print(f"{str(sample).upper()}: Normalize intensities of features.. ")
                 dataset_df = normalize_run(dataset_df, technical_repetitions, nmethod)
                 print(
@@ -551,6 +551,9 @@ def peptide_normalization(
             print(
                 f"{str(sample).upper()}: Number of peptides after selection: {len(dataset_df.index)}"
             )
+            
+            if log2:
+                dataset_df[NORM_INTENSITY] = np.log2(dataset_df[NORM_INTENSITY])
 
             # TODO: Normalization at peptide level
             if not skip_normalization and pnmethod != "none":

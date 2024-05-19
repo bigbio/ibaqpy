@@ -89,7 +89,7 @@ def ibaq_compute(
         for prot in proteins:
             summ += uniquepepcounts[prot]
         if len(proteins) > 0 and summ > 0:
-            return pdrow.NormIntensity / (summ / len(proteins))
+            return pdrow.NormIntensity / map_size[pdrow.name] / (summ / len(proteins))
         # If there is no protein in the group, return np nan
         return np.nan  # type: ignore
 
@@ -106,7 +106,7 @@ def ibaq_compute(
     data = data[data[PROTEIN_NAME].isin(protein_accessions)]
     print(data.head())
     # next line assumes unique peptides only (at least per indistinguishable group)
-
+    map_size = data.groupby(['ProteinName', 'SampleID', 'Condition']).size().to_dict()
     res = pd.DataFrame(
         data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION])[NORM_INTENSITY].sum()
     ).apply(get_average_nr_peptides_unique_bygroup, 1)

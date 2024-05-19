@@ -1,23 +1,23 @@
 import pandas as pd
 from sklearn.preprocessing import quantile_transform
-from ibaq.ibaqpy_commons import SAMPLE_ID, RUN, NORM_INTENSITY
+from ibaq.ibaqpy_commons import SAMPLE_ID, NORM_INTENSITY, TECHREPLICATE
 
 
 def normalize_run(df, reps, method):
     if reps > 1:
         samples = df[SAMPLE_ID].unique()
         for sample in samples:
-            runs = df.loc[df[SAMPLE_ID] == sample, RUN].unique().tolist()
+            runs = df.loc[df[SAMPLE_ID] == sample, TECHREPLICATE].unique().tolist()
             if len(runs) > 1:
                 sample_df = df.loc[df[SAMPLE_ID] == sample, :]
                 map_, base = get_normalize_args(sample_df, runs, method)
                 for run in runs:
                     run = str(run)
                     run_intensity = df.loc[
-                        (df[SAMPLE_ID] == sample) & (df[RUN] == run), NORM_INTENSITY
+                        (df[SAMPLE_ID] == sample) & (df[TECHREPLICATE] == run), NORM_INTENSITY
                     ]
                     df.loc[
-                        (df[SAMPLE_ID] == sample) & (df[RUN] == run), NORM_INTENSITY
+                        (df[SAMPLE_ID] == sample) & (df[TECHREPLICATE] == run), NORM_INTENSITY
                     ] = run_intensity / (map_[run] / base)
         return df
     else:
@@ -40,7 +40,7 @@ def normalize_mean(df, runs):
     total = 0
     for run in runs:
         run = str(run)
-        run_m = df.loc[df[RUN] == run, NORM_INTENSITY].mean()
+        run_m = df.loc[df[TECHREPLICATE] == run, NORM_INTENSITY].mean()
         map_[run] = run_m
         total += run_m
     avg = total / len(runs)
@@ -52,7 +52,7 @@ def normalize_median(df, runs):
     total = 0
     for run in runs:
         run = str(run)
-        run_m = df.loc[df[RUN] == run, NORM_INTENSITY].median()
+        run_m = df.loc[df[TECHREPLICATE] == run, NORM_INTENSITY].median()
         map_[run] = run_m
         total += run_m
     med = total / len(runs)
@@ -65,7 +65,7 @@ def normalize_q(df, runs):
     for run in runs:
         run = str(run)
         run_m = (
-            df.loc[df[RUN] == run, NORM_INTENSITY]
+            df.loc[df[TECHREPLICATE] == run, NORM_INTENSITY]
             .quantile([0.75, 0.25], interpolation="linear")
             .mean()
         )
