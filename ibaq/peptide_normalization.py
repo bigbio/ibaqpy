@@ -523,9 +523,6 @@ def peptide_normalization(
                     f"{str(sample).upper()}: Peptides after remove low frequency peptides: {len(dataset_df.index)}"
                 )
 
-            if log2:
-                dataset_df[NORM_INTENSITY] = np.log2(dataset_df[NORM_INTENSITY])
-
             if len(dataset_df[FRACTION].unique().tolist()) > 1:
                 print(f"{str(sample).upper()}: Merge features across fractions.. ")
                 dataset_df = merge_fractions(dataset_df)
@@ -554,6 +551,9 @@ def peptide_normalization(
             print(
                 f"{str(sample).upper()}: Number of peptides after selection: {len(dataset_df.index)}"
             )
+            
+            if log2:
+                dataset_df[NORM_INTENSITY] = np.log2(dataset_df[NORM_INTENSITY])
 
             # TODO: Normalization at peptide level
             if not skip_normalization and pnmethod != "none":
