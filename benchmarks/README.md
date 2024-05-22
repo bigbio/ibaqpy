@@ -30,43 +30,78 @@ In summary, both datasets were search with three search engines SAGE, COMET and 
 
 #### Coefficient of Variation (CV)
 
-<h3 style="text-align:center;">LFQ</h3>
-<img src='../data/benchmark/method_mean_cv_lfq.png' style="margin-left:200px;width:800px;height:600px;"></img>
+Coeffcient of variantion for all samples in both experiments using quantile,median,median-cov. We extracted human proteins common to 11 samples from IBAQ data. The mean of the coefficient of variation of all proteins in 11 samples was then calculated.
 
-<h3 style="text-align:center;">TMT</h3>
-<img src='../data/benchmark/method_mean_cv_tmt.png' style="margin-left:200px;width:800px;height:600px;"></img>
-
-#### Correlation between TMT and LFQ samples
-
-<img src='../data/benchmark/PXD007683-TMTvsLFQ-density.png' style="margin-left:200px;width:800px;height:600px;"></img>
-
-<img src='../data/benchmark/PXD007683-TMTvsLFQ-boxplot.png' style="margin-left:200px;width:800px;height:600px;"></img>
-
-<img src='../data/benchmark/PXD007683-11samples-density.png' style="margin-left:200px;width:1000px;height:1200px;"></img>
+<div style="display:flex;justify-content:center">
+    <div>
+        <h3 style="text-align:center;">LFQ</h3>
+        <img src='../data/benchmark/method_mean_cv_lfq.png' style="width:400px;height:300px;"></img>
+    </div>
+    <div>
+        <h3 style="text-align:center;">TMT</h3>
+        <img src='../data/benchmark/method_mean_cv_tmt.png' style="width:400px;height:300px;"></img>
+    </div>
+</div>
 
 #### Variability of specific proteins across samples. 
 
-<img src='../data/benchmark/per_protein_cv.png' style="margin-left:200px;width:800px;height:600px;"></img>
+Coeffcient of variantion of 30 proteins for all samples in both experiments using quantile,median,median-cov. We randomly selected 30 common proteins from IBAQ data from both experiments and then calculated their CV values in each of the 11 samples.
 
-<h3 style="text-align:center;">LFQ</h3>
-<img src='../data/benchmark/method_per_p_cv_lfq.png' style="margin-left:200px;width:800px;height:600px;"></img>
+<div style="display:flex;justify-content:center">
+    <div>
+        <h3 style="text-align:center;">LFQ vs TMT</h3>
+        <img src='../data/benchmark/per_protein_cv.png' style="width:600px;height:400px;"></img>
+    </div>
+    <div>
+        <h3 style="text-align:center;">LFQ</h3>
+        <img src='../data/benchmark/method_per_p_cv_lfq.png' style="width:600px;height:400px;"></img>
+    </div>
+    <div>
+        <h3 style="text-align:center;">TMT</h3>
+        <img src='../data/benchmark/method_per_p_cv_tmt.png' style="width:600px;height:400px;"></img>
+    </div>
+</div>
 
-<h3 style="text-align:center;">TMT</h3>
-<img src='../data/benchmark/method_per_p_cv_tmt.png' style="margin-left:200px;width:800px;height:600px;"></img>
+#### Correlation between TMT and LFQ samples
+
+We calculated the correlation of ``IBAQlog`` values for two experiments using ``median-cov``.
+
+<div style="display:flex;justify-content:center">
+    <img src='../data/benchmark/PXD007683-TMTvsLFQ-density.png' style="width:800px;height:600px;"></img>
+    <img src='../data/benchmark/PXD007683-TMTvsLFQ-boxplot.png' style="width:800px;height:600px;"></img>
+</div>
+
+Correlation of ``IBAQlog`` values between 11 samples in the two experiments.
+<div style="display:flex;justify-content:center">
+    <img src='../data/benchmark/PXD007683-11samples-density.png' style="width:1000px;height:1200px;"></img>
+</div>
 
 #### Missing values across samples
 
-<img src='../data/benchmark/missing_value.png' style="margin-left:200px;width:800px;height:600px;"></img>
+Number of peptide missings in both experiments.
+
+<div style="display:flex;justify-content:center">
+    <img src='../data/benchmark/missing_value.png' style="width:600px;height:500px;"></img>
+</div>
 
 #### Fold-change detection 3-, 2-, and 1.5-fold. 
 
-<h3 style="text-align:center;">LFQ</h3>
+Using the median-cov approach, we extracted yeast proteins common to 11 samples from IBAQ data. The 11 samples were divided into three groups due to different yeast protein concentrations. ``1x-10%(1,2,3);2x-5%(4,5,6,7);3x-3.3%(8,9,10,11)`` We calculated the mean for the same protein in different samples under the same group, and then calculated the expression difference. 
+-  3 fold-change: ``1x/3x``
+-  2 fold-change: ``1x/2x``
+-  1.5 fold-change: ``2x/1x``
 
-<img src='../data/benchmark/fold_change_lfq.png' style="margin-left:200px;width:800px;height:600px;"></img>
+<div style="display:flex;justify-content:center">
+    <div>
+        <h3 style="text-align:center;">LFQ</h3>
+        <img src='../data/benchmark/fold_change_lfq.png' style="width:600px;height:400px;"></img>
+    </div>
+    <div>
+        <h3 style="text-align:center;">TMT</h3>
+        <img src='../data/benchmark/fold_change_tmt.png' style="width:600px;height:400px;"></img>
+    </div>
+</div>
 
-<h3 style="text-align:center;">TMT</h3>
-
-<img src='../data/benchmark/fold_change_tmt.png' style="margin-left:200px;width:800px;height:600px;"></img>
 
 ### Datasets PXD010154 and PXD016999
 
