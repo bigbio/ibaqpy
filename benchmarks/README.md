@@ -25,18 +25,38 @@ We analyzed the dataset using [quantms workflow](https://github.com/bigbio/quant
 
 In summary, both datasets were search with three search engines SAGE, COMET and MSGF+ and the results were combined with ConsesusID and PSMs and proteins were filtered with a 1% FDR. The quantification was performed with the quantms workflow using the ibaq method. Some general statistics: 
 
-- TMT: X samples, X proteins, X peptides, X features, X PSMs. 
-- LFQ: X samples, X proteins, X peptides, X features, X PSMs.
+- TMT: 11 samples, 9423 proteins, 77439 peptides, 1409771 features, 139891 PSMs. 
+- LFQ: 11 samples, 8213 proteins, 54939 peptides, 505906 features, 533910 PSMs.
 
 #### Coefficient of Variation (CV)
 
+<img src='../data/benchmark/cv.png' style="margin-left:200px;width:800px;height:600px;"></img>
+
 #### Correlation between TMT and LFQ samples
+
+<img src='../data/benchmark/PXD007683-TMTvsLFQ-density.png' style="margin-left:200px;width:800px;height:600px;"></img>
+
+<img src='../data/benchmark/PXD007683-TMTvsLFQ-boxplot.png' style="margin-left:200px;width:800px;height:600px;"></img>
+
+<img src='../data/benchmark/PXD007683-11samples-density.png' style="margin-left:200px;width:1000px;height:1200px;"></img>
 
 #### Variability of specific proteins across samples. 
 
+<img src='../data/benchmark/per_protein_cv.png' style="margin-left:200px;width:800px;height:600px;"></img>
+
 #### Missing values across samples
 
+<img src='../data/benchmark/missing_value.png' style="margin-left:200px;width:800px;height:600px;"></img>
+
 #### Fold-change detection 3-, 2-, and 1.5-fold. 
+
+<h3 style="text-align:center;">LFQ</h3>
+
+<img src='../data/benchmark/fold_change_lfq.png' style="margin-left:200px;width:800px;height:600px;"></img>
+
+<h3 style="text-align:center;">TMT</h3>
+
+<img src='../data/benchmark/fold_change_tmt.png' style="margin-left:200px;width:800px;height:600px;"></img>
 
 ### Datasets PXD010154 and PXD016999
 
