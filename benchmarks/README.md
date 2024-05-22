@@ -30,7 +30,11 @@ In summary, both datasets were search with three search engines SAGE, COMET and 
 
 #### Coefficient of Variation (CV)
 
-<img src='../data/benchmark/cv.png' style="margin-left:200px;width:800px;height:600px;"></img>
+<h3 style="text-align:center;">LFQ</h3>
+<img src='../data/benchmark/method_mean_cv_lfq.png' style="margin-left:200px;width:800px;height:600px;"></img>
+
+<h3 style="text-align:center;">TMT</h3>
+<img src='../data/benchmark/method_mean_cv_tmt.png' style="margin-left:200px;width:800px;height:600px;"></img>
 
 #### Correlation between TMT and LFQ samples
 
@@ -43,6 +47,12 @@ In summary, both datasets were search with three search engines SAGE, COMET and 
 #### Variability of specific proteins across samples. 
 
 <img src='../data/benchmark/per_protein_cv.png' style="margin-left:200px;width:800px;height:600px;"></img>
+
+<h3 style="text-align:center;">LFQ</h3>
+<img src='../data/benchmark/method_per_p_cv_lfq.png' style="margin-left:200px;width:800px;height:600px;"></img>
+
+<h3 style="text-align:center;">TMT</h3>
+<img src='../data/benchmark/method_per_p_cv_tmt.png' style="margin-left:200px;width:800px;height:600px;"></img>
 
 #### Missing values across samples
 
