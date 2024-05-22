@@ -30,7 +30,7 @@ In summary, both datasets were search with three search engines SAGE, COMET and 
 
 #### Coefficient of Variation (CV)
 
-Coeffcient of variantion for all samples in both experiments using quantile,median,median-cov. We extracted human proteins common to 11 samples from IBAQ data. The mean of the coefficient of variation of all proteins in 11 samples was then calculated.
+Coeffcient of variantion for all samples in both experiments using quantile,median,median-cov. We extracted human proteins common to 11 samples from IBAQ data. The mean of the coefficient of variation of all proteins in 11 samples was then calculated. Compared to the quantile, median and median-cov has a smaller coefficient of variation. Medien-cov has the smallest CV in the lfq experiment.
 
 <div style="display:flex;justify-content:center">
     <div>
@@ -45,7 +45,7 @@ Coeffcient of variantion for all samples in both experiments using quantile,medi
 
 #### Variability of specific proteins across samples. 
 
-Coeffcient of variantion of 30 proteins for all samples in both experiments using quantile,median,median-cov. We randomly selected 30 common proteins from IBAQ data from both experiments and then calculated their CV values in each of the 11 samples.
+Coeffcient of variantion of 30 proteins for all samples in both experiments using quantile,median,median-cov. We randomly selected 30 common proteins from IBAQ data from both experiments and then calculated their CV values in each of the 11 samples. In lfq experiment, median-cov did better.
 
 <div style="display:flex;justify-content:center">
     <div>
@@ -64,7 +64,7 @@ Coeffcient of variantion of 30 proteins for all samples in both experiments usin
 
 #### Correlation between TMT and LFQ samples
 
-We calculated the correlation of ``IBAQlog`` values for two experiments using ``median-cov``.
+We calculated the correlation of ``IBAQlog`` values for two experiments using ``median-cov``. They have a strong correlation.
 
 <div style="display:flex;justify-content:center">
     <img src='../data/benchmark/PXD007683-TMTvsLFQ-density.png' style="width:800px;height:600px;"></img>
@@ -78,7 +78,7 @@ Correlation of ``IBAQlog`` values between 11 samples in the two experiments.
 
 #### Missing values across samples
 
-Number of peptide missings in both experiments.
+Number of peptide missings in both experiments. Compared to TMT, LFQ has a lot of missing values.
 
 <div style="display:flex;justify-content:center">
     <img src='../data/benchmark/missing_value.png' style="width:600px;height:500px;"></img>
@@ -90,6 +90,7 @@ Using the median-cov approach, we extracted yeast proteins common to 11 samples 
 -  3 fold-change: ``1x/3x``
 -  2 fold-change: ``1x/2x``
 -  1.5 fold-change: ``2x/1x``
+With median-cov, fold changes are well expressed.
 
 <div style="display:flex;justify-content:center">
     <div>
