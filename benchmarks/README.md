@@ -32,7 +32,7 @@ In summary, both datasets were search with three search engines SAGE, COMET and 
 
 Coeffcient of variantion for all samples in both experiments using quantile,median,median-cov. We extracted human proteins common to 11 samples from IBAQ data. The mean of the coefficient of variation of all proteins in 11 samples was then calculated. Compared to the quantile, median and median-cov has a smaller coefficient of variation. Medien-cov has the smallest CV in the lfq experiment.
 
-<div style="display:flex;justify-content:center">
+<!-- <div style="display:flex;justify-content:center">
     <div>
         <h3 style="text-align:center;">LFQ</h3>
         <img src='../data/benchmark/method_mean_cv_lfq.png' style="width:400px;height:300px;"></img>
@@ -41,13 +41,18 @@ Coeffcient of variantion for all samples in both experiments using quantile,medi
         <h3 style="text-align:center;">TMT</h3>
         <img src='../data/benchmark/method_mean_cv_tmt.png' style="width:400px;height:300px;"></img>
     </div>
-</div>
+</div> -->
+
+
+<center class="half">
+<img src='../data/benchmark/method_mean_cv_lfq.png' style="height:300px;"></img><img src='../data/benchmark/method_mean_cv_tmt.png' style="height:300px;"></img>
+</center>
 
 #### Variability of specific proteins across samples. 
 
 Coeffcient of variantion of 30 proteins for all samples in both experiments using quantile,median,median-cov. We randomly selected 30 common proteins from IBAQ data from both experiments and then calculated their CV values in each of the 11 samples. In lfq experiment, median-cov did better.
 
-<div style="display:flex;justify-content:center">
+<!-- <div style="display:flex;justify-content:center">
     <div style="flex:1">
         <h3 style="text-align:center;">LFQ vs TMT</h3>
         <img src='../data/benchmark/per_protein_cv.png' style="height:400px;"></img>
@@ -60,7 +65,11 @@ Coeffcient of variantion of 30 proteins for all samples in both experiments usin
         <h3 style="text-align:center;">TMT</h3>
         <img src='../data/benchmark/method_per_p_cv_tmt.png' style="height:400px;"></img>
     </div>
-</div>
+</div> -->
+
+<center class="half">
+<img src='../data/benchmark/per_protein_cv.png' style="height:350px;"></img><img src='../data/benchmark/method_per_p_cv_lfq.png' style="height:350px;"></img><img src='../data/benchmark/method_per_p_cv_tmt.png' style="height:350px;"></img>
+</center>
 
 #### Correlation between TMT and LFQ samples
 
@@ -92,7 +101,7 @@ Using the median-cov approach, we extracted yeast proteins common to 11 samples 
 -  1.5 fold-change: ``2x/1x``
 With median-cov, fold changes are well expressed.
 
-<div style="display:flex;justify-content:center">
+<!-- <div style="display:flex;justify-content:center">
     <div>
         <h3 style="text-align:center;">LFQ</h3>
         <img src='../data/benchmark/fold_change_lfq.png' style="flex:1;height:400px;"></img>
@@ -101,8 +110,12 @@ With median-cov, fold changes are well expressed.
         <h3 style="text-align:center;">TMT</h3>
         <img src='../data/benchmark/fold_change_tmt.png' style="flex:1;height:400px;"></img>
     </div>
-</div>
+</div> -->
 
+<h3 align='center'>LFQ vs TMT</h3>
+<center class="half">
+<img src='../data/benchmark/fold_change_lfq.png' style="flex:1;height:400px;"></img><img src='../data/benchmark/fold_change_tmt.png' style="flex:1;height:400px;"></img>
+</center>
 
 ### Datasets PXD010154 and PXD016999
 
