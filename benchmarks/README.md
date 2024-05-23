@@ -129,6 +129,8 @@ The datasets PXD010154 and PXD016999 are the largest human tissue datasets in pu
 
 #### Coefficient of Variation (CV)
 
+For the DIA experiment of PXD016999, all samples were from **skin** tissue.
+
 <center class="half">
 <img src='../data/benchmark/method_mean_cv_016999_lfq.png' style="height:400px;">
 </center>
