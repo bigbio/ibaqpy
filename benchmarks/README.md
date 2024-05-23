@@ -146,3 +146,15 @@ For the DIA experiment of PXD016999, all samples were from **skin** tissue.
 <center class="half">
 <img src='../data/benchmark/missing_value_016999_lfq.png' style="height:400px;">
 </center>
+
+#### IbaqLog for 9 tissues shared between datasets PXD016999 and PXD010154.
+
+<center align="center">
+<img src='../data/benchmark/9_tissues-boxplot.png' style="height:400px;">
+</center>
+
+#### Correlation between riBAQ values for all quantified proteins between PXD016999 and PXD010154
+
+<center align="center">
+<img src='../data/benchmark/9_tissues-density.png' style="height:400px;">
+</center>
