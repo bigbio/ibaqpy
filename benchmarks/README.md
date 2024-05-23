@@ -48,17 +48,17 @@ Coeffcient of variantion for all samples in both experiments using quantile,medi
 Coeffcient of variantion of 30 proteins for all samples in both experiments using quantile,median,median-cov. We randomly selected 30 common proteins from IBAQ data from both experiments and then calculated their CV values in each of the 11 samples. In lfq experiment, median-cov did better.
 
 <div style="display:flex;justify-content:center">
-    <div>
+    <div style="flex:1">
         <h3 style="text-align:center;">LFQ vs TMT</h3>
-        <img src='../data/benchmark/per_protein_cv.png' style="width:600px;height:400px;"></img>
+        <img src='../data/benchmark/per_protein_cv.png' style="height:400px;"></img>
     </div>
-    <div>
+    <div style="flex:1">
         <h3 style="text-align:center;">LFQ</h3>
-        <img src='../data/benchmark/method_per_p_cv_lfq.png' style="width:600px;height:400px;"></img>
+        <img src='../data/benchmark/method_per_p_cv_lfq.png' style="height:400px;"></img>
     </div>
-    <div>
+    <div style="flex:1">
         <h3 style="text-align:center;">TMT</h3>
-        <img src='../data/benchmark/method_per_p_cv_tmt.png' style="width:600px;height:400px;"></img>
+        <img src='../data/benchmark/method_per_p_cv_tmt.png' style="height:400px;"></img>
     </div>
 </div>
 
@@ -67,13 +67,13 @@ Coeffcient of variantion of 30 proteins for all samples in both experiments usin
 We calculated the correlation of ``IBAQlog`` values for two experiments using ``median-cov``. They have a strong correlation.
 
 <div style="display:flex;justify-content:center">
-    <img src='../data/benchmark/PXD007683-TMTvsLFQ-density.png' style="width:800px;height:600px;"></img>
-    <img src='../data/benchmark/PXD007683-TMTvsLFQ-boxplot.png' style="width:800px;height:600px;"></img>
+    <img src='../data/benchmark/PXD007683-TMTvsLFQ-density.png' style="flex:1;height:600px;"></img>
+    <img src='../data/benchmark/PXD007683-TMTvsLFQ-boxplot.png' style="flex:1;height:600px;"></img>
 </div>
 
 Correlation of ``IBAQlog`` values between 11 samples in the two experiments.
 <div style="display:flex;justify-content:center">
-    <img src='../data/benchmark/PXD007683-11samples-density.png' style="width:1000px;height:1200px;"></img>
+    <img src='../data/benchmark/PXD007683-11samples-density.png' style="flex:1;height:1200px;"></img>
 </div>
 
 #### Missing values across samples
@@ -95,11 +95,11 @@ With median-cov, fold changes are well expressed.
 <div style="display:flex;justify-content:center">
     <div>
         <h3 style="text-align:center;">LFQ</h3>
-        <img src='../data/benchmark/fold_change_lfq.png' style="width:600px;height:400px;"></img>
+        <img src='../data/benchmark/fold_change_lfq.png' style="flex:1;height:400px;"></img>
     </div>
     <div>
         <h3 style="text-align:center;">TMT</h3>
-        <img src='../data/benchmark/fold_change_tmt.png' style="width:600px;height:400px;"></img>
+        <img src='../data/benchmark/fold_change_tmt.png' style="flex:1;height:400px;"></img>
     </div>
 </div>
 
