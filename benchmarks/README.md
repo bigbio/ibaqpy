@@ -25,18 +25,97 @@ We analyzed the dataset using [quantms workflow](https://github.com/bigbio/quant
 
 In summary, both datasets were search with three search engines SAGE, COMET and MSGF+ and the results were combined with ConsesusID and PSMs and proteins were filtered with a 1% FDR. The quantification was performed with the quantms workflow using the ibaq method. Some general statistics: 
 
-- TMT: X samples, X proteins, X peptides, X features, X PSMs. 
-- LFQ: X samples, X proteins, X peptides, X features, X PSMs.
+- TMT: 11 samples, 9423 proteins, 77439 peptides, 1409771 features, 139891 PSMs. 
+- LFQ: 11 samples, 8213 proteins, 54939 peptides, 505906 features, 533910 PSMs.
 
 #### Coefficient of Variation (CV)
 
-#### Correlation between TMT and LFQ samples
+Coeffcient of variantion for all samples in both experiments using quantile,median,median-cov. We extracted human proteins common to 11 samples from IBAQ data. The mean of the coefficient of variation of all proteins in 11 samples was then calculated. Compared to the quantile, median and median-cov has a smaller coefficient of variation. Medien-cov has the smallest CV in the lfq experiment.
+
+<!-- <div style="display:flex;justify-content:center">
+    <div>
+        <h3 style="text-align:center;">LFQ</h3>
+        <img src='../data/benchmark/method_mean_cv_lfq.png' style="width:400px;height:300px;"></img>
+    </div>
+    <div>
+        <h3 style="text-align:center;">TMT</h3>
+        <img src='../data/benchmark/method_mean_cv_tmt.png' style="width:400px;height:300px;"></img>
+    </div>
+</div> -->
+
+
+<center class="half">
+<img src='../data/benchmark/method_mean_cv_lfq.png' style="height:300px;"></img><img src='../data/benchmark/method_mean_cv_tmt.png' style="height:300px;"></img>
+</center>
 
 #### Variability of specific proteins across samples. 
 
+Coeffcient of variantion of 30 proteins for all samples in both experiments using quantile,median,median-cov. We randomly selected 30 common proteins from IBAQ data from both experiments and then calculated their CV values in each of the 11 samples. In lfq experiment, median-cov did better.
+
+<!-- <div style="display:flex;justify-content:center">
+    <div style="flex:1">
+        <h3 style="text-align:center;">LFQ vs TMT</h3>
+        <img src='../data/benchmark/per_protein_cv.png' style="height:400px;"></img>
+    </div>
+    <div style="flex:1">
+        <h3 style="text-align:center;">LFQ</h3>
+        <img src='../data/benchmark/method_per_p_cv_lfq.png' style="height:400px;"></img>
+    </div>
+    <div style="flex:1">
+        <h3 style="text-align:center;">TMT</h3>
+        <img src='../data/benchmark/method_per_p_cv_tmt.png' style="height:400px;"></img>
+    </div>
+</div> -->
+
+<center class="half">
+<img src='../data/benchmark/per_protein_cv.png' style="height:350px;"></img><img src='../data/benchmark/method_per_p_cv_lfq.png' style="height:350px;"></img><img src='../data/benchmark/method_per_p_cv_tmt.png' style="height:350px;"></img>
+</center>
+
+#### Correlation between TMT and LFQ samples
+
+We calculated the correlation of ``IBAQlog`` values for two experiments using ``median-cov``. They have a strong correlation.
+
+<div style="display:flex;justify-content:center">
+    <img src='../data/benchmark/PXD007683-TMTvsLFQ-density.png' style="flex:1;height:600px;"></img>
+    <img src='../data/benchmark/PXD007683-TMTvsLFQ-boxplot.png' style="flex:1;height:600px;"></img>
+</div>
+
+Correlation of ``IBAQlog`` values between 11 samples in the two experiments.
+<div style="display:flex;justify-content:center">
+    <img src='../data/benchmark/PXD007683-11samples-density.png' style="flex:1;height:1200px;"></img>
+</div>
+
 #### Missing values across samples
 
+Number of peptide missings in both experiments. Compared to TMT, LFQ has a lot of missing values.
+
+<div style="display:flex;justify-content:center">
+    <img src='../data/benchmark/missing_value.png' style="width:600px;height:500px;"></img>
+</div>
+
 #### Fold-change detection 3-, 2-, and 1.5-fold. 
+
+Using the median-cov approach, we extracted yeast proteins common to 11 samples from IBAQ data. The 11 samples were divided into three groups due to different yeast protein concentrations. ``1x-10%(1,2,3);2x-5%(4,5,6,7);3x-3.3%(8,9,10,11)`` We calculated the mean for the same protein in different samples under the same group, and then calculated the expression difference. 
+-  3 fold-change: ``1x/3x``
+-  2 fold-change: ``1x/2x``
+-  1.5 fold-change: ``2x/1x``
+With median-cov, fold changes are well expressed.
+
+<!-- <div style="display:flex;justify-content:center">
+    <div>
+        <h3 style="text-align:center;">LFQ</h3>
+        <img src='../data/benchmark/fold_change_lfq.png' style="flex:1;height:400px;"></img>
+    </div>
+    <div>
+        <h3 style="text-align:center;">TMT</h3>
+        <img src='../data/benchmark/fold_change_tmt.png' style="flex:1;height:400px;"></img>
+    </div>
+</div> -->
+
+<h3 align='center'>LFQ vs TMT</h3>
+<center class="half">
+<img src='../data/benchmark/fold_change_lfq.png' style="flex:1;height:400px;"></img><img src='../data/benchmark/fold_change_tmt.png' style="flex:1;height:400px;"></img>
+</center>
 
 ### Datasets PXD010154 and PXD016999
 
@@ -50,8 +129,20 @@ The datasets PXD010154 and PXD016999 are the largest human tissue datasets in pu
 
 #### Coefficient of Variation (CV)
 
-#### Correlation between TMT and LFQ samples
+For the DIA experiment of PXD016999, all samples were from **skin** tissue.
+
+<center class="half">
+<img src='../data/benchmark/method_mean_cv_016999_lfq.png' style="height:400px;">
+</center>
 
 #### Variability of specific proteins across samples. 
 
+<center class="half">
+<img src='../data/benchmark/method_per_p_cv_016999_lfq.png' style="height:400px;">
+</center>
+
 #### Missing values across samples
+
+<center class="half">
+<img src='../data/benchmark/missing_value_016999_lfq.png' style="height:400px;">
+</center>
