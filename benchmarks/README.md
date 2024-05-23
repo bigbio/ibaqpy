@@ -129,8 +129,18 @@ The datasets PXD010154 and PXD016999 are the largest human tissue datasets in pu
 
 #### Coefficient of Variation (CV)
 
-#### Correlation between TMT and LFQ samples
+<center class="half">
+<img src='../data/benchmark/method_mean_cv_016999_lfq.png' style="height:400px;">
+</center>
 
 #### Variability of specific proteins across samples. 
 
+<center class="half">
+<img src='../data/benchmark/method_per_p_cv_016999_lfq.png' style="height:400px;">
+</center>
+
 #### Missing values across samples
+
+<center class="half">
+<img src='../data/benchmark/missing_value_016999_lfq.png' style="height:400px;">
+</center>
