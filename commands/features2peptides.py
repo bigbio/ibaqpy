@@ -51,7 +51,7 @@ from ibaq.peptide_normalization import peptide_normalization
 @click.option(
     "--pnmethod",
     help="Normalization method used to normalize peptides intensities for all samples (options: mean, median, max, global, max_min, none)",
-    default="max_min",
+    default="globalMedian",
 )
 @click.option(
     "--log2",

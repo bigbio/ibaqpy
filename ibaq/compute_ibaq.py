@@ -84,6 +84,7 @@ def ibaq_compute(
         :param pdrow: peptide row
         :return: average intensity
         """
+        nonlocal map_size
         proteins = pdrow.name[0].split(";")
         summ = 0
         for prot in proteins:
