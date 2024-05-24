@@ -460,7 +460,58 @@ class Feature:
 
         return unique["run"].tolist()
 
+    def get_median_map(self):
+        med_map = {}
+        for _, batch_df in self.iter_samples():
+            meds = batch_df.groupby(['sample_accession'])['intensity'].median()
+            med_map.update(meds.to_dict())
+        global_med = np.median([med for med in med_map.values()])
+        for sample,med in med_map.items():
+            med_map[sample] = med / global_med
+        return med_map 
+    
+    def get_report_condition_from_database(self, cons: list):
+        """
+        This function loads the report from the duckdb database for a group of ms_runs.
+        :param runs: A list of ms_runs
+        :return: The report
+        """
+        database = self.parquet_db.sql(
+            """SELECT * FROM parquet_db WHERE condition IN {}""".format(
+                tuple(cons)
+            )
+        )
+        report = database.df()
+        return report
+    
+    def iter_conditions(self,conditions:int = 10):
+        condition_list = self.get_unique_conditions()
+        ref_list = [
+            condition_list[i : i + conditions]
+            for i in range(0, len(condition_list), conditions)
+        ]
+        for refs in ref_list:
+            batch_df = self.get_report_condition_from_database(refs)
+            yield refs, batch_df
 
+    def get_unique_conditions(self):
+        """
+        return: A list of conditions.
+        """
+        unique = self.parquet_db.sql(
+            "SELECT DISTINCT condition FROM parquet_db"
+        ).df()
+        return unique["condition"].tolist()
+    
+    def get_median_map_to_condition(self):
+        med_map = {}
+        for cons, batch_df in self.iter_conditions():
+            for con in cons:
+                meds = batch_df[batch_df['condition']==con].groupby(['sample_accession'])['intensity'].median()
+                meds = meds / meds.mean()
+                med_map[con] = meds.to_dict()
+        return med_map 
+    
 def peptide_normalization(
     parquet: str,
     sdrf: str,
@@ -491,12 +542,22 @@ def peptide_normalization(
         technical_repetitions, label, sample_names, choice = F.experimental_inference
     low_frequency_peptides = F.low_frequency_peptides
     header = False
+    if not skip_normalization and pnmethod == "globalMedian":
+        med_map = F.get_median_map()
+    elif not skip_normalization and pnmethod == "conditionMedian":
+        med_map = F.get_median_map_to_condition()
     for samples, df in F.iter_samples():
         for sample in samples:
             ## TODO: Perform data preprocessing on every sample
             print(f"{str(sample).upper()}: Data preprocessing...")
             dataset_df = df[df["sample_accession"] == sample].copy()
             dataset_df = dataset_df[dataset_df["unique"] == 1]
+            if not skip_normalization:
+                if pnmethod == "globalMedian":
+                    dataset_df.loc[:, 'intensity'] = dataset_df['intensity'] / med_map[sample]
+                elif pnmethod == "conditionMedian":
+                    con = dataset_df['condition'].unique()[0]
+                    dataset_df.loc[:, 'intensity'] = dataset_df['intensity'] / med_map[con][sample]
             dataset_df = dataset_df[PARQUET_COLUMNS]
             dataset_df = parquet_common_process(dataset_df, label, choice)
             dataset_df = data_common_process(dataset_df, min_aa)
@@ -554,12 +615,6 @@ def peptide_normalization(
             
             if log2:
                 dataset_df[NORM_INTENSITY] = np.log2(dataset_df[NORM_INTENSITY])
-
-            # TODO: Normalization at peptide level
-            if not skip_normalization and pnmethod != "none":
-                dataset_df.loc[:, NORM_INTENSITY] = normalize(
-                    dataset_df[NORM_INTENSITY], pnmethod
-                )
 
             print(f"{str(sample).upper()}: Save the normalized peptide intensities...")
             if header:
