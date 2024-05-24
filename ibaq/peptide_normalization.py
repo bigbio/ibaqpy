@@ -399,21 +399,22 @@ class Feature:
             exit("Warning: Only support label free, TMT and ITRAQ experiment!")
         return label, choice
 
-    def get_report_from_database(self, samples: list):
+    def get_report_from_database(self, samples: list,columns:list = None):
         """
         This function loads the report from the duckdb database for a group of ms_runs.
         :param runs: A list of ms_runs
         :return: The report
         """
+        cols = columns if columns is not None else '*'
         database = self.parquet_db.sql(
-            """SELECT * FROM parquet_db WHERE sample_accession IN {}""".format(
-                tuple(samples)
+            """SELECT {} FROM parquet_db WHERE sample_accession IN {}""".format(
+                cols,tuple(samples)
             )
         )
         report = database.df()
         return report
 
-    def iter_samples(self, file_num: int = 20):
+    def iter_samples(self, file_num: int = 20,columns:list = None):
         """
         :params file_num: The number of files being processed at the same time(default 20)
         :yield: _description_
@@ -423,7 +424,7 @@ class Feature:
             for i in range(0, len(self.samples), file_num)
         ]
         for refs in ref_list:
-            batch_df = self.get_report_from_database(refs)
+            batch_df = self.get_report_from_database(refs,columns)
             yield refs, batch_df
 
     def get_unique_samples(self):
@@ -462,7 +463,7 @@ class Feature:
 
     def get_median_map(self):
         med_map = {}
-        for _, batch_df in self.iter_samples():
+        for _, batch_df in self.iter_samples(1000,['sample_accession','intensity']):
             meds = batch_df.groupby(['sample_accession'])['intensity'].median()
             med_map.update(meds.to_dict())
         global_med = np.median([med for med in med_map.values()])
@@ -470,28 +471,29 @@ class Feature:
             med_map[sample] = med / global_med
         return med_map 
     
-    def get_report_condition_from_database(self, cons: list):
+    def get_report_condition_from_database(self, cons: list,columns:list = None):
         """
         This function loads the report from the duckdb database for a group of ms_runs.
         :param runs: A list of ms_runs
         :return: The report
         """
+        cols = columns if columns is not None else '*'
         database = self.parquet_db.sql(
-            """SELECT * FROM parquet_db WHERE condition IN {}""".format(
-                tuple(cons)
+            """SELECT {} FROM parquet_db WHERE condition IN {}""".format(
+                cols,tuple(cons)
             )
         )
         report = database.df()
         return report
     
-    def iter_conditions(self,conditions:int = 10):
+    def iter_conditions(self,conditions:int = 10,columns:list = None):
         condition_list = self.get_unique_conditions()
         ref_list = [
             condition_list[i : i + conditions]
             for i in range(0, len(condition_list), conditions)
         ]
         for refs in ref_list:
-            batch_df = self.get_report_condition_from_database(refs)
+            batch_df = self.get_report_condition_from_database(refs,columns)
             yield refs, batch_df
 
     def get_unique_conditions(self):
@@ -505,7 +507,7 @@ class Feature:
     
     def get_median_map_to_condition(self):
         med_map = {}
-        for cons, batch_df in self.iter_conditions():
+        for cons, batch_df in self.iter_conditions(1000,['condition','sample_accession','intensity']):
             for con in cons:
                 meds = batch_df[batch_df['condition']==con].groupby(['sample_accession'])['intensity'].median()
                 meds = meds / meds.mean()
