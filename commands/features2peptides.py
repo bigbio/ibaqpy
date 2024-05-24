@@ -45,12 +45,12 @@ from ibaq.peptide_normalization import peptide_normalization
 )
 @click.option(
     "--nmethod",
-    help="Normalization method used to normalize feature intensities for all samples (options: mean, median, iqr, none)",
+    help="Normalization method used to normalize feature intensities for tec (options: mean, median, iqr, none)",
     default="median",
 )
 @click.option(
     "--pnmethod",
-    help="Normalization method used to normalize peptides intensities for all samples (options: mean, median, max, global, max_min, none)",
+    help="Normalization method used to normalize peptides intensities for all samples (options:globalMedian,conditionMedian)",
     default="globalMedian",
 )
 @click.option(

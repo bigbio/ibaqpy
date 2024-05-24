@@ -91,8 +91,7 @@ Options:
                                   (options: mean, median, iqr, none)
   --pnmethod TEXT                 Normalization method used to normalize
                                   peptides intensities for all samples
-                                  (options: mean, median, max, global,
-                                  max_min, none)
+                                  (options: globalMedian,conditionMedian)
   --log2                          Transform to log2 the peptide intensity
                                   values before normalization
   --save_parquet                  Save normalized peptides to parquet
@@ -142,7 +141,7 @@ A peptidoform is a combination of a `PeptideSequence(Modifications) + Charge + B
 
 #### 4. Peptide Intensity Normalization
 
-Finally, the intensity of the peptide was normalized globally by `median`, `mean`, `max`, `sum`, or `max_min`.
+Finally, the intensity of the peptide was normalized globally by `globalMedian`,`conditionMedian`.
 
 
 ### Compute IBAQ
