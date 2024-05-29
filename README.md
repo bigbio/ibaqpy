@@ -28,7 +28,7 @@ Ibaqpy is available in PyPI and can be installed using pip:
 pip install ibaqpy
 ```
 
-You can install the package from code: 
+You can install the package from code:
 
 1. Clone the repository:
 
@@ -49,9 +49,9 @@ You can install the package from code:
 >$ python setup.py install
 ```
 
-### Collecting intensity files 
+### Collecting intensity files
 
-Absolute quantification files has been store in the following url: 
+Absolute quantification files has been store in the following url:
 
 ```
 http://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/quantms-data/
@@ -65,7 +65,7 @@ E.g. http://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute
 
 ```asciidoc
 python commands/features2peptides.py -p tests/PXD003947/PXD003947-featrue.parquet -s tests/PXD003947/PXD003947.sdrf.tsv --remove_ids data/contaminants_ids.tsv --remove_decoy_contaminants --remove_low_frequency_peptides --output tests/PXD003947/PXD003947-peptides-norm.csv --log2 --save_parquet
-``` 
+```
 ```asciidoc
 Usage: features2peptides.py [OPTIONS]
 

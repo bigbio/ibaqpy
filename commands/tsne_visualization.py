@@ -10,8 +10,7 @@ import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
-from ibaq.ibaqpy_commons import (IBAQ_LOG, IBAQ_NORMALIZED, PROTEIN_NAME,
-                                 SAMPLE_ID)
+from ibaq.ibaqpy_commons import IBAQ_LOG, IBAQ_NORMALIZED, PROTEIN_NAME, SAMPLE_ID
 
 
 # function to compute principal components

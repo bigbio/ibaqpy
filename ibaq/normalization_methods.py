@@ -14,10 +14,12 @@ def normalize_run(df, reps, method):
                 for run in runs:
                     run = str(run)
                     run_intensity = df.loc[
-                        (df[SAMPLE_ID] == sample) & (df[TECHREPLICATE] == run), NORM_INTENSITY
+                        (df[SAMPLE_ID] == sample) & (df[TECHREPLICATE] == run),
+                        NORM_INTENSITY,
                     ]
                     df.loc[
-                        (df[SAMPLE_ID] == sample) & (df[TECHREPLICATE] == run), NORM_INTENSITY
+                        (df[SAMPLE_ID] == sample) & (df[TECHREPLICATE] == run),
+                        NORM_INTENSITY,
                     ] = run_intensity / (map_[run] / base)
         return df
     else:

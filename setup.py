@@ -6,56 +6,59 @@ ibaqpy is a python package to compute IBAQ values from peptide identifications a
 
 from setuptools import setup, find_packages
 
-version = '0.0.3'
+version = "0.0.3"
+
 
 def readme():
-    with open('README.md') as f:
+    with open("README.md") as f:
         return f.read()
 
 
 setup(
-    name='ibaqpy',
+    name="ibaqpy",
     version=version,
-    description='Python package to compute intensity base absolute expression values',
-    author='Yasset Perez-Riverol',
-    author_email='ypriverol@gmail.com',
+    description="Python package to compute intensity base absolute expression values",
+    author="Yasset Perez-Riverol",
+    author_email="ypriverol@gmail.com",
     long_description=readme(),
-    long_description_content_type='text/markdown',
-    keywords='Proteomics, Label-free, absolute quantification',
-    url='https://github.com/bigbio/ibaqpy/',
-    download_url='https://github.com/bigbio/ibaqpy/',
-    license='MIT',
+    long_description_content_type="text/markdown",
+    keywords="Proteomics, Label-free, absolute quantification",
+    url="https://github.com/bigbio/ibaqpy/",
+    download_url="https://github.com/bigbio/ibaqpy/",
+    license="MIT",
     packages=find_packages(),
     include_package_data=True,
     install_requires=[
-        'pyopenms',
-        'scikit-learn',
-        'numpy',
-        'click',
-        'pandas',
-        'matplotlib',
-        'qnorm',
-        'seaborn',
-        'typing_extensions'
+        "pyopenms",
+        "scikit-learn",
+        "numpy",
+        "click",
+        "pandas",
+        "matplotlib",
+        "qnorm",
+        "seaborn",
+        "typing_extensions",
     ],
-    scripts=['commands/features2peptides.py',
-             'commands/peptides2proteins.py',
-             'commands/compute_tpa.py',
-             'commands/datasets_merger.py',
-             'commands/tsne_visualization.py',
-             'commands/merge_condition_files.py',],
+    scripts=[
+        "commands/features2peptides.py",
+        "commands/peptides2proteins.py",
+        "commands/compute_tpa.py",
+        "commands/datasets_merger.py",
+        "commands/tsne_visualization.py",
+        "commands/merge_condition_files.py",
+    ],
     classifiers=[
-        'Development Status :: 4 - Beta',
-        'Environment :: Console',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: MIT License',
-        'Natural Language :: English',
-        'Operating System :: MacOS :: MacOS X',
-        'Operating System :: POSIX',
-        'Operating System :: Unix',
-        'Programming Language :: Python',
-        'Topic :: Scientific/Engineering',
-        'Topic :: Scientific/Engineering :: Bio-Informatics',
-        'Topic :: Scientific/Engineering :: Visualization',
+        "Development Status :: 4 - Beta",
+        "Environment :: Console",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: MIT License",
+        "Natural Language :: English",
+        "Operating System :: MacOS :: MacOS X",
+        "Operating System :: POSIX",
+        "Operating System :: Unix",
+        "Programming Language :: Python",
+        "Topic :: Scientific/Engineering",
+        "Topic :: Scientific/Engineering :: Bio-Informatics",
+        "Topic :: Scientific/Engineering :: Visualization",
     ],
 )
