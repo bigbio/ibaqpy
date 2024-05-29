@@ -136,7 +136,7 @@ In this second benchmark, we aim to test how ibaq values computed for different 
 
 #### Coefficient of Variation (CV)
 
-> **TODO**: @PingZeng can you double check the description of these sections, PXD016999 is not skin only, and also is not DIA is TMT. Please review carefully. 
+> **TODO**: @PingZeng can you double-check the description of these sections, PXD016999 is not skin only, and also is not DIA, is TMT. Please review carefully. 
 
 For the DIA experiment of PXD016999, all samples were from **skin** tissue.
 
