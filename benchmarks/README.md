@@ -2,14 +2,13 @@
 
 last update: 2024-05-29  
 
-This repository contains the benchmarks and tests for the IBAQ Python package [ibaqpy](https://github.com/bigbio/ibaqpy). The aim of this document is to provide a detailed description and documentation of different benchmarks on different datasets. An original benchmark of the package was published in [Proteomics in 2023](https://analyticalsciencejournals.onlinelibrary.wiley.com/doi/10.1002/pmic.202300188), but it was only aimed to demonstrate if the package and quantms could be used to analyze large-scale TMT and LFQ datasets. 
+This repository contains the benchmarks and tests for the IBAQ Python package [ibaqpy](https://github.com/bigbio/ibaqpy). The aim of this document is to provide a detailed description and documentation of different benchmarks on different datasets. An original benchmark of the package was published in [Proteomics in 2023](https://analyticalsciencejournals.onlinelibrary.wiley.com/doi/10.1002/pmic.202300188), but it was only aimed to demonstrate if the package and [quantms](https://quantms.org/bigbio/quantms) could be used to analyze large-scale TMT and LFQ datasets. 
 
 In these series of benchmarks, we aim to test the complete package including the different methods for protein quantification, feature and peptide selection and normalization. Also, we aim to benchmark different metrics and parameters to remove low-quality features and peptides; and finally, we aim to test the performance of the package in different datasets. These are the following questions we aim to answer with these benchmarks:
 
-- How does the package perform in different datasets?
+- How does the ibaqpy package perform in different datasets?
 - What method brings the less Coefficient of Variation (CV) in the quantification results across samples? 
 - What method brings the best correlation between the ibaq values in TMT vs. LFQ?
-- What method brings less missing values across samples?
 - What method brings less technical variability across samples?
 
 > ### Note: Coefficient of Variation (CV) calculation 
@@ -41,15 +40,14 @@ In these series of benchmarks, we aim to test the complete package including the
 
 ### Dataset PXD007683
 
-This dataset from Gygi's lab was originally published in JPR as [Proteome-Wide Evaluation of Two Common Protein Quantification Methods
-](https://pubs.acs.org/doi/10.1021/acs.jproteome.8b00016). The dataset is available at [PXD007683](https://www.ebi.ac.uk/pride/archive/projects/PXD007683). The authors test the ability of two common methods, a tandem mass tagging (TMT) method and a label-free quantitation method (LFQ), to achieve comprehensive quantitative coverage by benchmarking their capacity to measure 3 different levels of change (3-, 2-, and 1.5-fold) across an entire dataset. The authors reported Both methods achieved comparably accurate estimates for all 3-fold-changes. 
+This dataset from Gygi's lab was originally published in JPR as [Proteome-Wide Evaluation of Two Common Protein Quantification Methods](https://pubs.acs.org/doi/10.1021/acs.jproteome.8b00016). The dataset is available at [PXD007683](https://www.ebi.ac.uk/pride/archive/projects/PXD007683). The authors test the ability of two common methods, a tandem mass tagging (TMT) method and a label-free quantitation method (LFQ), to achieve comprehensive quantitative coverage by benchmarking their capacity to measure 3 different levels of change (3-, 2-, and 1.5-fold) across an entire dataset. The authors reported Both methods achieved comparably accurate estimates for all 3-fold-changes. 
 
 We analyzed the dataset using [quantms workflow](https://github.com/bigbio/quantms), results for both TMT and LFQ are available at: 
 
 - [PXD007683-TMT](https://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/quantms-benchmark/PXD007683-TMT/).
 - [PXD007683-LFQ](https://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/quantms-benchmark/PXD007683-LFQ/).
 
-In summary, both datasets were searched with three search engines _SAGE_, _COMET_ and _MSGF+_, and the results were combined with _ConsesusID_ and PSMs and proteins were filtered with a 1% protein and PSM FDR. The quantification was performed with the quantms workflow using the ibaqpy method. Some general statistics:
+In summary, both datasets were searched with three search engines _SAGE_, _COMET_ and _MSGF+_, and the results were combined with _ConsesusID_ and PSMs and proteins were filtered with a 1% protein and PSM FDR. The quantification was performed with the _quantms_ workflow using the ibaqpy method. Some general statistics:
 
 | Method | Samples | Proteins | Peptides | Features | PSMs    |
 |--------|---------|----------|----------|----------|---------|
@@ -60,7 +58,7 @@ In summary, both datasets were searched with three search engines _SAGE_, _COMET
 
 Coefficient of variation for all samples in both experiments using `quantile`, `median`, `median-cov`. We extracted human proteins common to 11 samples from IBAQ data. The mean of the coefficient of variation of all proteins in 11 samples was then calculated.
 
-Compared to the quantile, median and median-cov has a smaller coefficient of variation. `median-cov` has the smallest CV in the lfq experiment.
+Compared to the `quantile`, `median` and `median-cov` has a smaller coefficient of variation. `median-cov` has the smallest CV in the lfq experiment.
 
 <center class="half">
 <img src='images/method_mean_cv_lfq.png' style="height:300px;"/>
@@ -79,21 +77,29 @@ Coefficient of variation of 30 proteins for all samples in both experiments usin
 
 #### Correlation between TMT and LFQ samples
 
-We calculated the correlation of ``IBAQlog`` values for two experiments using ``median-cov``. They have a strong correlation.
+We calculated the correlation of ``log(rIBAQ)`` values for two experiments using ``median-cov``:
 
-<div style="display:flex;justify-content:center">
+
+<center class="half">
     <img src='images/PXD007683-TMTvsLFQ-density.png' style="flex:1;height:600px;" />
-    <img src='images/PXD007683-TMTvsLFQ-boxplot.png' style="flex:1;height:600px;" />
-</div>
+</center>
 
-Correlation of ``IBAQlog`` values between 11 samples in the two experiments.
+
+The previous plot explored the correlation of `rIbaq` values between both experiments TMT and LFQ using the `median-cov` method. In addition, we explored the correlation of `rIbaq` values between 11 samples in the two experiments. 
+
 <div style="display:flex;justify-content:center">
     <img src='images/PXD007683-11samples-density.png' style="flex:1;height:1200px;" />
 </div>
 
+The following boxplot shows the coefficient of variation for the 11 samples for both experiments TMT and LFQ using the `median-cov` method. Results show that LFQ has a higher CV than TMT.
+
+<center class="half">
+    <img src='images/PXD007683-TMTvsLFQ-boxplot.png' style="flex:1;height:600px;" />
+</center>
+
 #### Missing values across samples
 
-Number of peptide missings in both experiments. Compared to TMT, LFQ has a lot of missing values.
+Number of peptides missing in both experiments. Compared to TMT, LFQ has a lot of missing values.
 
 <div style="display:flex;justify-content:center">
     <img src='images/missing_value.png' style="width:600px;height:500px;" />
