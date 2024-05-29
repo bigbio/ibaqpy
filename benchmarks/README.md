@@ -147,6 +147,16 @@ For the DIA experiment of PXD016999, all samples were from **skin** tissue.
 <img src='../data/benchmark/missing_value_016999_lfq.png' style="height:400px;">
 </center>
 
+#### Correlation between MaxLFQ and Ibaq for the PXD016999.1
+We will normalize the MaxLFQ values of the proteins in the DIANN report by dividing it by the total sum of that sample.Then compare the correlation between the log values of it and the log values of IbaqNorm.
+
+<center class="half">
+<img src='../data/benchmark/PXD019909-TMTvsLFQ-density.png' style="height:400px;">
+</center>
+<center class="half">
+<img src='../data/benchmark/PXD019909-11samples-density.png' style="height:1200px;">
+</center>
+
 #### IbaqLog for 9 tissues shared between datasets PXD016999 and PXD010154.
 
 <center align="center">
