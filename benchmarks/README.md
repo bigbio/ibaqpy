@@ -97,9 +97,11 @@ The following boxplot shows the coefficient of variation for the 11 samples for 
     <img src='images/PXD007683-TMTvsLFQ-boxplot.png' style="flex:1;height:600px;" />
 </center>
 
-#### Missing values across samples
+#### LFQ missing values 
 
 Number of peptides missing in both experiments. Compared to TMT, LFQ has a lot of missing values.
+
+#### Todo: @PingZeng please remove the TMT experiment only leave the LFQ experiment.
 
 <div style="display:flex;justify-content:center">
     <img src='images/missing_value.png' style="width:600px;height:500px;" />
@@ -107,12 +109,12 @@ Number of peptides missing in both experiments. Compared to TMT, LFQ has a lot o
 
 #### Fold-change detection 3-, 2-, and 1.5-fold. 
 
-Using the median-cov approach, we extracted yeast proteins common to 11 samples from IBAQ data. The 11 samples were divided into three groups due to different yeast protein concentrations. ``1x-10%(1,2,3);2x-5%(4,5,6,7);3x-3.3%(8,9,10,11)`` We calculated the mean for the same protein in different samples under the same group, and then calculated the expression difference. 
+Using the `median-cov` approach, we extracted yeast proteins from the 11 samples from IBAQ data. The 11 samples were divided into three groups due to different yeast protein concentrations. ``1x-10%(1,2,3);2x-5%(4,5,6,7);3x-3.3%(8,9,10,11)`` We calculated the mean for the same protein in different samples under the same group, and then calculated the expression difference. 
 -  3 fold-change: ``1x/3x``
 -  2 fold-change: ``1x/2x``
 -  1.5 fold-change: ``2x/1x``
-With median-cov, fold changes are well expressed.
 
+- With median-cov, fold changes are well expressed.
 
 <h3 align='center'>LFQ vs TMT</h3>
 <center class="half">
@@ -120,17 +122,21 @@ With median-cov, fold changes are well expressed.
 <img src='images/fold_change_tmt.png' style="flex:1;height:400px;" />
 </center>
 
+Similar to the original results from Gygi's lab, we found that both methods achieved comparably accurate estimates for all 3-fold-changes. However, TMT has a better performance that LFQ for all fold changes. 
+
 ### Datasets PXD010154 and PXD016999
 
-The datasets PXD010154 and PXD016999 are the largest human tissue datasets in public proteomics respositories. In total they study more than 30 tissues. Here is a sumarize both datasets: 
+In this second benchmark, we aim to test how ibaq values computed for different experiments and datasets correlate. The idea is to find out a method to quantify proteins that enable to integrate them in a single resource like https://quantms.org/baseline. We used the two largest tissue datasets in PRIDE database PXD010154 from Kuster Lab and PXD016999 from GTEX. In total, they study more than 30 tissues. Here we summarized both datasets: 
 
-[PXD010154](https://www.ebi.ac.uk/pride/archive/projects/PXD010154): The label-free dataset used in the manuscript is a comprehensive analysis of the proteome abundance of 29 healthy human tissues 22. In summary, the samples were collected from 13 male and 16 female healthy donors, and tryptic-peptide samples were analyzed in DDA mode generated using a Q-Exactive Plus mass spectrometer coupled online to a nanoflow LC system (NanoLC-Ultra). Peptides were fractionated via hydrophilic strong anion exchange (hSAX) offline chromatography, enabling deep tissue proteomic fractionation. The dataset was originally analyzed using ENSEMBL GRCh38 proteome using MaxQuant. We created a sample and data relationship format (SDRF) 31 file for the original dataset including the sample metadata, and data search settings including, for example, post-translational modifications, precursor and fragment tolerances [PXD010154 SDRF](https://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/PXD010154/). 
+- [PXD010154](https://www.ebi.ac.uk/pride/archive/projects/PXD010154): The label-free dataset used in the manuscript is a comprehensive analysis of the proteome abundance of 29 healthy human tissues 22. In summary, the samples were collected from 13 male and 16 female healthy donors, and tryptic-peptide samples were analyzed in DDA mode generated using a Q-Exactive Plus mass spectrometer coupled online to a nanoflow LC system (NanoLC-Ultra). Peptides were fractionated via hydrophilic strong anion exchange (hSAX) offline chromatography, enabling deep tissue proteomic fractionation. The dataset was originally analyzed using ENSEMBL GRCh38 proteome using MaxQuant. We created a sample and data relationship format (SDRF) 31 file for the original dataset including the sample metadata, and data search settings including, for example, post-translational modifications, precursor and fragment tolerances [PXD010154 SDRF](https://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/PXD010154/). 
 
-[PXD016999](https://www.ebi.ac.uk/pride/archive/projects/PXD016999): Additionally, we used an isobaric (TMT) dataset, a quantitative map of the human body that includes data from different tissues 23. The study quantitatively profiled the proteome of 201 samples from 32 different tissue types of 14 healthy individuals. This was achieved using a tandem mass tag (TMT) 10plex/MS3 mass spectrometry strategy, which allows 10 isotopically labelled samples to be analyzed together. To improve proteome coverage, each sample was extensively fractionated. Tissue samples were randomized across TMT 10plex groups for cross-tissue comparison and to minimize technical variations between mass spectrometry runs. The SDRF of the given datasets was annotated and deposited in two different files depending on the instrument used: 
- - [PXD016999-First Instrument](https://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/PXD016999.1/) 
- - [PXD016999-Second Instrument](https://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/PXD016999.2/) 
+- [PXD016999](https://www.ebi.ac.uk/pride/archive/projects/PXD016999): Additionally, we used an isobaric (TMT) dataset, a quantitative map of the human body that includes data from different tissues 23. The study quantitatively profiled the proteome of 201 samples from 32 different tissue types of 14 healthy individuals. This was achieved using a tandem mass tag (TMT) 10plex/MS3 mass spectrometry strategy, which allows 10 isotopically labelled samples to be analyzed together. To improve proteome coverage, each sample was extensively fractionated. Tissue samples were randomized across TMT 10plex groups for cross-tissue comparison and to minimize technical variations between mass spectrometry runs. The SDRF of the given datasets was annotated and deposited in two different files depending on the instrument used: 
+  - [PXD016999-First Instrument](https://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/PXD016999.1/) 
+  - [PXD016999-Second Instrument](https://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/PXD016999.2/) 
 
 #### Coefficient of Variation (CV)
+
+> **TODO**: @PingZeng can you double check the description of these sections, PXD016999 is not skin only, and also is not DIA is TMT. Please review carefully. 
 
 For the DIA experiment of PXD016999, all samples were from **skin** tissue.
 
