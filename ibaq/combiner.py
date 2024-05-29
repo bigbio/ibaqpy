@@ -6,12 +6,20 @@ import numpy as np
 import pandas as pd
 
 from ibaq.ibaqpy_commons import load_feature, load_sdrf
-from ibaq.utils import (apply_batch_correction, compute_pca, fill_samples,
-                        filter_missing_value_by_group, folder_retrieval,
-                        generate_meta, get_batch_info_from_sample_names,
-                        impute_missing_values, iterative_outlier_removal,
-                        plot_pca, remove_single_sample_batches,
-                        split_df_by_column)
+from ibaq.utils import (
+    apply_batch_correction,
+    compute_pca,
+    fill_samples,
+    filter_missing_value_by_group,
+    folder_retrieval,
+    generate_meta,
+    get_batch_info_from_sample_names,
+    impute_missing_values,
+    iterative_outlier_removal,
+    plot_pca,
+    remove_single_sample_batches,
+    split_df_by_column,
+)
 
 logging.basicConfig(
     format="%(asctime)s [%(funcName)s] - %(message)s", level=logging.DEBUG
@@ -119,9 +127,9 @@ class Combiner:
         self.df_filtered_outliers = iterative_outlier_removal(
             self.df,
             self.batch_index,
-            n_components=n_components
-            if n_components
-            else round(len(set(self.batch_index)) / 3),
+            n_components=(
+                n_components if n_components else round(len(set(self.batch_index)) / 3)
+            ),
             min_cluster_size=min_cluster_size if min_cluster_size else min_samples,
             min_samples=min_samples_num if min_samples_num else min_samples,
             n_iter=n_iter if n_iter else 5,
@@ -131,9 +139,9 @@ class Combiner:
         # transpose the dataframe to get samples as rows and features as columns
         self.df_pca = compute_pca(
             self.df_filtered_outliers.T,
-            n_components=n_components
-            if n_components
-            else round(len(set(self.batch_index)) / 3),
+            n_components=(
+                n_components if n_components else round(len(set(self.batch_index)) / 3)
+            ),
         )
 
         # add batch information to the dataframe
@@ -156,9 +164,9 @@ class Combiner:
         # transpose the dataframe to get samples as rows and features as columns
         self.df_pca = compute_pca(
             self.df.T,
-            n_components=n_components
-            if n_components
-            else round(len(set(self.batch_index)) / 3),
+            n_components=(
+                n_components if n_components else round(len(set(self.batch_index)) / 3)
+            ),
         )
 
         # add batch information to the dataframe

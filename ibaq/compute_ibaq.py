@@ -9,10 +9,20 @@ from matplotlib.backends.backend_pdf import PdfPages
 from pandas import DataFrame, Series
 from pyopenms import *
 
-from ibaq.ibaqpy_commons import (CONDITION, IBAQ, IBAQ_LOG, IBAQ_NORMALIZED,
-                                 IBAQ_PPB, NORM_INTENSITY, PROTEIN_NAME,
-                                 SAMPLE_ID, plot_box_plot, plot_distributions,
-                                 print_help_msg, get_accession)
+from ibaq.ibaqpy_commons import (
+    CONDITION,
+    IBAQ,
+    IBAQ_LOG,
+    IBAQ_NORMALIZED,
+    IBAQ_PPB,
+    NORM_INTENSITY,
+    PROTEIN_NAME,
+    SAMPLE_ID,
+    plot_box_plot,
+    plot_distributions,
+    print_help_msg,
+    get_accession,
+)
 
 
 def normalize(group):
@@ -107,7 +117,7 @@ def ibaq_compute(
     data = data[data[PROTEIN_NAME].isin(protein_accessions)]
     print(data.head())
     # next line assumes unique peptides only (at least per indistinguishable group)
-    map_size = data.groupby(['ProteinName', 'SampleID', 'Condition']).size().to_dict()
+    map_size = data.groupby(["ProteinName", "SampleID", "Condition"]).size().to_dict()
     res = pd.DataFrame(
         data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION])[NORM_INTENSITY].sum()
     ).apply(get_average_nr_peptides_unique_bygroup, 1)

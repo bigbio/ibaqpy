@@ -9,9 +9,16 @@ import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 from pyopenms import *
 
-from ibaq.ibaqpy_commons import (CONDITION, NORM_INTENSITY, PROTEIN_NAME, SAMPLE_ID,
-                                 plot_box_plot, plot_distributions, print_help_msg,
-                                 get_accession)
+from ibaq.ibaqpy_commons import (
+    CONDITION,
+    NORM_INTENSITY,
+    PROTEIN_NAME,
+    SAMPLE_ID,
+    plot_box_plot,
+    plot_distributions,
+    print_help_msg,
+    get_accession,
+)
 
 
 def handle_nonstandard_aa(aa_seq: str) -> (list, str):
@@ -20,9 +27,9 @@ def handle_nonstandard_aa(aa_seq: str) -> (list, str):
     :param aa_seq: Protein sequences from multiple database.
     :return: One list contains nonstandard amoni acids and one remain sequence.
     """
-    standard_aa = 'ARNDBCEQZGHILKMFPSTWYV'
+    standard_aa = "ARNDBCEQZGHILKMFPSTWYV"
     nonstandard_aa_lst = [aa for aa in aa_seq if aa not in standard_aa]
-    considered_seq = ''.join([aa for aa in aa_seq if aa in standard_aa])
+    considered_seq = "".join([aa for aa in aa_seq if aa in standard_aa])
     return nonstandard_aa_lst, considered_seq
 
 
@@ -107,7 +114,9 @@ def tpa_compute(
                 error_aa, seq = handle_nonstandard_aa(entry.sequence)
                 mw = AASequence().fromString(seq).getMonoWeight()
                 mw_dict[accession] = mw
-                print(f"Nonstandard amimo acids found in {accession}: {error_aa}, ignored!")
+                print(
+                    f"Nonstandard amimo acids found in {accession}: {error_aa}, ignored!"
+                )
 
     res = res[res[PROTEIN_NAME].isin(mw_dict.keys())]
 
@@ -184,7 +193,12 @@ def tpa_compute(
 
         if verbose:
             density = plot_distributions(
-                res, "Copy", SAMPLE_ID, width=plot_width, log2=True, title="Copy numbers Distribution"
+                res,
+                "Copy",
+                SAMPLE_ID,
+                width=plot_width,
+                log2=True,
+                title="Copy numbers Distribution",
             )
             plt.show()
             pdf.savefig(density)

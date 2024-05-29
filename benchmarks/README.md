@@ -35,46 +35,25 @@ In summary, both datasets were searched with three search engines SAGE, COMET an
 Coefficient of variation for all samples in both experiments using quantile, median, median-cov.
 We extracted human proteins common to 11 samples from IBAQ data.
 The mean of the coefficient of variation of all proteins in 11 samples was then calculated.
+
+> Note:  
+
 Compared to the quantile, median and median-cov has a smaller coefficient of variation.
 Medien-cov has the smallest CV in the lfq experiment.
 
-<!-- <div style="display:flex;justify-content:center">
-    <div>
-        <h3 style="text-align:center;">LFQ</h3>
-        <img src='images/method_mean_cv_lfq.png' style="width:400px;height:300px;"></img>
-    </div>
-    <div>
-        <h3 style="text-align:center;">TMT</h3>
-        <img src='images/method_mean_cv_tmt.png' style="width:400px;height:300px;"></img>
-    </div>
-</div> -->
-
-
 <center class="half">
-<img src='images/method_mean_cv_lfq.png' style="height:300px;"></img><img src='images/method_mean_cv_tmt.png' style="height:300px;"></img>
+<img src='images/method_mean_cv_lfq.png' style="height:300px;"/>
+<img src='images/method_mean_cv_tmt.png' style="height:300px;"/>
 </center>
 
 #### Variability of specific proteins across samples. 
 
-Coeffcient of variantion of 30 proteins for all samples in both experiments using quantile,median,median-cov. We randomly selected 30 common proteins from IBAQ data from both experiments and then calculated their CV values in each of the 11 samples. In lfq experiment, median-cov did better.
-
-<!-- <div style="display:flex;justify-content:center">
-    <div style="flex:1">
-        <h3 style="text-align:center;">LFQ vs TMT</h3>
-        <img src='../data/images/per_protein_cv.png' style="height:400px;"></img>
-    </div>
-    <div style="flex:1">
-        <h3 style="text-align:center;">LFQ</h3>
-        <img src='../data/images/method_per_p_cv_lfq.png' style="height:400px;"></img>
-    </div>
-    <div style="flex:1">
-        <h3 style="text-align:center;">TMT</h3>
-        <img src='../data/images/method_per_p_cv_tmt.png' style="height:400px;"></img>
-    </div>
-</div> -->
+Coefficient of variation of 30 proteins for all samples in both experiments using quantile, median, median-cov. We randomly selected 30 common proteins from IBAQ data from both experiments and then calculated their CV values in each of the 11 samples. In lfq experiment, median-cov did better.
 
 <center class="half">
-<img src='images/per_protein_cv.png' style="height:350px;"></img><img src='images/method_per_p_cv_lfq.png' style="height:350px;"></img><img src='images/method_per_p_cv_tmt.png' style="height:350px;"></img>
+<img src='images/per_protein_cv.png' style="height:350px;" />
+<img src='images/method_per_p_cv_lfq.png' style="height:350px;" />
+<img src='images/method_per_p_cv_tmt.png' style="height:350px;" />
 </center>
 
 #### Correlation between TMT and LFQ samples
