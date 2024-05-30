@@ -29,12 +29,20 @@ def handle_nonstandard_aa(aa_seq: str) -> (list, str):
     return nonstandard_aa_lst, considered_seq
 
 
-@click.command()
-@click.option("-f", "--fasta", help="Protein database")
+@click.command("tpa", short_help="Compute TPA values.")
+@click.option(
+    "-f",
+    "--fasta",
+    help="Protein database",
+    required=True,
+    type=click.Path(exists=True),
+)
 @click.option(
     "-p",
     "--peptides",
     help="Peptide identifications with intensities following the peptide intensity output",
+    required=True,
+    type=click.Path(exists=True),
 )
 @click.option("-r", "--ruler", help="Whether to use ProteomicRuler", is_flag=True)
 @click.option("-n", "--ploidy", help="Ploidy number", default=2)
@@ -77,9 +85,6 @@ def tpa_compute(
     :param qc_report: PDF file to store multiple QC images.
     :return:
     """
-    if peptides is None or fasta is None:
-        print_help_msg(tpa_compute)
-        exit(1)
 
     data = pd.read_csv(
         peptides, sep=",", usecols=[PROTEIN_NAME, NORM_INTENSITY, SAMPLE_ID, CONDITION]
