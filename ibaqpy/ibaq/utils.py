@@ -6,10 +6,10 @@ from typing import List, Optional, Union
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+from sklearn.cluster._hdbscan import hdbscan
 from sklearn.decomposition import PCA
 from sklearn.impute import KNNImputer
 
-import hdbscan
 from combat.pycombat import pycombat
 
 logging.basicConfig(
