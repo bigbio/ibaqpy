@@ -66,7 +66,6 @@ def analyse_sdrf(sdrf_path: str) -> tuple:
     4. choice: A dictionary caontains key-values between channel
         names and numbers.
     :param sdrf_path: File path of SDRF.
-    :param compression: Whether compressed.
     :return:
     """
     sdrf_df = pd.read_csv(sdrf_path, sep="\t")
@@ -139,7 +138,6 @@ def remove_contaminants_entrapments_decoys(
     This method reads a file with a list of contaminants and high abudant proteins and
     remove them from the dataset.
     :param dataset: Peptide intensity DataFrame
-    :param contaminants_file: contaminants file
     :param protein_field: protein field
     :return: dataset with the filtered proteins
     """
@@ -172,11 +170,14 @@ def remove_protein_by_ids(
 def parquet_common_process(
     data_df: pd.DataFrame, label: str, choice: dict
 ) -> pd.DataFrame:
-    """Apply common process on data.
-
+    """
+    Apply a common process on data.
     :param data_df: Feature data in dataframe.
+    :param label: Label type of the experiment.
+    :param choice: Choice dict for a label type.
     :return: Processed data.
     """
+
     data_df = data_df.rename(columns=parquet_map)
     data_df[PROTEIN_NAME] = data_df.apply(lambda x: ";".join(x[PROTEIN_NAME]), axis=1)
     if label == "LFQ":
@@ -398,7 +399,8 @@ class Feature:
     def get_report_from_database(self, samples: list, columns: list = None):
         """
         This function loads the report from the duckdb database for a group of ms_runs.
-        :param runs: A list of ms_runs
+        :param columns: A list of columns
+        :param samples: A list of samples
         :return: The report
         """
         cols = columns if columns is not None else "*"
@@ -470,7 +472,8 @@ class Feature:
     def get_report_condition_from_database(self, cons: list, columns: list = None):
         """
         This function loads the report from the duckdb database for a group of ms_runs.
-        :param runs: A list of ms_runs
+        :param columns: A list of columns
+        :param cons: A list of conditions
         :return: The report
         """
         cols = columns if columns is not None else "*"

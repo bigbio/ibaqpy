@@ -21,7 +21,6 @@ def cli():
     """
     Main entry point for the CLI
     """
-    pass
 
 
 cli.add_command(tpa_compute)

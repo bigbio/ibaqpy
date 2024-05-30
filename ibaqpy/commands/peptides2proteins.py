@@ -63,6 +63,7 @@ def peptides2proteins(
     """
     This command computes the IBAQ values for a file output of peptides with the format described in
     peptide_contaminants_file_generation.py.
+    :param click_context: Click context
     :param min_aa: Minimum number of amino acids to consider a peptide.
     :param max_aa: Maximum number of amino acids to consider a peptide.
     :param fasta: Fasta file used to perform the peptide identification.
