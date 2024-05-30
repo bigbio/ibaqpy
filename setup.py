@@ -38,7 +38,7 @@ setup(
         "qnorm",
         "seaborn",
         "typing_extensions",
-        "pycombact",
+        "pycombat",
     ],
     entry_points={"console_scripts": ["ibaqpy=ibaqpy.ibaqpyc:main"]},
     classifiers=[
