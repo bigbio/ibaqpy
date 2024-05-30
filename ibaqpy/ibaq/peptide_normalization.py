@@ -534,9 +534,6 @@ def peptide_normalization(
     if os.path.exists(output):
         exit(f"{output} already exist!")
 
-    if parquet is None:
-        raise
-
     print("Loading data..")
     F = Feature(parquet)
     if sdrf:

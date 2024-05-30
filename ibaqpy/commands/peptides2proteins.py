@@ -1,14 +1,20 @@
-import click
 
+import click
 from ibaqpy.ibaq.compute_ibaq import ibaq_compute
 
 
-@click.command()
-@click.option("-f", "--fasta", help="Protein database to compute IBAQ values")
+@click.command("peptides2proteins", short_help="Compute IBAQ values for proteins")
+@click.option("-f",
+              "--fasta",
+              help="Protein database to compute IBAQ values",
+              required=True,
+              type=click.Path(exists=True))
 @click.option(
     "-p",
     "--peptides",
     help="Peptide identifications with intensities following the peptide intensity output",
+    required=True,
+    type=click.Path(exists=True),
 )
 @click.option(
     "-e",
@@ -40,7 +46,9 @@ from ibaqpy.ibaq.compute_ibaq import ibaq_compute
     help="PDF file to store multiple QC images",
     default="IBAQ-QCprofile.pdf",
 )
+@click.pass_context
 def peptides2proteins(
+    click_context,
     fasta: str,
     peptides: str,
     enzyme: str,
@@ -65,5 +73,15 @@ def peptides2proteins(
     :param qc_report: PDF file to store multiple QC images.
     :return:
     """
-    ibaq_compute(**click.get_current_context().params)
+    ibaq_compute(
+        fasta=fasta,
+        peptides=peptides,
+        enzyme=enzyme,
+        normalize=normalize,
+        min_aa=min_aa,
+        max_aa=max_aa,
+        output=output,
+        verbose=verbose,
+        qc_report=qc_report,
+    )
 
