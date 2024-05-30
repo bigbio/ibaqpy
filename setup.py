@@ -5,14 +5,12 @@ ibaqpy is a python package to compute IBAQ values from peptide identifications a
 """
 
 from setuptools import setup, find_packages
-
 version = "0.0.3"
 
 
 def readme():
     with open("README.md") as f:
         return f.read()
-
 
 setup(
     name="ibaqpy",

@@ -22,7 +22,6 @@ def cli():
     Main entry point for the CLI
     """
 
-
 cli.add_command(tpa_compute)
 cli.add_command(datasets_merge)
 cli.add_command(features2parquet)

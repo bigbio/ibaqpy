@@ -7,7 +7,7 @@ from ibaqpy.ibaq.compute_ibaq import ibaq_compute
 class TestIbaqpy(TestCase):
     def test_feature_assembly(self):
         args = {
-            "parquet": __package__ + "PXD003947/PXD003947-featrue.parquet",
+            "parquet": __package__ + "PXD003947/PXD003947-feature.parquet",
             "sdrf": __package__ + "PXD003947/PXD003947.sdrf.tsv",
             "min_aa": 7,
             "min_unique": 2,
