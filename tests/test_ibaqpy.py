@@ -1,6 +1,6 @@
 from unittest import TestCase
 
-from ibaqpy.ibaq import peptide_normalization
+from ibaqpy.ibaq.peptide_normalization import peptide_normalization
 from ibaqpy.ibaq.compute_ibaq import ibaq_compute
 
 
