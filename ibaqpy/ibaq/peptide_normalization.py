@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+
 import pandas as pd
 import os
 import re
@@ -28,7 +28,6 @@ from ibaqpy.ibaq.ibaqpy_commons import (
     ITRAQ4plex,
     ITRAQ8plex,
     parquet_map,
-    print_help_msg,
 )
 
 
@@ -305,6 +304,9 @@ def sum_peptidoform_intensities(dataset: pd.DataFrame) -> pd.DataFrame:
 class Feature:
 
     def __init__(self, database_path: str):
+        self.labels = self.get_unique_labels()
+        self.label, self.choice = get_label(self.labels)
+        self.technical_repetitions = self.get_unique_tec_reps()
         if os.path.exists(database_path):
             self.parquet_db = duckdb.connect()
             self.parquet_db = self.parquet_db.execute(
@@ -318,9 +320,6 @@ class Feature:
 
     @property
     def experimental_inference(self) -> tuple:
-        self.labels = self.get_unique_labels()
-        self.label, self.choice = get_label(self.labels)
-        self.technical_repetitions = self.get_unique_tec_reps()
         return len(self.technical_repetitions), self.label, self.samples, self.choice
 
     @property
@@ -536,8 +535,7 @@ def peptide_normalization(
         exit(f"{output} already exist!")
 
     if parquet is None:
-        print_help_msg(peptide_normalization)
-        exit(1)
+        raise
 
     print("Loading data..")
     F = Feature(parquet)

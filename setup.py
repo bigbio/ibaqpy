@@ -39,14 +39,8 @@ setup(
         "seaborn",
         "typing_extensions",
     ],
-    scripts=[
-        "commands/features2peptides.py",
-        "commands/peptides2proteins.py",
-        "commands/compute_tpa.py",
-        "commands/datasets_merger.py",
-        "commands/tsne_visualization.py",
-        "commands/merge_condition_files.py",
-    ],
+    entry_points={"console_scripts": ["ibaqpy=ibaqpy.ibaqpyc:main"]
+    },
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",

@@ -1,6 +1,4 @@
-#!/usr/bin/env python
 import os
-import click
 import matplotlib
 import numpy as np
 import pandas as pd
@@ -137,17 +135,6 @@ ITRAQ8plex = {
     "ITRAQ119": 7,
     "ITRAQ121": 8,
 }
-
-
-def print_help_msg(command: click.Command):
-    """
-    Print the help of the command
-    :param command: click command object
-    :return: None
-    """
-    with click.Context(command) as ctx:
-        click.echo(command.get_help(ctx))
-
 
 def get_accession(identifier: str) -> str:
     """

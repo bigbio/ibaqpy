@@ -6,14 +6,13 @@ import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 from pyopenms import *
 
-from ibaqpy.ibaq import (
+from ibaqpy.ibaq.ibaqpy_commons import (
     CONDITION,
     NORM_INTENSITY,
     PROTEIN_NAME,
     SAMPLE_ID,
     plot_box_plot,
     plot_distributions,
-    print_help_msg,
     get_accession,
 )
 

@@ -3,12 +3,8 @@ import re
 
 import click
 
-from ibaqpy.ibaq import __version__
-from ibaqpy.ibaq import Combiner
 
-@click.version_option(
-    version=__version__, package_name="ibaqpy", message="%(package)s %(version)s"
-)
+
 @click.command("datasets_merge", short_help="Merge ibaq results from compute_ibaq")
 @click.option(
     "--data_folder",

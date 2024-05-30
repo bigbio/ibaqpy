@@ -32,6 +32,16 @@ class Combiner:
         self, data_folder: os.PathLike, covariate: str = None, organism: str = "HUMAN"
     ):
         """Generate concated IbaqNorm and metadata."""
+        self.df_pca = compute_pca(self.df_corrected.T, n_components=5)
+        self.df_corrected = None
+        self.batch_index = get_batch_info_from_sample_names(self.df.columns.tolist())
+        self.df_pca = None
+        self.df_filtered_outliers = None
+        self.batch_index = get_batch_info_from_sample_names(self.df.columns)
+        self.samples_number = None
+        self.datasets = None
+        self.samples = self.df.columns.tolist()
+        self.proteins = self.df["ProteinName"].unique().tolist()
         logger.info("Combining SDRFs and ibaq results ...")
         self.data_folder = Path(data_folder)
         if not self.data_folder.exists() or not self.data_folder.is_dir():
@@ -83,7 +93,6 @@ class Combiner:
         self.df = filter_missing_value_by_group(
             self.df, col="ProteinName", non_missing_percent_to_keep=0.3
         )
-        self.proteins = self.df["ProteinName"].unique().tolist()
 
         # TODO: Data for imputation should take samples as columns, proteins as rows. [Expression Matrix]
         # Also need to fill the proteins didn't show in original results for each sample.
@@ -101,7 +110,6 @@ class Combiner:
             self.df = fill_samples(self.df, self.proteins)
             self.df = impute_missing_values(self.df)
 
-        self.samples = self.df.columns.tolist()
         self.datasets = list(set([sample.split("-")[0] for sample in self.samples]))
         print(self.df.head)
 
@@ -122,7 +130,6 @@ class Combiner:
         min_samples = round(np.median(list(self.samples_number.values())))
         if min_samples == 1:
             min_samples = 2
-        self.batch_index = get_batch_info_from_sample_names(self.df.columns)
         # apply iterative outlier removal
         self.df_filtered_outliers = iterative_outlier_removal(
             self.df,
@@ -196,7 +203,6 @@ class Combiner:
         # Before apply batch correction, filter out batches with just one sample (otherwise the batch correction will fail).
         batch_index = get_batch_info_from_sample_names(self.df.columns.tolist())
         self.df = remove_single_sample_batches(self.df, batch_index)
-        self.batch_index = get_batch_info_from_sample_names(self.df.columns.tolist())
 
         # get covariate information from metadata.
         columns = self.df.columns.tolist()
@@ -220,7 +226,6 @@ class Combiner:
 
         # plot PCA of corrected data
         # transpose the dataframe to get samples as rows and features as columns
-        self.df_pca = compute_pca(self.df_corrected.T, n_components=5)
         # add batch information to the dataframe
         self.df_pca["batch"] = self.df_pca.index.str.split("-").str[0]
 

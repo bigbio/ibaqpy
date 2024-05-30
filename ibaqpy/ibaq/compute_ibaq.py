@@ -1,8 +1,5 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
 import math
-
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
@@ -20,7 +17,6 @@ from ibaqpy.ibaq.ibaqpy_commons import (
     SAMPLE_ID,
     plot_box_plot,
     plot_distributions,
-    print_help_msg,
     get_accession,
 )
 
@@ -78,8 +74,7 @@ def ibaq_compute(
     :return:
     """
     if peptides is None or fasta is None:
-        print_help_msg( ibaq_compute)
-        exit(1)
+        raise ValueError("Fasta and peptides files are required")
 
     fasta_proteins = list()  # type: list[FASTAEntry]
     protein_accessions = list()

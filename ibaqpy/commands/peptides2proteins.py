@@ -1,7 +1,6 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
 import click
-from ibaqpy.ibaq import ibaq_compute
+
+from ibaqpy.ibaq.compute_ibaq import ibaq_compute
 
 
 @click.command()
@@ -68,6 +67,3 @@ def peptides2proteins(
     """
     ibaq_compute(**click.get_current_context().params)
 
-
-if __name__ == "__main__":
-    peptides2proteins()
