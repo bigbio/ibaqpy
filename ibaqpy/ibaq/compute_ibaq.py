@@ -9,7 +9,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from pandas import DataFrame, Series
 from pyopenms import *
 
-from ibaq.ibaqpy_commons import (
+from ibaqpy.ibaq.ibaqpy_commons import (
     CONDITION,
     IBAQ,
     IBAQ_LOG,
@@ -78,7 +78,7 @@ def ibaq_compute(
     :return:
     """
     if peptides is None or fasta is None:
-        print_help_msg(ibaq_compute)
+        print_help_msg( ibaq_compute)
         exit(1)
 
     fasta_proteins = list()  # type: list[FASTAEntry]

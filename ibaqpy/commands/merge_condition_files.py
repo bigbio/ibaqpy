@@ -2,11 +2,6 @@
 # -*- coding: utf-8 -*-
 
 
-import os
-
-from ibaq.ibaqpy_commons import *
-
-
 def print_help_msg(command) -> None:
     """
     Print help information

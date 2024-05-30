@@ -1,6 +1,5 @@
 # import libraries
 import glob
-import math
 
 import click
 import matplotlib.pyplot as plt
@@ -10,7 +9,7 @@ import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
-from ibaq.ibaqpy_commons import IBAQ_LOG, IBAQ_NORMALIZED, PROTEIN_NAME, SAMPLE_ID
+from ibaqpy.ibaq import IBAQ_LOG, PROTEIN_NAME, SAMPLE_ID
 
 
 # function to compute principal components

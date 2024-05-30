@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 import click
-from ibaq.compute_ibaq import ibaq_compute
+from ibaqpy.ibaq import ibaq_compute
 
 
 @click.command()

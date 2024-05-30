@@ -1,6 +1,3 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import os
 
 import click
@@ -9,7 +6,7 @@ import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 from pyopenms import *
 
-from ibaq.ibaqpy_commons import (
+from ibaqpy.ibaq import (
     CONDITION,
     NORM_INTENSITY,
     PROTEIN_NAME,
@@ -237,7 +234,3 @@ def tpa_compute(
             pdf.savefig(box)
             pdf.close()
         res.to_csv(output, index=False)
-
-
-if __name__ == "__main__":
-    tpa_compute()

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import click
-from ibaq.peptide_normalization import peptide_normalization
+from ibaqpy.ibaq import peptide_normalization
 
 
 @click.command()
@@ -79,7 +79,3 @@ def features2parquet(
     save_parquet: bool,
 ) -> None:
     peptide_normalization(**click.get_current_context().params)
-
-
-if __name__ == "__main__":
-    features2parquet()
