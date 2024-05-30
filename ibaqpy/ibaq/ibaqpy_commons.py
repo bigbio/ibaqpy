@@ -136,6 +136,7 @@ ITRAQ8plex = {
     "ITRAQ121": 8,
 }
 
+
 def get_accession(identifier: str) -> str:
     """
     Get protein accession from the identifier  (e.g. sp|P12345|PROT_NAME)

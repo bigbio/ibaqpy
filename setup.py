@@ -39,8 +39,7 @@ setup(
         "seaborn",
         "typing_extensions",
     ],
-    entry_points={"console_scripts": ["ibaqpy=ibaqpy.ibaqpyc:main"]
-    },
+    entry_points={"console_scripts": ["ibaqpy=ibaqpy.ibaqpyc:main"]},
     classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",

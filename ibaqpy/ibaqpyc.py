@@ -13,14 +13,16 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option(
-    version=__init__.__version__, package_name="ibaqpy", message="%(package)s %(version)s"
+    version=__init__.__version__,
+    package_name="ibaqpy",
+    message="%(package)s %(version)s",
 )
-
 def cli():
     """
     Main entry point for the CLI
     """
     pass
+
 
 cli.add_command(tpa_compute)
 cli.add_command(datasets_merge)

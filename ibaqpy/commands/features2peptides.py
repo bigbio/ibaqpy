@@ -65,21 +65,22 @@ from ibaqpy.ibaq.peptide_normalization import peptide_normalization
     is_flag=True,
 )
 @click.pass_context
-def features2parquet(ctx,
-                     parquet: str,
-                     sdrf: str,
-                     min_aa: int,
-                     min_unique: int,
-                     remove_ids: str,
-                     remove_decoy_contaminants: bool,
-                     remove_low_frequency_peptides: bool,
-                     output: str,
-                     skip_normalization: bool,
-                     nmethod: str,
-                     pnmethod: str,
-                     log2: bool,
-                     save_parquet: bool,
-                     ) -> None:
+def features2parquet(
+    ctx,
+    parquet: str,
+    sdrf: str,
+    min_aa: int,
+    min_unique: int,
+    remove_ids: str,
+    remove_decoy_contaminants: bool,
+    remove_low_frequency_peptides: bool,
+    output: str,
+    skip_normalization: bool,
+    nmethod: str,
+    pnmethod: str,
+    log2: bool,
+    save_parquet: bool,
+) -> None:
     """
     Convert features to parquet file.
     :param ctx: Click context

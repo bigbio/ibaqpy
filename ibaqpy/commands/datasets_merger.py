@@ -4,7 +4,6 @@ import re
 import click
 
 
-
 @click.command("datasets_merge", short_help="Merge ibaq results from compute_ibaq")
 @click.option(
     "--data_folder",

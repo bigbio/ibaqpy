@@ -1,14 +1,15 @@
-
 import click
 from ibaqpy.ibaq.compute_ibaq import ibaq_compute
 
 
 @click.command("peptides2proteins", short_help="Compute IBAQ values for proteins")
-@click.option("-f",
-              "--fasta",
-              help="Protein database to compute IBAQ values",
-              required=True,
-              type=click.Path(exists=True))
+@click.option(
+    "-f",
+    "--fasta",
+    help="Protein database to compute IBAQ values",
+    required=True,
+    type=click.Path(exists=True),
+)
 @click.option(
     "-p",
     "--peptides",
@@ -84,4 +85,3 @@ def peptides2proteins(
         verbose=verbose,
         qc_report=qc_report,
     )
-
