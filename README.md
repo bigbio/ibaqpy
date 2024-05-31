@@ -88,7 +88,7 @@ A peptidoform is a combination of a `PeptideSequence(Modifications) + Charge + B
 
 #### Peptide Intensity Normalization
 
-Finally, the intensity of the peptide was normalized globally by `globalMedian`,`conditionMedian`. In the sample, the protein was combined from its unique peptides. 
+Finally, the intensity of the peptide was normalized globally by `globalMedian`,`conditionMedian`. In the sample, the protein was combined with its unique peptides. 
 
 #### Computing Ibaq and TPA 
 
@@ -191,7 +191,7 @@ ibaqpy peptides2proteins --fasta tests/PXD003947/Homo-sapiens-uniprot-reviewed-c
 The command provides an additional `flag` for normalize IBAQ values.
 
 ```asciidoc
-Usage: peptides2proteins.py [OPTIONS]
+Usage: peptides2proteins [OPTIONS]
 
 Options:
   -f, --fasta TEXT     Protein database to compute IBAQ values
@@ -220,8 +220,8 @@ python compute_tpa --fasta Homo-sapiens-uniprot-reviewed-contaminants-decoy-2022
 ```
 
 ```asciidoc
-python compute_tpa.py --help
-Usage: compute_tpa.py [OPTIONS]
+python compute_tpa --help
+Usage: compute_tpa [OPTIONS]
 
   Compute the protein copy numbers and concentrations according to a file output of peptides with the
   format described in peptide_normalization.py.
