@@ -414,7 +414,7 @@ class Feature:
 
     def iter_samples(self, file_num: int = 20, columns: list = None):
         """
-        :params file_num: The number of files being processed at the same time(default 20)
+        :params file_num: The number of files being processed at the same time (default 20)
         :yield: _description_
         """
         ref_list = [
