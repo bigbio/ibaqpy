@@ -256,7 +256,7 @@ Options:
 There are batch effects in protein identification and quantitative results between different studies, which may be caused by differences in experimental techniques, conditional methods, data analysis, etc. Here we provide a method to apply batch effect correction. First to impute ibaq data, then remove outliers using `hdbscan`, and apply batch effect correction using `pycombat`.
 
 ```asciidoc
-python commands/datasets_merge.py datasets_merge --data_folder ../ibaqpy_test/ --output datasets-merge.csv --verbose
+python datasets_merge datasets_merge --data_folder ../ibaqpy_test/ --output datasets-merge.csv --verbose
 ``` 
 
 ```asciidoc

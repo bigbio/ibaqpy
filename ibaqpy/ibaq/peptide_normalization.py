@@ -473,7 +473,7 @@ class Feature:
         """
         This function loads the report from the duckdb database for a group of ms_runs.
         :param columns: A list of columns
-        :param cons: A list of conditions
+        :param cons: A list of conditions in
         :return: The report
         """
         cols = columns if columns is not None else "*"

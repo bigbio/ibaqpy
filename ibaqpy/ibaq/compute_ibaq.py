@@ -19,7 +19,6 @@ from ibaqpy.ibaq.ibaqpy_commons import (
     get_accession,
 )
 
-
 def normalize(group):
     group[IBAQ_NORMALIZED] = group[IBAQ] / group[IBAQ].sum()
     return group
