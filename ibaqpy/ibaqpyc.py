@@ -2,7 +2,6 @@ import click
 
 from ibaqpy.commands.features2peptides import features2parquet
 from ibaqpy.commands.compute_tpa import tpa_compute
-from ibaqpy.commands.datasets_merger import datasets_merge
 from ibaqpy.commands.merge_condition_files import merge_condition_generation
 from ibaqpy.commands.peptides2proteins import peptides2proteins
 from ibaqpy.commands.tsne_visualization import tsne_visualization
@@ -24,7 +23,6 @@ def cli():
 
 
 cli.add_command(tpa_compute)
-# cli.add_command(datasets_merge)
 cli.add_command(features2parquet)
 cli.add_command(merge_condition_generation)
 cli.add_command(peptides2proteins)

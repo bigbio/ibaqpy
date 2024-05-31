@@ -1,4 +1,3 @@
-
 import re
 
 import click
@@ -61,19 +60,19 @@ from ibaqpy.ibaq.combiner import Combiner
 )
 @click.pass_context
 def datasets_merge(
-    ctx,
-    data_folder: str,
-    output: str,
-    covariate: str,
-    organism: str,
-    covariate_to_keep: list,
-    non_missing_percent_to_keep: float,
-    skip_outliers_removal: bool,
-    n_components: int,
-    min_cluster: int,
-    min_sample_num: int,
-    n_iter: int,
-    verbose: bool,
+        ctx,
+        data_folder: str,
+        output: str,
+        covariate: str,
+        organism: str,
+        covariate_to_keep: list,
+        non_missing_percent_to_keep: float,
+        skip_outliers_removal: bool,
+        n_components: int,
+        min_cluster: int,
+        min_sample_num: int,
+        n_iter: int,
+        verbose: bool,
 ):
     if covariate_to_keep:
         covariate_to_keep = re.split(",\s*", covariate_to_keep)

@@ -1,4 +1,3 @@
-
 import os
 import click
 import matplotlib.pyplot as plt
@@ -52,7 +51,7 @@ def handle_nonstandard_aa(aa_seq: str) -> (list, str):
 @click.option(
     "--verbose",
     help="Print addition information about the distributions of the intensities, number of peptides remove "
-    "after normalization, etc.",
+         "after normalization, etc.",
     is_flag=True,
 )
 @click.option(
@@ -61,15 +60,15 @@ def handle_nonstandard_aa(aa_seq: str) -> (list, str):
     default="TPA-QCprofile.pdf",
 )
 def tpa_compute(
-    fasta: str,
-    peptides: str,
-    ruler: bool,
-    organism: str,
-    ploidy: int,
-    cpc: float,
-    output: str,
-    verbose: bool,
-    qc_report: str,
+        fasta: str,
+        peptides: str,
+        ruler: bool,
+        organism: str,
+        ploidy: int,
+        cpc: float,
+        output: str,
+        verbose: bool,
+        qc_report: str,
 ) -> None:
     """
     This command computes the protein copies and concentrations according to a file output of peptides with the

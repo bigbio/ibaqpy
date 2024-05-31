@@ -131,7 +131,8 @@ def plot_tsne(df, x_col, y_col, hue_col, file_name):
 @click.option(
     "-o",
     "--pattern",
-    help="Protein file pattern",   #TODO: I think we should use instead of pattern the structure of quantms.io for absolute quantification
+    help="Protein file pattern",
+    # TODO: I think we should use instead of pattern the structure of quantms.io for absolute quantification
     required=False,
     default="proteins.tsv",
 )
