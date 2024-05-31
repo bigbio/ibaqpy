@@ -1,5 +1,5 @@
-import os
 
+import os
 import click
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -101,7 +101,7 @@ def tpa_compute(
     proteins = res[PROTEIN_NAME].unique().tolist()
     proteins = sum([i.split(";") for i in proteins], [])
 
-    # calculate molecular weight of quantified proteins
+    # calculate the molecular weight of quantified proteins
     mw_dict = dict()
     fasta_proteins = list()  # type: list[FASTAEntry]
     FASTAFile().load(fasta, fasta_proteins)
@@ -116,7 +116,7 @@ def tpa_compute(
                 mw = AASequence().fromString(seq).getMonoWeight()
                 mw_dict[accession] = mw
                 print(
-                    f"Nonstandard amimo acids found in {accession}: {error_aa}, ignored!"
+                    f"Nonstandard amino acids found in {accession}: {error_aa}, ignored!"
                 )
 
     res = res[res[PROTEIN_NAME].isin(mw_dict.keys())]
