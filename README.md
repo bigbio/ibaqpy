@@ -6,9 +6,9 @@
 [![PyPI version](https://badge.fury.io/py/ibaqpy.svg)](https://badge.fury.io/py/ibaqpy)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/ibaqpy)
 
-iBAQ (Intensity-Based Absolute Quantification) determines the abundance of a protein by dividing the total precursor intensities by the number of theoretically observable peptides of the protein [manuscript here](https://pubmed.ncbi.nlm.nih.gov/16219938/). ibaqpy is a Python package that computes iBAQ values, and other normalized IBAQ values and starting from a feature parquet from [quantmsio](https://github.com/bigbio/quantms.io) and a [SDRF](https://github.com/bigbio/proteomics-sample-metadata) file. 
+iBAQ (Intensity-Based Absolute Quantification) determines the abundance of a protein by dividing the total precursor intensities by the number of theoretically observable peptides of the protein [manuscript here](https://pubmed.ncbi.nlm.nih.gov/16219938/). ibaqpy is a Python package that computes iBAQ values starting from a feature parquet from [quantmsio](https://github.com/bigbio/quantms.io) and a [SDRF](https://github.com/bigbio/proteomics-sample-metadata) file. In addition, the package computes other ibaq values including rIBAQ, log2, and ppb.
 
-Additionally, the tool allows computing the TPA value (Total Protein Approach). TPA is determined by summing peptide intensities of each protein and then dividing by the molecular mass to determine the relative concentration of each protein. By using [ProteomicRuler](https://www.sciencedirect.com/science/article/pii/S1535947620337749), it is possible to calculate the protein copy number and absolute concentration.
+ibaqpy also allows computing the TPA value (Total Protein Approach). TPA is determined by summing peptide intensities of each protein and then dividing by the molecular mass to determine the relative concentration of each protein. By using [ProteomicRuler](https://www.sciencedirect.com/science/article/pii/S1535947620337749), it is possible to calculate the protein copy number and absolute concentration.
 
 ### Overview of ibaq-base values computation
 
@@ -18,21 +18,75 @@ As mentioned before, ibaq values are calculated by dividing the total precursor 
 
 - _Total precursor intensities_, the total intensity of a protein is calculated by summing the intensity of all peptides that belong to the protein. The intensity values are obtained from the feature parquet file in [quantms.io](https://github.com/bigbio/quantms.io).
 
-#### IBAQ calculation
-
-First, peptide intensity dataframe was grouped according to `protein name`, `sample name` and `condition`. Finally, the sum of the intensity of the protein is divided by the number of theoretical peptides.
-
 # TODO: @PingZheng Can you double-check that for protein group we multiply the intensity or divided? 
 
 > Note: If protein-group exists in the peptide intensity dataframe, the intensity of all proteins in the protein-group is summed based on the above steps, and then multiplied by the number of proteins in the protein-group.
 
-#### IBAQ Normalization  
+#### Other normalized IBAQ values  
 
 - `IbaqNorm` - normalize the ibaq values using the total ibaq of the sample `ibaq / sum(ibaq)`, the sum is applied for proteins in the same _sample + condition_.
+
+
 - `IbaqLog`  - The ibaq log is calculated as `10 + log10(IbaqNorm)`. This normalized ibaq value was developed [by ProteomicsDB Team](https://academic.oup.com/nar/article/46/D1/D1271/4584631).
+
+
 - `IbaqPpb` - The resulted IbaqNorm is multiplied by 100M `IbaqNorm * 100'000'000`. This method was developed originally [by PRIDE Team](https://www.nature.com/articles/s41597-021-00890-2).
 
-### Assemble peptides as proteins
+### From quantms to Ibaq values
+
+![Ibaq](./data/ibaqpy.png "IBAQ")
+
+The output of quantms is converted into quantms.io feature file. A feature in quantms.io is the combination of the following columns: 
+
+- `ProteinName`: Protein name
+- `Peptidoform`: Peptide sequence including post-translation modifications `(e.g. .(Acetyl)ASPDWGYDDKN(Deamidated)GPEQWSK)`
+- `PrecursorCharge`: Precursor charge
+- `IsotopeLabelType`: Isotope label type
+- `Condition`: Condition label `(e.g. heart)`
+- `BioReplicate`: Biological replicate index `(e.g. 1)`
+- `Run`: Run index `(e.g. 1)`
+- `Fraction`: Fraction index `(e.g. 1)`
+- `Intensity`: Peptide intensity
+- `SampleID`: Sample ID `(e.g. PXD003947-Sample-3)`
+- `StudyID`: Study ID `(e.g. PXD003947)`. In most of the cases, the study ID is the same as the ProteomeXchange ID.
+
+In summary, each feature is the unique combination of a peptide sequence including modifications (peptidoform), precursor charge state, condition, biological replicate, run, fraction, isotopic label type, and a given intensity. In order to go from these features into protein ibaq values, the package does the following: 
+
+#### Data preprocessing
+
+**Todo** @PingZheng: Can you confirm that the following steps are correct?
+In this section, ibaqpy will do: 
+- Remove lines where intensity or study condition is empty: This could happen in the following cases: 
+  - The DIA pipeline sometimes for some features releases intensities with value 0.
+  - The quantms.io do not contain feature information for some conditions. This extreme case could happen when not ID/Quant was found for a given condition during the analysis.
+- Parse the identifier of proteins and retain only unique peptides. 
+- Low-confidence proteins were removed according to the threshold of unique peptides: We use a thershold of 2 unique peptides to consider a protein as a high-confidence protein. This parameter is applied if not specified by the user, and the default value is 2. If users want to change this threshold, they can use the `--min_unique` parameter.
+- Filter decoy, contaminants, entrapment: Proteins with the following prefix are removed by default: `DECOY, CONTAMINANT, ENTRAPMENT` could be removed, by default, the filter is not applied. If users want to remove these proteins, they can use the `--remove_decoy_contaminants` parameter.
+- Filter user-specified proteins: The user can provide a list of protein identifiers to remove from the analysis using the `--remove_ids` parameter. The remove ids parameters will remove proteins from the analysis that could be potential to influence the intensity normalization. For example, ALBU_HUMAN could be over expressed in human tissues, and that is why we may want to remove it when analyzing tissue data.
+- Remove peptides with low frequency if `sample number > 1`: This parameter is applied always unless the user specifies the `--remove_low_frequency_peptides` parameter. The default value is 20% of the samples. If users want to change this threshold, they can use the `--remove_low_frequency_peptides` parameter.
+- Intensity transformation to log: The user can specify the `--log2` parameter to transform the peptide intensity values to log2 before normalization.
+
+> Note: At the moment, ibaqpy computes the ibaq values only based on unique peptides. Shared peptides are discarded. However, if a group of proteins share the same unique peptides (e.g., Pep1 -> Prot1;Prot2 and Pep2 -> Prot1;Prot2), the intensity of the proteins is summed and divided by the number of proteins in the group.
+
+#### Feature normalization
+
+**Todo**: @PingZheng: Can you confirm that the following steps are correct?
+
+In this section, ibaqpy corrects the intensity of each feature MS runs in the sample, eliminating the effect between runs (including technique repetitions). It will do:
+
+- When `MS runs > 1` in the sample, the `mean` of all average(`mean`, `median` or `iqr`) in each MS run is calculated(SampleMean)
+- The ratio between SampleMean and the average MS run is used as a reference to scale the original intensity
+
+#### 3. Assembly features to peptides
+
+A peptidoform is a combination of a `PeptideSequence(Modifications) + Charge + BioReplicate + Fraction` (among other features), and a peptide is a combination of a `PeptideSequence(Canonical) + BioReplicate`. ibaqpy will do:
+- Select peptidoforms with the highest intensity across different modifications, fractions, and technical replicates
+- Merge peptidoforms across different charges and combined into peptides. 
+
+#### 4. Peptide Intensity Normalization
+
+Finally, the intensity of the peptide was normalized globally by `globalMedian`,`conditionMedian`.
+
 
 In the sample, the protein was combined from its unique peptides; then the iBAQ value was calculated as the Intensity of the protein divided by the theoretical number of unique peptides cut by the enzyme. This command also normalized iBAQ as riBAQ. See details in `peptides2proteins`.
 
@@ -42,7 +96,6 @@ In the sample, the protein was combined from its unique peptides; then the iBAQ 
 
 > Note: In all scripts and result files, *uniprot accession* is used as the protein identifier.
 
-![Ibaq](./data/ibaqpy.png "IBAQ")
 
 ### How to install ibaqpy
 
@@ -122,50 +175,6 @@ Options:
   --help                          Show this message and exit.
 ```
 
-Peptide normalization starts from the peptides dataframe extracted from feature parquet. It contains the following columns:
-
-- ProteinName: Protein name
-- PeptideSequence: Peptide sequence including post-translation modifications `(e.g. .(Acetyl)ASPDWGYDDKN(Deamidated)GPEQWSK)`
-- PrecursorCharge: Precursor charge
-- FragmentIon: Fragment ion
-- ProductCharge: Product charge
-- IsotopeLabelType: Isotope label type
-- Condition: Condition label `(e.g. heart)`
-- BioReplicate: Biological replicate index `(e.g. 1)`
-- Run: Run index `(e.g. 1)`
-- Fraction: Fraction index `(e.g. 1)`
-- Intensity: Peptide intensity
-- Reference: Name of the RAW file containing the peptide intensity `(e.g. Adult_Heart_Gel_Elite_54_f16)`
-- SampleID: Sample ID `(e.g. PXD003947-Sample-3)`
-- StudyID: Study ID `(e.g. PXD003947)`. In most of the cases the study ID is the same as the ProteomeXchange ID.
-
-#### 1. Data preprocessing
-
-In this section, ibaqpy will do: 
-- Remove lines where intensity or study condition is empty
-- Parse the identifier of proteins and retain only unique peptides
-- Low confidence proteins were removed according to the threshold of unique peptides (optional)
-- Filter decoy, contaminants, entrapments, and user-specified proteins (optional)
-- Remove peptides with low frequency if `sample number > 1` (optional)
-- Data logization (optional)
-
-#### 2. Feature normalization
-
-In this section, ibaqpy corrects the intensity of each MS runs in the sample, eliminating the effect between runs (including technique repetitions). It will do:
-
-- When `MS runs > 1` in the sample, the `mean` of all average(`mean`, `median` or `iqr`) in each MS run is calculated(SampleMean)
-- The ratio between SampleMean and the average MS run is used as reference to scale the original intensity
-
-#### 3. Assembly features to peptides
-
-A peptidoform is a combination of a `PeptideSequence(Modifications) + Charge + BioReplicate + Fraction`, and a peptide is a combination of a `PeptideSequence(Canonical) + BioReplicate`. ibaqpy will do:
-
-- Select peptidoforms with the highest intensity across different modifications, fractions, and technical repeats
-- Merge peptidoforms across different charges and combined into peptides
-
-#### 4. Peptide Intensity Normalization
-
-Finally, the intensity of the peptide was normalized globally by `globalMedian`,`conditionMedian`.
 
 
 ### Compute IBAQ

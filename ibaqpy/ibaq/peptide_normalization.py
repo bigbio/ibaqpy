@@ -105,12 +105,12 @@ def get_label(labels: list) -> (str, dict):
         label = "LFQ"
     elif "TMT" in ",".join(labels) or "tmt" in ",".join(labels):
         if (
-            len(labels) > 11
-            or "TMT134N" in labels
-            or "TMT133C" in labels
-            or "TMT133N" in labels
-            or "TMT132C" in labels
-            or "TMT132N" in labels
+                len(labels) > 11
+                or "TMT134N" in labels
+                or "TMT133C" in labels
+                or "TMT133N" in labels
+                or "TMT132C" in labels
+                or "TMT132N" in labels
         ):
             choice = TMT16plex
         elif len(labels) == 11 or "TMT131C" in labels:
@@ -132,7 +132,7 @@ def get_label(labels: list) -> (str, dict):
 
 
 def remove_contaminants_entrapments_decoys(
-    dataset: pd.DataFrame, protein_field=PROTEIN_NAME
+        dataset: pd.DataFrame, protein_field=PROTEIN_NAME
 ) -> pd.DataFrame:
     """
     This method reads a file with a list of contaminants and high abudant proteins and
@@ -150,7 +150,7 @@ def remove_contaminants_entrapments_decoys(
 
 
 def remove_protein_by_ids(
-    dataset: pd.DataFrame, protein_file: str, protein_field=PROTEIN_NAME
+        dataset: pd.DataFrame, protein_file: str, protein_field=PROTEIN_NAME
 ) -> pd.DataFrame:
     """
     This method reads a file with a list of contaminants and high abudant proteins and
@@ -168,7 +168,7 @@ def remove_protein_by_ids(
 
 
 def parquet_common_process(
-    data_df: pd.DataFrame, label: str, choice: dict
+        data_df: pd.DataFrame, label: str, choice: dict
 ) -> pd.DataFrame:
     """
     Apply a common process on data.
@@ -247,7 +247,7 @@ def merge_fractions(dataset: pd.DataFrame) -> pd.DataFrame:
 
 
 def get_peptidoform_normalize_intensities(
-    dataset: pd.DataFrame, higher_intensity: bool = True
+        dataset: pd.DataFrame, higher_intensity: bool = True
 ) -> pd.DataFrame:
     """
     Select the best peptidoform for the same sample and the same replicates. A peptidoform is the combination of
@@ -366,17 +366,17 @@ class Feature:
         """
         choice = None
         if len(labels) == 1 and (
-            "LABEL FREE" in ",".join(labels) or "label free" in ",".join(labels)
+                "LABEL FREE" in ",".join(labels) or "label free" in ",".join(labels)
         ):
             label = "LFQ"
         elif "TMT" in ",".join(labels) or "tmt" in ",".join(labels):
             if (
-                len(labels) > 11
-                or "TMT134N" in labels
-                or "TMT133C" in labels
-                or "TMT133N" in labels
-                or "TMT132C" in labels
-                or "TMT132N" in labels
+                    len(labels) > 11
+                    or "TMT134N" in labels
+                    or "TMT133C" in labels
+                    or "TMT133N" in labels
+                    or "TMT132C" in labels
+                    or "TMT132N" in labels
             ):
                 choice = TMT16plex
             elif len(labels) == 11 or "TMT131C" in labels:
@@ -418,7 +418,7 @@ class Feature:
         :yield: _description_
         """
         ref_list = [
-            self.samples[i : i + file_num]
+            self.samples[i: i + file_num]
             for i in range(0, len(self.samples), file_num)
         ]
         for refs in ref_list:
@@ -488,7 +488,7 @@ class Feature:
     def iter_conditions(self, conditions: int = 10, columns: list = None):
         condition_list = self.get_unique_conditions()
         ref_list = [
-            condition_list[i : i + conditions]
+            condition_list[i: i + conditions]
             for i in range(0, len(condition_list), conditions)
         ]
         for refs in ref_list:
@@ -505,7 +505,7 @@ class Feature:
     def get_median_map_to_condition(self):
         med_map = {}
         for cons, batch_df in self.iter_conditions(
-            1000, ["condition", "sample_accession", "intensity"]
+                1000, ["condition", "sample_accession", "intensity"]
         ):
             for con in cons:
                 meds = (
@@ -519,21 +519,20 @@ class Feature:
 
 
 def peptide_normalization(
-    parquet: str,
-    sdrf: str,
-    min_aa: int,
-    min_unique: int,
-    remove_ids: str,
-    remove_decoy_contaminants: bool,
-    remove_low_frequency_peptides: bool,
-    output: str,
-    skip_normalization: bool,
-    nmethod: str,
-    pnmethod: str,
-    log2: bool,
-    save_parquet: bool,
+        parquet: str,
+        sdrf: str,
+        min_aa: int,
+        min_unique: int,
+        remove_ids: str,
+        remove_decoy_contaminants: bool,
+        remove_low_frequency_peptides: bool,
+        output: str,
+        skip_normalization: bool,
+        nmethod: str,
+        pnmethod: str,
+        log2: bool,
+        save_parquet: bool,
 ) -> None:
-
     if os.path.exists(output):
         raise FileExistsError("The output file already exists.")
 
@@ -561,12 +560,12 @@ def peptide_normalization(
             if not skip_normalization:
                 if pnmethod == "globalMedian":
                     dataset_df.loc[:, "intensity"] = (
-                        dataset_df["intensity"] / med_map[sample]
+                            dataset_df["intensity"] / med_map[sample]
                     )
                 elif pnmethod == "conditionMedian":
                     con = dataset_df["condition"].unique()[0]
                     dataset_df.loc[:, "intensity"] = (
-                        dataset_df["intensity"] / med_map[con][sample]
+                            dataset_df["intensity"] / med_map[con][sample]
                     )
             dataset_df = dataset_df[PARQUET_COLUMNS]
             dataset_df = parquet_common_process(dataset_df, label, choice)
@@ -576,8 +575,10 @@ def peptide_normalization(
                 lambda x: len(set(x[PEPTIDE_CANONICAL])) >= min_unique
             )
             dataset_df.rename(columns={INTENSITY: NORM_INTENSITY}, inplace=True)
+            ## TODO: @PingZheng I think the removal of these features must happen before the normalization step.
+            ## TODO: The entire point to catch any outliers and remove them before normalization.
 
-            # Remove high abundant, entrapments, contaminants proteins and the outliers
+            # Remove high abundant entrapment's, contaminants, proteins and the outliers
             if remove_ids is not None:
                 dataset_df = remove_protein_by_ids(dataset_df, remove_ids)
             if remove_decoy_contaminants:
@@ -603,9 +604,9 @@ def peptide_normalization(
 
             # TODO: Normalize at feature level between ms runs (technical repetitions)
             if (
-                not skip_normalization
-                and nmethod != "none"
-                and technical_repetitions > 1
+                    not skip_normalization
+                    and nmethod != "none"
+                    and technical_repetitions > 1
             ):
                 print(f"{str(sample).upper()}: Normalize intensities of features.. ")
                 dataset_df = normalize_run(dataset_df, technical_repetitions, nmethod)
