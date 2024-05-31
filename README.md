@@ -251,49 +251,6 @@ Options:
   --help                Show this message and exit.
 ```
 
-#### Datasets Merge
-
-There are batch effects in protein identification and quantitative results between different studies, which may be caused by differences in experimental techniques, conditional methods, data analysis, etc. Here we provide a method to apply batch effect correction. First to impute ibaq data, then remove outliers using `hdbscan`, and apply batch effect correction using `pycombat`.
-
-```asciidoc
-python datasets_merge datasets_merge --data_folder ../ibaqpy_test/ --output datasets-merge.csv --verbose
-``` 
-
-```asciidoc
-python datasets_merge.py --help
-Usage: datasets_merge.py [OPTIONS]
-
-  Merge ibaq results from compute_ibaq.py.
-
-  :param data_folder: Data dolfer contains SDRFs and ibaq CSVs.
-  :param output: Output file after batch effect removal.
-  :param covariate: Indicators included in covariate consideration when datasets are merged.
-  :param organism: Organism to keep in input data.
-  :param covariate_to_keep: Keep tissue parts from metadata, e.g. 'LV,RV,LA,RA'.
-  :param non_missing_percent_to_keep: non-missing values in each group.
-  :param n_components: Number of principal components to be computed.
-  :param min_cluster: The minimum size of clusters.
-  :param min_sample_num: The minimum number of samples in a neighborhood for a point to be considered as a core point.
-  :param n_iter: Number of iterations to be performed.
-  :param verbose/quiet: Output debug information.
-
-Options:
-  Options:
-  -d, --data_folder TEXT          Data dolfer contains SDRFs and ibaq CSVs. [required]
-  -o, --output TEXT               Output file after batch effect removal. [required]
-  -c, --covariate TEXT            Indicators included in covariate consideration when datasets are merged.
-  --organism TEXT                 Organism to keep in input data.
-  --covariate_to_keep TEXT        Keep tissue parts from metadata, e.g. 'LV,RV,LA,RA'.
-  --non_missing_percent_to_keep FLOAT
-                                  non-missing values in each group.
-  --n_components TEXT             Number of principal components to be computed.
-  --min_cluster TEXT              The minimum size of clusters.
-  --min_sample_num TEXT           The minimum number of samples in a neighborhood for a point to be considered as a core point.
-  --n_iter TEXT                   Number of iterations to be performed.
-  -v, --verbose / -q, --quiet     Output debug information.
-  --help                          Show this message and exit.
-```
-
 ### Calculate the Cellular Protein Copy Number and Concentration
 
 The protein copy calculation follows the following formula:

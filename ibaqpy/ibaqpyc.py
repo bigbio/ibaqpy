@@ -24,7 +24,7 @@ def cli():
 
 
 cli.add_command(tpa_compute)
-cli.add_command(datasets_merge)
+# cli.add_command(datasets_merge)
 cli.add_command(features2parquet)
 cli.add_command(merge_condition_generation)
 cli.add_command(peptides2proteins)
