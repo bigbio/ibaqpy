@@ -6,17 +6,41 @@
 [![PyPI version](https://badge.fury.io/py/ibaqpy.svg)](https://badge.fury.io/py/ibaqpy)
 ![PyPI - Downloads](https://img.shields.io/pypi/dm/ibaqpy)
 
-iBAQ (Intensity-Based Absolute Quantification) determines the abundance of a protein by dividing the total precursor intensities by the number of theoretically observable peptides of the protein. The TPA (Total Protein Approach) value is determined by summing peptide intensities of each protein and then dividing by the molecular mass to determine the relative concentration of each protein. By using [ProteomicRuler](https://www.sciencedirect.com/science/article/pii/S1535947620337749), it is possible to calculate the protein copy number and absolute concentration. **ibaqpy** compute IBAQ values, TPA values, copy numbers and concentration for proteins starting from a feature parquet from [quantmsio](https://github.com/bigbio/quantms.io) and a [SDRF](https://github.com/bigbio/proteomics-sample-metadata) file. In addition, it supports the merging of iBAQ results from multiple datasets and the elimination of outliers and batch effects. This package provides multiple functions: 
+iBAQ (Intensity-Based Absolute Quantification) determines the abundance of a protein by dividing the total precursor intensities by the number of theoretically observable peptides of the protein [manuscript here](https://pubmed.ncbi.nlm.nih.gov/16219938/). ibaqpy is a Python package that computes iBAQ values, and other normalized IBAQ values and starting from a feature parquet from [quantmsio](https://github.com/bigbio/quantms.io) and a [SDRF](https://github.com/bigbio/proteomics-sample-metadata) file. 
 
-**Assemble features as peptides**: In features, the differences between different runs and different fractions in the sample were reduced, and then normalized after combining into peptides. See details in `commands/features2peptides`.
+Additionally, the tool allows computing the TPA value (Total Protein Approach). TPA is determined by summing peptide intensities of each protein and then dividing by the molecular mass to determine the relative concentration of each protein. By using [ProteomicRuler](https://www.sciencedirect.com/science/article/pii/S1535947620337749), it is possible to calculate the protein copy number and absolute concentration.
 
-**Assemble peptides as proteins**: In the sample, the protein was combined from its unique peptides, then the iBAQ value was calculated as the Intensity of the protein devided by the theoretical number of unique peptides cut by the enzyme. This command also normalized iBAQ as riBAQ. See details in `commands/peptides2proteins`.
+### Overview of ibaq-base values computation
+
+As mentioned before, ibaq values are calculated by dividing the total precursor intensities by the number of theoretically observable peptides of the protein. We use the following steps to calculate the iBAQ values:
+
+- _Observable peptides_, the protein sequence is digested in silico using a specific enzyme. The current version of this tool uses OpenMS method to load fasta file, and use [ProteaseDigestion](https://openms.de/current_doxygen/html/classOpenMS_1_1ProteaseDigestion.html) to enzyme digestion of protein sequences, and finally get the theoretical peptide number of each protein.
+
+- _Total precursor intensities_, the total intensity of a protein is calculated by summing the intensity of all peptides that belong to the protein. The intensity values are obtained from the feature parquet file in [quantms.io](https://github.com/bigbio/quantms.io).
+
+#### IBAQ calculation
+
+First, peptide intensity dataframe was grouped according to `protein name`, `sample name` and `condition`. Finally, the sum of the intensity of the protein is divided by the number of theoretical peptides.
+
+# TODO: @PingZheng Can you double-check that for protein group we multiply the intensity or divided? 
+
+> Note: If protein-group exists in the peptide intensity dataframe, the intensity of all proteins in the protein-group is summed based on the above steps, and then multiplied by the number of proteins in the protein-group.
+
+#### IBAQ Normalization  
+
+- `IbaqNorm` - normalize the ibaq values using the total ibaq of the sample `ibaq / sum(ibaq)`, the sum is applied for proteins in the same _sample + condition_.
+- `IbaqLog`  - The ibaq log is calculated as `10 + log10(IbaqNorm)`. This normalized ibaq value was developed [by ProteomicsDB Team](https://academic.oup.com/nar/article/46/D1/D1271/4584631).
+- `IbaqPpb` - The resulted IbaqNorm is multiplied by 100M `IbaqNorm * 100'000'000`. This method was developed originally [by PRIDE Team](https://www.nature.com/articles/s41597-021-00890-2).
+
+### Assemble peptides as proteins
+
+In the sample, the protein was combined from its unique peptides; then the iBAQ value was calculated as the Intensity of the protein divided by the theoretical number of unique peptides cut by the enzyme. This command also normalized iBAQ as riBAQ. See details in `peptides2proteins`.
 
 **Compute TPA**: Compute TPA values, protein copy numbers and concentration from the output file from script `commands/features2peptides`. See details in `commands/compute_tpa.py`.
 
 **Merge projects**: Merge ibaq results from multiple datasets. It consists of three steps: missing value imputation, outlier removal, and batch effect removal. See details in `commands/datasets_merger.py`.
 
-**NOTE:** In all scripts and result files, *uniprot accession* is used as the protein identifier.
+> Note: In all scripts and result files, *uniprot accession* is used as the protein identifier.
 
 ![Ibaq](./data/ibaqpy.png "IBAQ")
 
@@ -174,16 +198,7 @@ Options:
   --help               Show this message and exit.
 ```
 
-#### 1. Performs the Enzymatic Digestion
-The current version of this tool uses OpenMS method to load fasta file, and use [ProteaseDigestion](https://openms.de/current_doxygen/html/classOpenMS_1_1ProteaseDigestion.html) to enzyme digestion of protein sequences, and finally get the theoretical peptide number of each protein.
 
-#### 2. Calculate the IBAQ Value
-First, peptide intensity dataframe was grouped according to protein name, sample name and condition. The protein intensity of each group was summed. Finally, the sum of the intensity of the protein is divided by the number of theoretical peptides.
-
-If protein-group exists in the peptide intensity dataframe, the intensity of all proteins in the protein-group is summed based on the above steps, and then multiplied by the number of proteins in the protein-group.
-
-#### 3. IBAQ Normalization  
-Normalize the ibaq values using the total ibaq of the sample. The resulted ibaq values are then multiplied by 100'000'000 (PRIDE database noramalization), for the ibaq ppb and log10 shifted by 10 (ProteomicsDB).
 
 ### Compute TPA
 The total protein approach (TPA) is a label- and standard-free method for absolute protein quantitation of proteins using large-scale proteomic data. In the current version of the tool, the TPA value is the total intensity of the protein divided by its theoretical molecular mass.
