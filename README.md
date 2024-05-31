@@ -8,7 +8,8 @@
 
 iBAQ (Intensity-Based Absolute Quantification) determines the abundance of a protein by dividing the total precursor intensities by the number of theoretically observable peptides of the protein [manuscript here](https://pubmed.ncbi.nlm.nih.gov/16219938/). ibaqpy is a Python package that computes iBAQ values starting from a feature parquet from [quantmsio](https://github.com/bigbio/quantms.io) and a [SDRF](https://github.com/bigbio/proteomics-sample-metadata) file. In addition, the package computes other ibaq values including rIBAQ, log2, and ppb.
 
-ibaqpy also allows computing the TPA value (Total Protein Approach). TPA is determined by summing peptide intensities of each protein and then dividing by the molecular mass to determine the relative concentration of each protein. By using [ProteomicRuler](https://www.sciencedirect.com/science/article/pii/S1535947620337749), it is possible to calculate the protein copy number and absolute concentration.
+ibaqpy also allows computing the TPA value (Total Protein Approach). TPA is determined by summing peptide intensities of each protein and then dividing by the molecular mass to determine the relative concentration of each protein. By using [ProteomicRuler](https://www.sciencedirect.com/science/article/pii/S1535947620337749), it is possible to calculate the protein copy number and absolute concentration. The OpenMS tool was used to calculate the theoretical molecular mass of each protein. Similar to the calculation of IBAQ, the TPA value of protein-group was the sum of its intensity divided by the sum of the theoretical molecular mass.
+
 
 ### Overview of ibaq-base values computation
 
@@ -18,7 +19,7 @@ As mentioned before, ibaq values are calculated by dividing the total precursor 
 
 - _Total precursor intensities_, the total intensity of a protein is calculated by summing the intensity of all peptides that belong to the protein. The intensity values are obtained from the feature parquet file in [quantms.io](https://github.com/bigbio/quantms.io).
 
-# TODO: @PingZheng Can you double-check that for protein group we multiply the intensity or divided? 
+## TODO @PingZheng: Can you double-check that for protein group we multiply the intensity or divided? 
 
 > Note: If protein-group exists in the peptide intensity dataframe, the intensity of all proteins in the protein-group is summed based on the above steps, and then multiplied by the number of proteins in the protein-group.
 
@@ -54,7 +55,8 @@ In summary, each feature is the unique combination of a peptide sequence includi
 
 #### Data preprocessing
 
-**Todo** @PingZheng: Can you confirm that the following steps are correct?
+## TODO @PingZheng: Can you confirm that the following steps are correct?
+
 In this section, ibaqpy will do: 
 - Remove lines where intensity or study condition is empty: This could happen in the following cases: 
   - The DIA pipeline sometimes for some features releases intensities with value 0.
@@ -70,32 +72,33 @@ In this section, ibaqpy will do:
 
 #### Feature normalization
 
-**Todo**: @PingZheng: Can you confirm that the following steps are correct?
+## TODO @PingZheng: Can you confirm that the following steps are correct?
 
 In this section, ibaqpy corrects the intensity of each feature MS runs in the sample, eliminating the effect between runs (including technique repetitions). It will do:
 
 - When `MS runs > 1` in the sample, the `mean` of all average(`mean`, `median` or `iqr`) in each MS run is calculated(SampleMean)
 - The ratio between SampleMean and the average MS run is used as a reference to scale the original intensity
 
-#### 3. Assembly features to peptides
+#### Features to peptides
 
 A peptidoform is a combination of a `PeptideSequence(Modifications) + Charge + BioReplicate + Fraction` (among other features), and a peptide is a combination of a `PeptideSequence(Canonical) + BioReplicate`. ibaqpy will do:
+
 - Select peptidoforms with the highest intensity across different modifications, fractions, and technical replicates
-- Merge peptidoforms across different charges and combined into peptides. 
+- Merge peptidoforms across different charges and combined into peptides. In order to merge peptidoforms, the package will applied the `sum` of the intensity values of the peptidoforms.
 
-#### 4. Peptide Intensity Normalization
+#### Peptide Intensity Normalization
 
-Finally, the intensity of the peptide was normalized globally by `globalMedian`,`conditionMedian`.
+Finally, the intensity of the peptide was normalized globally by `globalMedian`,`conditionMedian`. In the sample, the protein was combined from its unique peptides. 
 
+#### Computing Ibaq and TPA 
 
-In the sample, the protein was combined from its unique peptides; then the iBAQ value was calculated as the Intensity of the protein divided by the theoretical number of unique peptides cut by the enzyme. This command also normalized iBAQ as riBAQ. See details in `peptides2proteins`.
+The iBAQ value was calculated as the Intensity of the protein divided by the theoretical number of unique peptides cut by the enzyme. This command also normalized iBAQ as riBAQ. See details in `peptides2proteins`.
 
-**Compute TPA**: Compute TPA values, protein copy numbers and concentration from the output file from script `commands/features2peptides`. See details in `commands/compute_tpa.py`.
+Compute TPA values, protein copy numbers and concentration from the output file from script `commands/features2peptides`. 
 
-**Merge projects**: Merge ibaq results from multiple datasets. It consists of three steps: missing value imputation, outlier removal, and batch effect removal. See details in `commands/datasets_merger.py`.
+**Merge projects**: Merge ibaq results from multiple datasets. It consists of three steps: missing value imputation, outlier removal, and batch effect removal. 
 
 > Note: In all scripts and result files, *uniprot accession* is used as the protein identifier.
-
 
 ### How to install ibaqpy
 
@@ -126,9 +129,9 @@ You can install the package from code:
 >$ python setup.py install
 ```
 
-### Collecting intensity files
+### Collecting intensity files from quantms.org 
 
-Absolute quantification files has been store in the following url:
+Absolute quantification files have been stored in the following url:
 
 ```
 http://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/quantms-data/
@@ -138,10 +141,13 @@ Inside each project reanalysis folder, the folder proteomicslfq contains the mss
 
 E.g. http://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/quantms-data/MSV000079033.1/MSV000079033.1-bd44c7e3-654c-444d-9e21-0f701d6dac94.feature.parquet
 
-### Assemble features as peptides
+### Major commands  
+
+
+#### Features to peptides
 
 ```asciidoc
-python commands/features2peptides.py -p tests/PXD003947/PXD003947-featrue.parquet -s tests/PXD003947/PXD003947.sdrf.tsv --remove_ids data/contaminants_ids.tsv --remove_decoy_contaminants --remove_low_frequency_peptides --output tests/PXD003947/PXD003947-peptides-norm.csv --log2 --save_parquet
+ibaqpy features2peptides -p tests/PXD003947/PXD003947-featrue.parquet -s tests/PXD003947/PXD003947.sdrf.tsv --remove_ids data/contaminants_ids.tsv --remove_decoy_contaminants --remove_low_frequency_peptides --output tests/PXD003947/PXD003947-peptides-norm.csv --log2 --save_parquet
 ```
 ```asciidoc
 Usage: features2peptides.py [OPTIONS]
@@ -176,12 +182,10 @@ Options:
 ```
 
 
-
-### Compute IBAQ
-IBAQ is an absolute quantitative method based on strength that can be used to estimate the relative abundance of proteins in a sample. IBAQ value is the total intensity of a protein divided by the number of theoretical peptides.
+####  Compute IBAQ
 
 ```asciidoc
-python commands/peptides2proteins.py --fasta tests/PXD003947/Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta --peptides tests/PXD003947/PXD003947-peptides-norm.csv --enzyme Trypsin --output tests/PXD003947/PXD003947-ibaq-norm.csv --normalize --verbose
+ibaqpy peptides2proteins --fasta tests/PXD003947/Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta --peptides tests/PXD003947/PXD003947-peptides-norm.csv --enzyme Trypsin --output tests/PXD003947/PXD003947-ibaq-norm.csv --normalize --verbose
 ``` 
 
 The command provides an additional `flag` for normalize IBAQ values.
@@ -207,15 +211,12 @@ Options:
   --help               Show this message and exit.
 ```
 
+#### Compute TPA
 
-
-### Compute TPA
-The total protein approach (TPA) is a label- and standard-free method for absolute protein quantitation of proteins using large-scale proteomic data. In the current version of the tool, the TPA value is the total intensity of the protein divided by its theoretical molecular mass.
-
-[ProteomicRuler](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC4256500/) is a method for protein copy number and concentration estimation that does not require the use of isotope labeled standards. It uses the mass spectrum signal of histones as a "proteomic ruler" because it is proportional to the amount of DNA in the sample, which in turn depends on cell count. Thus, this approach can add an absolute scale to the mass spectrometry readout and allow estimates of the copy number of individual proteins in each cell.
+# TODO @PingZheng: Can you confirm that this command works?
 
 ```asciidoc
-python commands/compute_tpa.py --fasta Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta --organism 'human' --peptides PXD003947-peptides.csv --ruler --ploidy 2 --cpc 200 --output PXD003947-tpa.tsv --verbose
+python compute_tpa --fasta Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta --organism 'human' --peptides PXD003947-peptides.csv --ruler --ploidy 2 --cpc 200 --output PXD003947-tpa.tsv --verbose
 ```
 
 ```asciidoc
@@ -250,21 +251,9 @@ Options:
   --help                Show this message and exit.
 ```
 
-#### 1. Calculate the TPA Value
-The OpenMS tool was used to calculate the theoretical molecular mass of each protein. Similar to the calculation of IBAQ, the TPA value of protein-group was the sum of its intensity divided by the sum of the theoretical molecular mass.
+#### Datasets Merge
 
-#### 2. Calculate the Cellular Protein Copy Number and Concentration
-The protein copy calculation follows the following formula:
-```
-protein copies per cell = protein MS-signal *  (avogadro / molecular mass) * (DNA mass / histone MS-signal)
-```
-For cellular protein copy number calculation, the uniprot accession of histones were obtained from species first, and the molecular mass of DNA was calculated. Then the dataframe was grouped according to different conditions, and the copy number, molar number and mass of proteins were calculated.
-
-In the calculation of protein concentration, the volume is calculated according to the cell protein concentration first, and then the protein mass is divided by the volume to calculate the intracellular protein concentration.
-
-### Datasets Merge
-There are batch effects in protein identification and quantitative results between different studies, which may be caused by differences in experimental techniques, conditional methods, data analysis, etc. Here we provide a method to apply batch effect correction.  First to impute ibaq data, then remove outliers using `hdbscan`, and apply batch effect correction using `pycombat`.
-
+There are batch effects in protein identification and quantitative results between different studies, which may be caused by differences in experimental techniques, conditional methods, data analysis, etc. Here we provide a method to apply batch effect correction. First to impute ibaq data, then remove outliers using `hdbscan`, and apply batch effect correction using `pycombat`.
 
 ```asciidoc
 python commands/datasets_merge.py datasets_merge --data_folder ../ibaqpy_test/ --output datasets-merge.csv --verbose
@@ -305,18 +294,17 @@ Options:
   --help                          Show this message and exit.
 ```
 
-#### 1. Impute Missing Values
-Remove proteins missing more than 30% of all samples. Users can keep tissue parts interested, and data will be converted to a expression matrix (samples as columns, proteins as rows), then missing values will be imputed with `KNNImputer`. 
+### Calculate the Cellular Protein Copy Number and Concentration
 
-#### 2. Remove Outliers
-When outliers are removed, multiple hierarchical clustering is performed using `hdbscan.HDBSCAN`, where outliers are labeled -1 in the PCA plot. When clustering is performed, the default cluster minimum value and the minimum number of neighbors of the core point are the minimum number of samples in all datasets.
+The protein copy calculation follows the following formula:
 
-*Users can skip this step and do outliers removal manually.*
+```
+protein copies per cell = protein MS-signal *  (avogadro / molecular mass) * (DNA mass / histone MS-signal)
+```
 
-#### 3. Batch Effect Correction
-Using `pycombat` for batch effect correction, and batch is set to `datasets` (refers specifically to PXD ids) and the covariate should be `tissue_part`.
+For cellular protein copy number calculation, the uniprot accession of histones was obtained from species first, and the molecular mass of DNA was calculated. Then the dataframe was grouped according to different conditions, and the copy number, molar number and mass of proteins were calculated. In the calculation of protein concentration, the volume is calculated according to the cell protein concentration first, and then the protein mass is divided by the volume to calculate the intracellular protein concentration.
 
-### Citation
+### How to cite ibaqpy
 
 Wang H, Dai C, Pfeuffer J, Sachsenberg T, Sanchez A, Bai M, Perez-Riverol Y. Tissue-based absolute quantification using large-scale TMT and LFQ experiments. Proteomics. 2023 Oct;23(20):e2300188. doi: [10.1002/pmic.202300188](https://analyticalsciencejournals.onlinelibrary.wiley.com/doi/10.1002/pmic.202300188). Epub 2023 Jul 24. PMID: 37488995.
 
