@@ -403,7 +403,7 @@ class Feature:
         :param samples: A list of samples
         :return: The report
         """
-        cols = columns if columns is not None else "*"
+        cols = ','.join(columns) if columns is not None else '*'
         database = self.parquet_db.sql(
             """SELECT {} FROM parquet_db WHERE sample_accession IN {}""".format(
                 cols, tuple(samples)
@@ -476,7 +476,7 @@ class Feature:
         :param cons: A list of conditions in
         :return: The report
         """
-        cols = columns if columns is not None else "*"
+        cols = ','.join(columns) if columns is not None else '*'
         database = self.parquet_db.sql(
             """SELECT {} FROM parquet_db WHERE condition IN {}""".format(
                 cols, tuple(cons)

@@ -150,7 +150,7 @@ For the DIA experiment of PXD016999, we randomly selected 30 common proteins fro
 
 #### Missing values across samples
 
-Number of peptides missing in the DIA experiment of PXD016999.
+Number of peptides missing in the DIA experiment of PXD016999.1
 
 <center class="half">
 <img src='images/missing_value_016999_lfq.png' style="height:400px;" />
