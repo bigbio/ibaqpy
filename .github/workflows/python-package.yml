@@ -40,4 +40,11 @@ jobs:
       run: |
         cd tests/
         python -m unittest
-
+    - name: Test commandline tool help
+      run: |
+        ibaqpy --help
+    - name: Test commandline normalization features
+      run: |
+        rm -rfv tests/PXD003947/PXD003947-peptides-norm.csv
+        rm -rfv tests/PXD003947/PXD003947-peptides-norm.parquet
+        ibaqpy features2peptides --parquet tests/PXD003947/PXD003947-feature.parquet --sdrf tests/PXD003947/PXD003947.sdrf.tsv --min_aa 7 --min_unique 2 --remove_ids data/contaminants_ids.tsv --remove_decoy_contaminants --remove_low_frequency_peptides --output tests/PXD003947/PXD003947-peptides-norm.csv --skip_normalization --nmethod median --pnmethod max_min --log2 --save_parquet

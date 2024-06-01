@@ -1,15 +1,11 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import math
-
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 from pandas import DataFrame, Series
 from pyopenms import *
 
-from ibaq.ibaqpy_commons import (
+from ibaqpy.ibaq.ibaqpy_commons import (
     CONDITION,
     IBAQ,
     IBAQ_LOG,
@@ -20,10 +16,8 @@ from ibaq.ibaqpy_commons import (
     SAMPLE_ID,
     plot_box_plot,
     plot_distributions,
-    print_help_msg,
     get_accession,
 )
-
 
 def normalize(group):
     group[IBAQ_NORMALIZED] = group[IBAQ] / group[IBAQ].sum()
@@ -78,8 +72,7 @@ def ibaq_compute(
     :return:
     """
     if peptides is None or fasta is None:
-        print_help_msg(ibaq_compute)
-        exit(1)
+        raise ValueError("Fasta and peptides files are required")
 
     fasta_proteins = list()  # type: list[FASTAEntry]
     protein_accessions = list()

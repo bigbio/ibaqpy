@@ -1,20 +1,9 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 
 import os
+import click
+import pandas as pd
 
-from ibaq.ibaqpy_commons import *
-
-
-def print_help_msg(command) -> None:
-    """
-    Print help information
-    :param command: command to print helps
-    :return: print help
-    """
-    with click.Context(command) as ctx:
-        click.echo(command.get_help(ctx))
+from ibaqpy.ibaq.ibaqpy_commons import CONDITION
 
 
 @click.command()
@@ -44,7 +33,3 @@ def merge_condition_generation(input: str, output: str, pattern: str) -> None:
         g.to_csv(
             f"{output}/{k}-grouped-Intensities.csv", index=False
         )  # '{}.csv'.format(k)
-
-
-if __name__ == "__main__":
-    merge_condition_generation()

@@ -1,24 +1,9 @@
-#!/usr/bin/env python
 import re
 
 import click
-
-from ibaq import __version__
-from ibaq.combiner import Combiner
-
-CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
+from ibaqpy.ibaq.combiner import Combiner
 
 
-@click.group(context_settings=CONTEXT_SETTINGS)
-def cli():
-    """
-    This is the main tool that gives access to all commands.
-    """
-
-
-@click.version_option(
-    version=__version__, package_name="ibaqpy", message="%(package)s %(version)s"
-)
 @click.command("datasets_merge", short_help="Merge ibaq results from compute_ibaq")
 @click.option(
     "--data_folder",
@@ -75,19 +60,19 @@ def cli():
 )
 @click.pass_context
 def datasets_merge(
-    ctx,
-    data_folder: str,
-    output: str,
-    covariate: str,
-    organism: str,
-    covariate_to_keep: list,
-    non_missing_percent_to_keep: float,
-    skip_outliers_removal: bool,
-    n_components: int,
-    min_cluster: int,
-    min_sample_num: int,
-    n_iter: int,
-    verbose: bool,
+        ctx,
+        data_folder: str,
+        output: str,
+        covariate: str,
+        organism: str,
+        covariate_to_keep: list,
+        non_missing_percent_to_keep: float,
+        skip_outliers_removal: bool,
+        n_components: int,
+        min_cluster: int,
+        min_sample_num: int,
+        n_iter: int,
+        verbose: bool,
 ):
     if covariate_to_keep:
         covariate_to_keep = re.split(",\s*", covariate_to_keep)
@@ -98,14 +83,3 @@ def datasets_merge(
     combiner.batch_correction(n_components, covariate_to_keep)
     result = combiner.df_corrected
     result.to_csv(output, sep=",", index=True)
-
-
-cli.add_command(datasets_merge)
-
-
-def main():
-    cli()
-
-
-if __name__ == "__main__":
-    main()

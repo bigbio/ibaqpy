@@ -10,3 +10,7 @@ venv
 /compute-all.sh
 /ibaqpy.egg-info/
 /ibaqpy_temp/
+/tests/PXD003947/IBAQ-QCprofile.pdf
+/tests/PXD003947/PXD003947-ibaq-norm.csv
+/tests/PXD003947/PXD003947-peptides-norm.csv
+/tests/PXD003947/PXD003947-peptides-norm.parquet

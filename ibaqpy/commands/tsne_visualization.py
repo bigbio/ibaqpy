@@ -1,6 +1,4 @@
-# import libraries
 import glob
-import math
 
 import click
 import matplotlib.pyplot as plt
@@ -10,7 +8,7 @@ import seaborn as sns
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
-from ibaq.ibaqpy_commons import IBAQ_LOG, IBAQ_NORMALIZED, PROTEIN_NAME, SAMPLE_ID
+from ibaqpy.ibaq.ibaqpy_commons import PROTEIN_NAME, SAMPLE_ID, IBAQ_LOG
 
 
 # function to compute principal components
@@ -134,6 +132,7 @@ def plot_tsne(df, x_col, y_col, hue_col, file_name):
     "-o",
     "--pattern",
     help="Protein file pattern",
+    # TODO: I think we should use instead of pattern the structure of quantms.io for absolute quantification
     required=False,
     default="proteins.tsv",
 )

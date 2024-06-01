@@ -1,22 +1,17 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
 import os
-
 import click
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 from pyopenms import *
 
-from ibaq.ibaqpy_commons import (
+from ibaqpy.ibaq.ibaqpy_commons import (
     CONDITION,
     NORM_INTENSITY,
     PROTEIN_NAME,
     SAMPLE_ID,
     plot_box_plot,
     plot_distributions,
-    print_help_msg,
     get_accession,
 )
 
@@ -33,12 +28,20 @@ def handle_nonstandard_aa(aa_seq: str) -> (list, str):
     return nonstandard_aa_lst, considered_seq
 
 
-@click.command()
-@click.option("-f", "--fasta", help="Protein database")
+@click.command("tpa", short_help="Compute TPA values.")
+@click.option(
+    "-f",
+    "--fasta",
+    help="Protein database",
+    required=True,
+    type=click.Path(exists=True),
+)
 @click.option(
     "-p",
     "--peptides",
     help="Peptide identifications with intensities following the peptide intensity output",
+    required=True,
+    type=click.Path(exists=True),
 )
 @click.option("-r", "--ruler", help="Whether to use ProteomicRuler", is_flag=True)
 @click.option("-n", "--ploidy", help="Ploidy number", default=2)
@@ -48,7 +51,7 @@ def handle_nonstandard_aa(aa_seq: str) -> (list, str):
 @click.option(
     "--verbose",
     help="Print addition information about the distributions of the intensities, number of peptides remove "
-    "after normalization, etc.",
+         "after normalization, etc.",
     is_flag=True,
 )
 @click.option(
@@ -57,15 +60,15 @@ def handle_nonstandard_aa(aa_seq: str) -> (list, str):
     default="TPA-QCprofile.pdf",
 )
 def tpa_compute(
-    fasta: str,
-    peptides: str,
-    ruler: bool,
-    organism: str,
-    ploidy: int,
-    cpc: float,
-    output: str,
-    verbose: bool,
-    qc_report: str,
+        fasta: str,
+        peptides: str,
+        ruler: bool,
+        organism: str,
+        ploidy: int,
+        cpc: float,
+        output: str,
+        verbose: bool,
+        qc_report: str,
 ) -> None:
     """
     This command computes the protein copies and concentrations according to a file output of peptides with the
@@ -81,9 +84,6 @@ def tpa_compute(
     :param qc_report: PDF file to store multiple QC images.
     :return:
     """
-    if peptides is None or fasta is None:
-        print_help_msg(tpa_compute)
-        exit(1)
 
     data = pd.read_csv(
         peptides, sep=",", usecols=[PROTEIN_NAME, NORM_INTENSITY, SAMPLE_ID, CONDITION]
@@ -100,7 +100,7 @@ def tpa_compute(
     proteins = res[PROTEIN_NAME].unique().tolist()
     proteins = sum([i.split(";") for i in proteins], [])
 
-    # calculate molecular weight of quantified proteins
+    # calculate the molecular weight of quantified proteins
     mw_dict = dict()
     fasta_proteins = list()  # type: list[FASTAEntry]
     FASTAFile().load(fasta, fasta_proteins)
@@ -115,7 +115,7 @@ def tpa_compute(
                 mw = AASequence().fromString(seq).getMonoWeight()
                 mw_dict[accession] = mw
                 print(
-                    f"Nonstandard amimo acids found in {accession}: {error_aa}, ignored!"
+                    f"Nonstandard amino acids found in {accession}: {error_aa}, ignored!"
                 )
 
     res = res[res[PROTEIN_NAME].isin(mw_dict.keys())]
@@ -237,7 +237,3 @@ def tpa_compute(
             pdf.savefig(box)
             pdf.close()
         res.to_csv(output, index=False)
-
-
-if __name__ == "__main__":
-    tpa_compute()

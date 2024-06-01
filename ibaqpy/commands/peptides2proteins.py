@@ -1,15 +1,22 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
+
 import click
-from ibaq.compute_ibaq import ibaq_compute
+from ibaqpy.ibaq.compute_ibaq import ibaq_compute
 
 
-@click.command()
-@click.option("-f", "--fasta", help="Protein database to compute IBAQ values")
+@click.command("peptides2proteins", short_help="Compute IBAQ values for proteins")
+@click.option(
+    "-f",
+    "--fasta",
+    help="Protein database to compute IBAQ values",
+    required=True,
+    type=click.Path(exists=True),
+)
 @click.option(
     "-p",
     "--peptides",
     help="Peptide identifications with intensities following the peptide intensity output",
+    required=True,
+    type=click.Path(exists=True),
 )
 @click.option(
     "-e",
@@ -41,7 +48,9 @@ from ibaq.compute_ibaq import ibaq_compute
     help="PDF file to store multiple QC images",
     default="IBAQ-QCprofile.pdf",
 )
+@click.pass_context
 def peptides2proteins(
+    click_context,
     fasta: str,
     peptides: str,
     enzyme: str,
@@ -55,6 +64,7 @@ def peptides2proteins(
     """
     This command computes the IBAQ values for a file output of peptides with the format described in
     peptide_contaminants_file_generation.py.
+    :param click_context: Click context
     :param min_aa: Minimum number of amino acids to consider a peptide.
     :param max_aa: Maximum number of amino acids to consider a peptide.
     :param fasta: Fasta file used to perform the peptide identification.
@@ -66,8 +76,14 @@ def peptides2proteins(
     :param qc_report: PDF file to store multiple QC images.
     :return:
     """
-    ibaq_compute(**click.get_current_context().params)
-
-
-if __name__ == "__main__":
-    peptides2proteins()
+    ibaq_compute(
+        fasta=fasta,
+        peptides=peptides,
+        enzyme=enzyme,
+        normalize=normalize,
+        min_aa=min_aa,
+        max_aa=max_aa,
+        output=output,
+        verbose=verbose,
+        qc_report=qc_report,
+    )
