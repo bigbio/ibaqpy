@@ -142,11 +142,15 @@ In this second benchmark, we aim to test how ibaq values computed for different 
 
 #### Variability of specific proteins across samples. 
 
+For the DIA experiment of PXD016999, we randomly selected 30 common proteins from IBAQ data and then calculated their CV values in each of the skin samples.
+
 <center class="half">
 <img src='images/method_per_p_cv_016999_lfq.png' style="height:400px;" />
 </center>
 
 #### Missing values across samples
+
+Number of peptides missing in the DIA experiment of PXD016999.1
 
 <center class="half">
 <img src='images/missing_value_016999_lfq.png' style="height:400px;" />
