@@ -99,12 +99,10 @@ The following boxplot shows the coefficient of variation for the 11 samples for 
 
 #### LFQ missing values 
 
-Number of peptides missing in both experiments. Compared to TMT, LFQ has a lot of missing values.
-
-#### Todo: @PingZeng please remove the TMT experiment only leave the LFQ experiment.
+Number of peptides missing in LFQ experiments.
 
 <div style="display:flex;justify-content:center">
-    <img src='images/missing_value.png' style="width:600px;height:500px;" />
+    <img src='images/missing_peptides_by_sample.png' style="width:600px;" />
 </div>
 
 #### Fold-change detection 3-, 2-, and 1.5-fold. 
@@ -136,9 +134,7 @@ In this second benchmark, we aim to test how ibaq values computed for different 
 
 #### Coefficient of Variation (CV)
 
-> **TODO**: @PingZeng can you double-check the description of these sections, PXD016999 is not skin only, and also is not DIA, is TMT. Please review carefully. 
-
-For the DIA experiment of PXD016999, all samples were from **skin** tissue.
+ For the DIA experiment of PXD016999, our **sdrf** only annotates experimental information from **skin**. We extract the shared proteins from all samples, calculate the coefficient of variation (CV) of these proteins across all samples, and then divide it by the number of proteins to obtain the average CV value.
 
 <center class="half">
 <img src='images/method_mean_cv_016999_lfq.png' style="height:400px;" />
