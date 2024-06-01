@@ -402,7 +402,7 @@ class Feature:
         :param runs: A list of ms_runs
         :return: The report
         """
-        cols = columns if columns is not None else "*"
+        cols = ','.join(columns) if columns is not None else '*'
         database = self.parquet_db.sql(
             """SELECT {} FROM parquet_db WHERE sample_accession IN {}""".format(
                 cols, tuple(samples)
@@ -474,7 +474,7 @@ class Feature:
         :param runs: A list of ms_runs
         :return: The report
         """
-        cols = columns if columns is not None else "*"
+        cols = ','.join(columns) if columns is not None else '*'
         database = self.parquet_db.sql(
             """SELECT {} FROM parquet_db WHERE condition IN {}""".format(
                 cols, tuple(cons)

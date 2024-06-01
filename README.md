@@ -64,7 +64,7 @@ E.g. http://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute
 ### Assemble features as peptides
 
 ```asciidoc
-python commands/features2peptides.py -p tests/PXD003947/PXD003947-featrue.parquet -s tests/PXD003947/PXD003947.sdrf.tsv --remove_ids data/contaminants_ids.tsv --remove_decoy_contaminants --remove_low_frequency_peptides --output tests/PXD003947/PXD003947-peptides-norm.csv --log2 --save_parquet
+python commands/features2peptides.py -p tests/PXD003947/PXD003947-featrue.parquet -s tests/PXD003947/PXD003947.sdrf.tsv --remove_ids data/contaminants_ids.tsv --remove_decoy_contaminants --remove_low_frequency_peptides --output tests/PXD003947/PXD003947-peptides-norm.csv
 ```
 ```asciidoc
 Usage: features2peptides.py [OPTIONS]
@@ -87,11 +87,11 @@ Options:
                                   properties for normalization
   --skip_normalization            Skip normalization step
   --nmethod TEXT                  Normalization method used to normalize
-                                  feature intensities for all samples
+                                  feature intensities for tec
                                   (options: mean, median, iqr, none)
   --pnmethod TEXT                 Normalization method used to normalize
                                   peptides intensities for all samples
-                                  (options: globalMedian,conditionMedian)
+                                  (options: globalMedian,conditionMedian,none)
   --log2                          Transform to log2 the peptide intensity
                                   values before normalization
   --save_parquet                  Save normalized peptides to parquet
@@ -178,7 +178,7 @@ Options:
 The current version of this tool uses OpenMS method to load fasta file, and use [ProteaseDigestion](https://openms.de/current_doxygen/html/classOpenMS_1_1ProteaseDigestion.html) to enzyme digestion of protein sequences, and finally get the theoretical peptide number of each protein.
 
 #### 2. Calculate the IBAQ Value
-First, peptide intensity dataframe was grouped according to protein name, sample name and condition. The protein intensity of each group was summed. Finally, the sum of the intensity of the protein is divided by the number of theoretical peptides.
+First, peptide intensity dataframe was grouped according to protein name, sample name and condition. The protein intensity of each group was summed. Due to the experimental type, the same protein may exhibit missing peptides in different samples, resulting in variations in the number of peptides detected for the protein across different samples. To handle this difference, normalization within the same group can be achieved by using the formula `sum(peptides) / n`(n represents the number of detected peptide segments). Finally, the sum of the intensity of the protein is divided by the number of theoretical peptides.
 
 If protein-group exists in the peptide intensity dataframe, the intensity of all proteins in the protein-group is summed based on the above steps, and then multiplied by the number of proteins in the protein-group.
 
