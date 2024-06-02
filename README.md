@@ -193,8 +193,6 @@ Options:
 
 #### Compute TPA
 
-# TODO @PingZheng: Can you confirm that this command works?
-
 ```asciidoc
 python compute_tpa --fasta Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta --organism 'human' --peptides PXD003947-peptides.csv --ruler --ploidy 2 --cpc 200 --output PXD003947-tpa.tsv --verbose
 ```
@@ -250,3 +248,4 @@ Wang H, Dai C, Pfeuffer J, Sachsenberg T, Sanchez A, Bai M, Perez-Riverol Y. Tis
 - Julianus Pfeuffer
 - Yasset Perez-Riverol
 - Hong Wang
+- Ping Zheng
