@@ -177,3 +177,10 @@ We will normalize the MaxLFQ values of the proteins in the DIANN report by divid
 <center align="center">
 <img src='images/9_tissues-density.png' style="height:400px;" />
 </center>
+
+### Performance testing
+The [PXD030304](https://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/PXD030304/)  project collected mass spectrometry data from 949 cancer cell lines and reanalyzed it using the DIANN analysis pipeline within the quantms platform.The size of the `diann_report.tsv` file is 167GB, after being converted to a parquet file using quantmsio, the size is 15.8GB.We conducted performance testing in a 128GB memory environment.
+
+| Project | Samples | Size(diann report) | Size(parquet file) | Runn time |
+|--------|---------|----------|----------|----------|
+| PXD030304 |  2013 |  167G  | 15.8G    | 2.75h  |
