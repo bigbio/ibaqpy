@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 
 class Combiner:
     def __init__(
-        self, data_folder: os.PathLike, covariate: str = None, organism: str = "HUMAN"
+            self, data_folder: os.PathLike, covariate: str = None, organism: str = "HUMAN"
     ):
         """Generate concated IbaqNorm and metadata."""
         self.df_pca = compute_pca(self.df_corrected.T, n_components=5)
@@ -114,11 +114,11 @@ class Combiner:
         print(self.df.head)
 
     def outlier_removal(
-        self,
-        n_components: int = None,
-        min_cluster_size: int = None,
-        min_samples_num: int = None,
-        n_iter: int = None,
+            self,
+            n_components: int = None,
+            min_cluster_size: int = None,
+            min_samples_num: int = None,
+            n_iter: int = None,
     ):
         logger.info("Removing outliers from imputed data ...")
         # Apply iterative outlier removal on imputed data
@@ -164,7 +164,7 @@ class Combiner:
         )
 
     def batch_correction(
-        self, n_components: int = None, tissue_parts_to_keep: int = None
+            self, n_components: int = None, tissue_parts_to_keep: int = None
     ):
         logger.info("Applying batch effect correction ...")
         # Plot PCA of uncorrected imputed data

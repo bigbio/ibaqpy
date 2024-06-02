@@ -540,18 +540,18 @@ def peptide_normalization(
         raise FileNotFoundError("The file does not exist.")
 
     print("Loading data..")
-    F = Feature(parquet)
+    feature = Feature(parquet)
     if sdrf:
         technical_repetitions, label, sample_names, choice = analyse_sdrf(sdrf)
     else:
-        technical_repetitions, label, sample_names, choice = F.experimental_inference
-    low_frequency_peptides = F.low_frequency_peptides
+        technical_repetitions, label, sample_names, choice = feature.experimental_inference
+    low_frequency_peptides = feature.low_frequency_peptides
     header = False
     if not skip_normalization and pnmethod == "globalMedian":
-        med_map = F.get_median_map()
+        med_map = feature.get_median_map()
     elif not skip_normalization and pnmethod == "conditionMedian":
-        med_map = F.get_median_map_to_condition()
-    for samples, df in F.iter_samples():
+        med_map = feature.get_median_map_to_condition()
+    for samples, df in feature.iter_samples():
         for sample in samples:
             # Perform data preprocessing on every sample
             print(f"{str(sample).upper()}: Data preprocessing...")
@@ -638,4 +638,4 @@ def peptide_normalization(
                 header = True
 
     if save_parquet:
-        F.csv2parquet(output)
+        feature.csv2parquet(output)
