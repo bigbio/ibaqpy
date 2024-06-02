@@ -18,11 +18,9 @@ As mentioned before, ibaq values are calculated by dividing the total precursor 
 
 - _Total precursor intensities_, the total intensity of a protein is calculated by summing the intensity of all peptides that belong to the protein. The intensity values are obtained from the feature parquet file in [quantms.io](https://github.com/bigbio/quantms.io).
 
-## TODO @PingZheng: Can you double-check that for protein group we multiply the intensity or divided? 
+> Note: If protein-group exists in the peptide intensity dataframe, the intensity of all proteins in the protein-group is summed based on the above steps, and then divided by the number of proteins in the protein-group.
 
-> Note: If protein-group exists in the peptide intensity dataframe, the intensity of all proteins in the protein-group is summed based on the above steps, and then multiplied by the number of proteins in the protein-group.
-
-#### Other normalized IBAQ values  
+### Other normalized IBAQ values  
 
 - `IbaqNorm` - normalize the ibaq values using the total ibaq of the sample `ibaq / sum(ibaq)`, the sum is applied for proteins in the same _sample + condition_.
 
@@ -52,49 +50,34 @@ In summary, each feature is the unique combination of a peptide sequence includi
 
 #### Data preprocessing
 
-## TODO @PingZheng: Can you confirm that the following steps are correct?
-
-In this section, ibaqpy will do: 
+In this section`features2peptides`, ibaqpy will do: 
+- Parse the identifier of proteins and retain only unique peptides.
 - Remove lines where intensity or study condition is empty: This could happen in the following cases: 
   - The DIA pipeline sometimes for some features releases intensities with value 0.
   - The quantms.io do not contain feature information for some conditions. This extreme case could happen when not ID/Quant was found for a given condition during the analysis.
-- Parse the identifier of proteins and retain only unique peptides. 
+- Filter peptides with less amino acids than min_aa.
 - Low-confidence proteins were removed according to the threshold of unique peptides: We use a thershold of 2 unique peptides to consider a protein as a high-confidence protein. This parameter is applied if not specified by the user, and the default value is 2. If users want to change this threshold, they can use the `--min_unique` parameter.
 - Filter decoy, contaminants, entrapment: Proteins with the following prefix are removed by default: `DECOY, CONTAMINANT, ENTRAPMENT` could be removed, by default, the filter is not applied. If users want to remove these proteins, they can use the `--remove_decoy_contaminants` parameter.
 - Filter user-specified proteins: The user can provide a list of protein identifiers to remove from the analysis using the `--remove_ids` parameter. The remove ids parameters will remove proteins from the analysis that could be potential to influence the intensity normalization. For example, ALBU_HUMAN could be over expressed in human tissues, and that is why we may want to remove it when analyzing tissue data.
+- Normalize at feature level between ms runs (technical repetitions):
+  - When `MS runs > 1` in the sample, the `mean` of all average(`mean`, `median` or `iqr`) in each MS run is calculated(SampleMean)
+  - The ratio between SampleMean and the average MS run is used as a reference to scale the original intensity
+- Merge peptidoforms across fractions and technical repetitions: Combine technical replicates and fragments from the same sample.
+- Normalize the data at the sample level:
+  - `globalMedian`: A global median that adjusts the median of all samples.
+  - `conditionMedian`: All samples under the same conditions were adjusted to the median value under the current conditions.
 - Remove peptides with low frequency if `sample number > 1`: This parameter is applied always unless the user specifies the `--remove_low_frequency_peptides` parameter. The default value is 20% of the samples. If users want to change this threshold, they can use the `--remove_low_frequency_peptides` parameter.
+- Assembly peptidoforms to peptides:
+A peptidoform is a combination of a `PeptideSequence(Modifications) + Charge + BioReplicate + Fraction` (among other features), and a peptide is a combination of a `PeptideSequence(Canonical) + BioReplicate`. ibaqpy will do:
+  - Select peptidoforms with the highest intensity across different modifications, fractions, and technical replicates
+  - Merge peptidoforms across different charges and combined into peptides. In order to merge peptidoforms, the package will applied the `sum` of the intensity values of the peptidoforms.
 - Intensity transformation to log: The user can specify the `--log2` parameter to transform the peptide intensity values to log2 before normalization.
 
 > Note: At the moment, ibaqpy computes the ibaq values only based on unique peptides. Shared peptides are discarded. However, if a group of proteins share the same unique peptides (e.g., Pep1 -> Prot1;Prot2 and Pep2 -> Prot1;Prot2), the intensity of the proteins is summed and divided by the number of proteins in the group.
 
-#### Feature normalization
-
-## TODO @PingZheng: Can you confirm that the following steps are correct?
-
-In this section, ibaqpy corrects the intensity of each feature MS runs in the sample, eliminating the effect between runs (including technique repetitions). It will do:
-
-- When `MS runs > 1` in the sample, the `mean` of all average(`mean`, `median` or `iqr`) in each MS run is calculated(SampleMean)
-- The ratio between SampleMean and the average MS run is used as a reference to scale the original intensity
-
-#### Features to peptides
-
-A peptidoform is a combination of a `PeptideSequence(Modifications) + Charge + BioReplicate + Fraction` (among other features), and a peptide is a combination of a `PeptideSequence(Canonical) + BioReplicate`. ibaqpy will do:
-
-- Select peptidoforms with the highest intensity across different modifications, fractions, and technical replicates
-- Merge peptidoforms across different charges and combined into peptides. In order to merge peptidoforms, the package will applied the `sum` of the intensity values of the peptidoforms.
-
-#### Peptide Intensity Normalization
-
-Finally, the intensity of the peptide was normalized globally by `globalMedian`,`conditionMedian`. In the sample, the protein was combined with its unique peptides. 
-
-#### Computing Ibaq and TPA 
-
-The iBAQ value was calculated as the Intensity of the protein divided by the theoretical number of unique peptides cut by the enzyme. This command also normalized iBAQ as riBAQ. See details in `peptides2proteins`.
-
-Compute TPA values, protein copy numbers and concentration from the output file from script `commands/features2peptides`. 
-
-**Merge projects**: Merge ibaq results from multiple datasets. It consists of three steps: missing value imputation, outlier removal, and batch effect removal. 
-
+#### Calculate the IBAQ Value
+First, peptide intensity dataframe was grouped according to protein name, sample name and condition. The protein intensity of each group was summed. Due to the experimental type, the same protein may exhibit missing peptides in different samples, resulting in variations in the number of peptides detected for the protein across different samples. To handle this difference, normalization within the same group can be achieved by using the formula `sum(peptides) / n`(n represents the number of detected peptide segments). Finally, the sum of the intensity of the protein is divided by the number of theoretical peptides.See details in `peptides2proteins`.
+ 
 > Note: In all scripts and result files, *uniprot accession* is used as the protein identifier.
 
 ### How to install ibaqpy
@@ -144,7 +127,7 @@ E.g. http://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute
 #### Features to peptides
 
 ```asciidoc
-ibaqpy features2peptides -p tests/PXD003947/PXD003947-featrue.parquet -s tests/PXD003947/PXD003947.sdrf.tsv --remove_ids data/contaminants_ids.tsv --remove_decoy_contaminants --remove_low_frequency_peptides --output tests/PXD003947/PXD003947-peptides-norm.csv --log2 --save_parquet
+ibaqpy features2peptides -p tests/PXD003947/PXD003947-featrue.parquet -s tests/PXD003947/PXD003947.sdrf.tsv --remove_ids data/contaminants_ids.tsv --remove_decoy_contaminants --remove_low_frequency_peptides --output tests/PXD003947/PXD003947-peptides-norm.csv
 ```
 ```asciidoc
 Usage: features2peptides.py [OPTIONS]
@@ -167,11 +150,11 @@ Options:
                                   properties for normalization
   --skip_normalization            Skip normalization step
   --nmethod TEXT                  Normalization method used to normalize
-                                  feature intensities for all samples
+                                  feature intensities for tec
                                   (options: mean, median, iqr, none)
   --pnmethod TEXT                 Normalization method used to normalize
                                   peptides intensities for all samples
-                                  (options: globalMedian,conditionMedian)
+                                  (options: globalMedian,conditionMedian,none)
   --log2                          Transform to log2 the peptide intensity
                                   values before normalization
   --save_parquet                  Save normalized peptides to parquet
