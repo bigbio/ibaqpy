@@ -553,37 +553,62 @@ def peptide_normalization(
         med_map = F.get_median_map_to_condition()
     for samples, df in F.iter_samples():
         for sample in samples:
-            ## TODO: Perform data preprocessing on every sample
+            # Perform data preprocessing on every sample
             print(f"{str(sample).upper()}: Data preprocessing...")
             dataset_df = df[df["sample_accession"] == sample].copy()
+            # Step1: Parse the identifier of proteins and retain only unique peptides.
             dataset_df = dataset_df[dataset_df["unique"] == 1]
-            if not skip_normalization:
-                if pnmethod == "globalMedian":
-                    dataset_df.loc[:, "intensity"] = (
-                            dataset_df["intensity"] / med_map[sample]
-                    )
-                elif pnmethod == "conditionMedian":
-                    con = dataset_df["condition"].unique()[0]
-                    dataset_df.loc[:, "intensity"] = (
-                            dataset_df["intensity"] / med_map[con][sample]
-                    )
             dataset_df = dataset_df[PARQUET_COLUMNS]
             dataset_df = parquet_common_process(dataset_df, label, choice)
+            # Step2: Remove lines where intensity or study condition is empty.
+            # Step3: Filter peptides with less amino acids than min_aa.
             dataset_df = data_common_process(dataset_df, min_aa)
-            # Only proteins with unique peptides number greater than min_unique (default: 2) are retained
+            # Step4: Delete low-confidence proteins.
             dataset_df = dataset_df.groupby(PROTEIN_NAME).filter(
                 lambda x: len(set(x[PEPTIDE_CANONICAL])) >= min_unique
             )
-            dataset_df.rename(columns={INTENSITY: NORM_INTENSITY}, inplace=True)
-            ## TODO: @PingZheng I think the removal of these features must happen before the normalization step.
-            ## TODO: The entire point to catch any outliers and remove them before normalization.
-
-            # Remove high abundant entrapment's, contaminants, proteins and the outliers
-            if remove_ids is not None:
-                dataset_df = remove_protein_by_ids(dataset_df, remove_ids)
+            # Step5: Filter decoy, contaminants, entrapment
             if remove_decoy_contaminants:
                 dataset_df = remove_contaminants_entrapments_decoys(dataset_df)
-
+            # Step6: Filter user-specified proteins
+            if remove_ids is not None:
+                dataset_df = remove_protein_by_ids(dataset_df, remove_ids)
+            dataset_df.rename(columns={INTENSITY: NORM_INTENSITY}, inplace=True)
+            # Step7: Normalize at feature level between ms runs (technical repetitions)
+            if (
+                    not skip_normalization
+                    and nmethod != "none"
+                    and technical_repetitions > 1
+            ):
+                print(f"{str(sample).upper()}: Normalize intensities of features.. ")
+                dataset_df = normalize_run(dataset_df, technical_repetitions, nmethod)
+                print(
+                    f"{str(sample).upper()}: Number of features after normalization: {len(dataset_df.index)}"
+                )
+            # Step8: Merge peptidoforms across fractions and technical repetitions
+            dataset_df = get_peptidoform_normalize_intensities(dataset_df)
+            print(
+                f"{str(sample).upper()}: Number of peptides after peptidofrom selection: {len(dataset_df.index)}"
+            )
+            if len(dataset_df[FRACTION].unique().tolist()) > 1:
+                print(f"{str(sample).upper()}: Merge features across fractions.. ")
+                dataset_df = merge_fractions(dataset_df)
+                print(
+                    f"{str(sample).upper()}: Number of features after merging fractions: {len(dataset_df.index)}"
+                )
+            # Step9: Normalize the data.
+            if not skip_normalization:
+                if pnmethod == "globalMedian":
+                    dataset_df.loc[:, NORM_INTENSITY] = (
+                            dataset_df[NORM_INTENSITY] / med_map[sample]
+                    )
+                elif pnmethod == "conditionMedian":
+                    con = dataset_df[CONDITION].unique()[0]
+                    dataset_df.loc[:, NORM_INTENSITY] = (
+                            dataset_df[NORM_INTENSITY] / med_map[con][sample]
+                    )
+            
+            # Step10: Remove peptides with low frequency.
             if remove_low_frequency_peptides and len(sample_names) > 1:
                 dataset_df.set_index(
                     [PROTEIN_NAME, PEPTIDE_CANONICAL], drop=True, inplace=True
@@ -595,39 +620,13 @@ def peptide_normalization(
                     f"{str(sample).upper()}: Peptides after remove low frequency peptides: {len(dataset_df.index)}"
                 )
 
-            if len(dataset_df[FRACTION].unique().tolist()) > 1:
-                print(f"{str(sample).upper()}: Merge features across fractions.. ")
-                dataset_df = merge_fractions(dataset_df)
-                print(
-                    f"{str(sample).upper()}: Number of features after merging fractions: {len(dataset_df.index)}"
-                )
-
-            # TODO: Normalize at feature level between ms runs (technical repetitions)
-            if (
-                    not skip_normalization
-                    and nmethod != "none"
-                    and technical_repetitions > 1
-            ):
-                print(f"{str(sample).upper()}: Normalize intensities of features.. ")
-                dataset_df = normalize_run(dataset_df, technical_repetitions, nmethod)
-                print(
-                    f"{str(sample).upper()}: Number of features after normalization: {len(dataset_df.index)}"
-                )
-
-            ## TODO: Assembly features to peptides
-            # Merge peptidoforms across fractions and technical repetitions
-            dataset_df = get_peptidoform_normalize_intensities(dataset_df)
-            print(
-                f"{str(sample).upper()}: Number of peptides after peptidofrom selection: {len(dataset_df.index)}"
-            )
-
-            # Assembly peptidoforms to peptides
+            # Step11: Assembly peptidoforms to peptides.
             print(f"{str(sample).upper()}: Sum all peptidoforms per Sample...")
             dataset_df = sum_peptidoform_intensities(dataset_df)
             print(
                 f"{str(sample).upper()}: Number of peptides after selection: {len(dataset_df.index)}"
             )
-
+            # Step12: Intensity transformation to log.
             if log2:
                 dataset_df[NORM_INTENSITY] = np.log2(dataset_df[NORM_INTENSITY])
 
