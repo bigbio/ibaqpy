@@ -198,8 +198,8 @@ python compute_tpa --fasta Homo-sapiens-uniprot-reviewed-contaminants-decoy-2022
 ```
 
 ```asciidoc
-python compute_tpa --help
-Usage: compute_tpa [OPTIONS]
+ibaqpyc tpa --help
+Usage: tpa [OPTIONS]
 
   Compute the protein copy numbers and concentrations according to a file output of peptides with the
   format described in peptide_normalization.py.
