@@ -245,7 +245,7 @@ Wang H, Dai C, Pfeuffer J, Sachsenberg T, Sanchez A, Bai M, Perez-Riverol Y. Tis
 
 ### Credits 
 
-- Julianus Pfeuffer
-- Yasset Perez-Riverol
-- Hong Wang
-- Ping Zheng
+- [Julianus Pfeuffer](@jpfeuffer)
+- [Yasset Perez-Riverol](@ypriverol)
+- [Hong Wang](@WangHong007)
+- [Ping Zheng](@zprobot) 
