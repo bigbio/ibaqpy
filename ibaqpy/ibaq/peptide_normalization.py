@@ -533,6 +533,22 @@ def peptide_normalization(
         log2: bool,
         save_parquet: bool,
 ) -> None:
+    """
+
+    :param parquet: Parquet file with features
+    :param sdrf: SDRF file
+    :param min_aa: Min amino acids
+    :param min_unique: Min of unique peptides
+    :param remove_ids: Remove features for the given proteins
+    :param remove_decoy_contaminants: Remove contaminants and entrapment
+    :param remove_low_frequency_peptides: Remove low frecuency peptides
+    :param output: Output file
+    :param skip_normalization: Skip normalization
+    :param nmethod: normalization method for features
+    :param pnmethod: peptide normalization method
+    :param log2: log intensities for features before normalizing
+    :param save_parquet: Save to parque file.
+    """
     if os.path.exists(output):
         raise FileExistsError("The output file already exists.")
 
