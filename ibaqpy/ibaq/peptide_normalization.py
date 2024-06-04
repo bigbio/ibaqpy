@@ -194,9 +194,9 @@ def data_common_process(data_df: pd.DataFrame, min_aa: int) -> pd.DataFrame:
     data_df = data_df[data_df["Condition"] != "Empty"]
 
     # Filter peptides with less amino acids than min_aa (default: 7)
-    data_df = data_df[
-        data_df.apply(lambda x: len(x[PEPTIDE_CANONICAL]) >= min_aa, axis=1)
-    ]
+    data_df.loc[:,'len'] = data_df[PEPTIDE_CANONICAL].apply(len)
+    data_df = data_df[data_df['len']>=min_aa]
+    data_df.drop(['len'],inplace=True,axis=1)
     data_df[PROTEIN_NAME] = data_df[PROTEIN_NAME].apply(parse_uniprot_accession)
     if FRACTION not in data_df.columns:
         data_df[FRACTION] = 1
@@ -561,7 +561,8 @@ def peptide_normalization(
         technical_repetitions, label, sample_names, choice = analyse_sdrf(sdrf)
     else:
         technical_repetitions, label, sample_names, choice = feature.experimental_inference
-    low_frequency_peptides = feature.low_frequency_peptides
+    if remove_low_frequency_peptides:
+        low_frequency_peptides = feature.low_frequency_peptides
     header = False
     if not skip_normalization and pnmethod == "globalMedian":
         med_map = feature.get_median_map()
