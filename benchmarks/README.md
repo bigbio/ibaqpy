@@ -113,6 +113,15 @@ For `PXD007683-LFQ`, we will normalize the MaxQuant Ibaq values of the proteins 
     <img src='images/PXD007683-LFQ-11samples-ibaq-vs-maxquant-density.png' style="height:1200px;" />
 </div>
 
+Next, for the peptide table of MaxQuant, we recalculated the Ibaq values using `ibaqpy`. Then compare the correlation between the log values of it and the log values of IbaqNorm.
+
+<div style="display:flex;justify-content:center">
+    <img src='images/PXD007683-LFQ-ibaq-ibaqpy-and-maxquant.png' style="heigit:600px;" />
+</div>
+<div style="display:flex;justify-content:center">
+    <img src='images/PXD007683-LFQ-11samples-ibaq-ibaqpy-and-maxquant.png' style="height:1200px;" />
+</div>
+
 #### LFQ missing values 
 
 Number of peptides missing in LFQ experiments.
