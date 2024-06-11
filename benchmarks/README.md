@@ -122,6 +122,15 @@ Next, for the peptide table of MaxQuant, we recalculated the Ibaq values using `
     <img src='images/PXD007683-LFQ-11samples-ibaq-ibaqpy-and-maxquant.png' style="height:1200px;" />
 </div>
 
+If we don't use `cov` to normalize proteins, the result is:
+
+<div style="display:flex;justify-content:center">
+    <img src='images/PXD007683-LFQ-no_cov.png' style="heigit:600px;" />
+</div>
+<div style="display:flex;justify-content:center">
+    <img src='images/PXD007683-LFQ-11samples-no_cov.png' style="height:1200px;" />
+</div>
+
 #### LFQ missing values 
 
 Number of peptides missing in LFQ experiments.
