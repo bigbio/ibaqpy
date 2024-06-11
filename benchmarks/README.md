@@ -104,7 +104,7 @@ The following boxplot shows the coefficient of variation for the 11 samples for 
 
 #### Correlation between Ibaq and MaxQuant(Ibaq)
 
-For `PXD007683-LFQ`, we will normalize the MaxQuant Ibaq values of the proteins by dividing it by the total sum of that sample. Then compare the correlation between the log values of it and the log values of IbaqNorm.
+For `PXD007683-LFQ`, we will normalize the MaxQuant Ibaq values of the proteins by dividing it by the total sum of that sample. Then, we use quantmsio to convert the results report from quantms, and subsequently apply the median-cov method to calculate the iBAQ values in the results report. Finally, we compare the correlation between the log values of it and the log values of IbaqNorm.
 
 <div style="display:flex;justify-content:center">
     <img src='images/PXD007683-LFQ-ibaq-vs-maxquant-density.png' style="heigit:600px;" />
@@ -113,7 +113,7 @@ For `PXD007683-LFQ`, we will normalize the MaxQuant Ibaq values of the proteins 
     <img src='images/PXD007683-LFQ-11samples-ibaq-vs-maxquant-density.png' style="height:1200px;" />
 </div>
 
-Next, for the peptide table of MaxQuant, we recalculated the Ibaq values using `ibaqpy`. Then compare the correlation between the log values of it and the log values of IbaqNorm.
+Next, for the peptide table of MaxQuant, we recalculated the Ibaq values using `ibaqpy`. Then compare the correlation between the log values of it and the log values of IbaqNorm. `Cov` is used to reduce the impact of missing values, adding an extra step compared to directly calculating the iBAQ values, which leads to some differences between its iBAQ values and those calculated directly.
 
 <div style="display:flex;justify-content:center">
     <img src='images/PXD007683-LFQ-ibaq-ibaqpy-and-maxquant.png' style="heigit:600px;" />
@@ -122,7 +122,7 @@ Next, for the peptide table of MaxQuant, we recalculated the Ibaq values using `
     <img src='images/PXD007683-LFQ-11samples-ibaq-ibaqpy-and-maxquant.png' style="height:1200px;" />
 </div>
 
-If we don't use `cov` to normalize proteins, the result is:
+If we don't use `cov` to normalize proteins, but calculate the iBAQ values directly. For the peptide table of MaxQuant, the iBAQ values we calculated using ibaqpy are very close to those obtained from MaxQuant.
 
 <div style="display:flex;justify-content:center">
     <img src='images/PXD007683-LFQ-no_cov.png' style="heigit:600px;" />
@@ -130,6 +130,7 @@ If we don't use `cov` to normalize proteins, the result is:
 <div style="display:flex;justify-content:center">
     <img src='images/PXD007683-LFQ-11samples-no_cov.png' style="height:1200px;" />
 </div>
+
 
 #### LFQ missing values 
 
