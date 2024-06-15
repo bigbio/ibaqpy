@@ -56,7 +56,12 @@ In summary, both datasets were searched with three search engines _SAGE_, _COMET
 
 #### Coefficient of Variation (CV)
 
-Coefficient of variation for all samples in both experiments using `quantile`, `median`, `median-cov`. We extracted human proteins common to 11 samples from IBAQ data. The mean of the coefficient of variation of all proteins in 11 samples was then calculated.
+Coefficient of variation for all samples in both experiments using `quantile`, `median`, `median-cov`. 
+- `quantile`: In the data preprocessing, adjust the samples to ensure that the mean and variance of all samples are equal.  Finally, the sum of the intensity of the protein is divided by the number of theoretical peptides.
+- `median`: In the data preprocessing, adjust the samples to ensure that the median of all samples are equal. Finally, the sum of the intensity of the protein is divided by the number of theoretical peptides.
+- `median-cov`: In the data preprocessing, adjust the samples to ensure that the median of all samples are equal. Due to the experimental type, the same protein may exhibit missing peptides in different samples, resulting in variations in the number of peptides detected for the protein across different samples. To handle this difference, normalization within the same group can be achieved by using the formula `sum(peptides) / n`(n represents the number of detected peptide segments). Finally, the normalized intensity of the protein is divided by the number of theoretical peptides.
+
+We extracted human proteins common to 11 samples from IBAQ data. The mean of the coefficient of variation of all proteins in 11 samples was then calculated.
 
 Compared to the `quantile`, `median` and `median-cov` has a smaller coefficient of variation. `median-cov` has the smallest CV in the lfq experiment.
 
@@ -96,6 +101,36 @@ The following boxplot shows the coefficient of variation for the 11 samples for 
 <center class="half">
     <img src='images/PXD007683-TMTvsLFQ-boxplot.png' style="flex:1;height:600px;" />
 </center>
+
+#### Correlation between Ibaq and MaxQuant(Ibaq)
+
+For `PXD007683-LFQ`, we will normalize the MaxQuant Ibaq values of the proteins by dividing it by the total sum of that sample. Then, we use quantmsio to convert the results report from quantms, and subsequently apply the median-cov method to calculate the iBAQ values in the results report. Finally, we compare the correlation between the log values of it and the log values of IbaqNorm.
+
+<div style="display:flex;justify-content:center">
+    <img src='images/PXD007683-LFQ-ibaq-vs-maxquant-density.png' style="heigit:600px;" />
+</div>
+<div style="display:flex;justify-content:center">
+    <img src='images/PXD007683-LFQ-11samples-ibaq-vs-maxquant-density.png' style="height:1200px;" />
+</div>
+
+Next, for the peptide table of MaxQuant, we recalculated the Ibaq values using `ibaqpy`. Then compare the correlation between the log values of it and the log values of IbaqNorm. `Cov` is used to reduce the impact of missing values, adding an extra step compared to directly calculating the iBAQ values, which leads to some differences between its iBAQ values and those calculated directly.
+
+<div style="display:flex;justify-content:center">
+    <img src='images/PXD007683-LFQ-ibaq-ibaqpy-and-maxquant.png' style="heigit:600px;" />
+</div>
+<div style="display:flex;justify-content:center">
+    <img src='images/PXD007683-LFQ-11samples-ibaq-ibaqpy-and-maxquant.png' style="height:1200px;" />
+</div>
+
+If we don't use `cov` to normalize proteins, but calculate the iBAQ values directly. For the peptide table of MaxQuant, the iBAQ values we calculated using ibaqpy are very close to those obtained from MaxQuant.
+
+<div style="display:flex;justify-content:center">
+    <img src='images/PXD007683-LFQ-no_cov.png' style="heigit:600px;" />
+</div>
+<div style="display:flex;justify-content:center">
+    <img src='images/PXD007683-LFQ-11samples-no_cov.png' style="height:1200px;" />
+</div>
+
 
 #### LFQ missing values 
 
@@ -179,8 +214,82 @@ We will normalize the MaxLFQ values of the proteins in the DIANN report by divid
 </center>
 
 ### Performance testing
-The [PXD030304](https://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/PXD030304/)  project collected mass spectrometry data from 949 cancer cell lines and reanalyzed it using the DIANN analysis pipeline within the quantms platform.The size of the `diann_report.tsv` file is 167GB, after being converted to a parquet file using quantmsio, the size is 15.8GB.We conducted performance testing in a 128GB memory environment.
 
-| Project | Samples | Size(diann report) | Size(parquet file) | Runn time |
-|--------|---------|----------|----------|----------|
-| PXD030304 |  2013 |  167G  | 15.8G    | 2.75h  |
+We have conducted performance tests on three methods. Since `median` and `median-cov` only differ when calculating ibaq, they are referred to as `median` below. It can be seen that the `median` is based on the sample level. It does not read all data at once like the `quantile`, but reads it in batches (by default, it reads 20 samples at a time), which greatly reduces memory consumption.
+
+<table align="center">
+    <thead>
+        <tr>
+            <th>Project</th>
+            <th>File size(original)</th>
+            <th>File size(transform)</th>
+            <th>Ms runs</th>
+            <th>Samples</th>
+            <th>Method</th>
+            <th>Memory</th>
+            <th>Run time</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan=2>PXD016999.1</td>
+            <td rowspan=2>5.7 G</td>
+            <td rowspan=2>292 M</td>
+            <td rowspan=2>336</td>
+            <td rowspan=2>280</td>
+            <td>quantile</td>
+            <td>36.4 G</td>
+            <td>14 min</td>
+        </tr>
+        <tr>
+            <td>median</td>
+            <td>8.4 G</td>
+            <td>20 min</td>
+        </tr>
+        <tr>
+            <td rowspan=2>PXD019909</td>
+            <td rowspan=2>1.9 G</td>
+            <td rowspan=2>171 M</td>
+            <td rowspan=2>43</td>
+            <td rowspan=2>43</td>
+            <td>quantile</td>
+            <td>7.9 G</td>
+            <td>30 s</td>
+        </tr>
+        <tr>
+            <td>median</td>
+            <td>4.0 G</td>
+            <td>1.4 min</td>
+        </tr>
+        <tr>
+            <td rowspan=2>PXD010154</td>
+            <td rowspan=2>1.9 G</td>
+            <td rowspan=2>287 M</td>
+            <td rowspan=2>1367</td>
+            <td rowspan=2>38</td>
+            <td>quantile</td>
+            <td>32.1 G</td>
+            <td>8 min</td>
+        </tr>
+        <tr>
+            <td>median</td>
+            <td>16.2 G</td>
+            <td>12 min</td>
+        </tr>
+        <tr>
+            <td rowspan=2>PXD030304</td>
+            <td rowspan=2>167 G</td>
+            <td rowspan=2>15.8 G</td>
+            <td rowspan=2>6862</td>
+            <td rowspan=2>2013</td>
+            <td>quantile</td>
+            <td>> 128 G</td>
+            <td>> 2 days</td>
+        </tr>
+        <tr>
+            <td>median</td>
+            <td>13.1 G</td>
+            <td>2.75 h</td>
+        </tr>
+    </tbody>
+</table>
