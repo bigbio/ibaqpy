@@ -143,7 +143,7 @@ def remove_contaminants_entrapments_decoys(
     """
     contaminants = []
     contaminants.append("CONTAMINANT")
-    contaminants.append("ENTRAPMENT")
+    contaminants.append("ENTRAP")
     contaminants.append("DECOY")
     cregex = "|".join(contaminants)
     return dataset[~dataset[protein_field].str.contains(cregex)]
