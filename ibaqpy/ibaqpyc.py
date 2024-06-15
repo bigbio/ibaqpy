@@ -1,5 +1,4 @@
 import click
-
 from ibaqpy.commands.features2peptides import features2parquet
 from ibaqpy.commands.compute_tpa import tpa_compute
 from ibaqpy.commands.merge_condition_files import merge_condition_generation
@@ -8,7 +7,6 @@ from ibaqpy.commands.tsne_visualization import tsne_visualization
 import ibaqpy.__init__ as __init__
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
-
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option(
