@@ -6,12 +6,10 @@ import seaborn as sns
 from matplotlib import pyplot as plt
 
 PARQUET_COLUMNS = [
-    "protein_accessions",
+    "pg_accessions",
     "peptidoform",
     "sequence",
-    "charge",
-    "fragment_ion",
-    "isotope_label_type",
+    "precursor_charge",
     "channel",
     "condition",
     "biological_replicate",
@@ -52,12 +50,12 @@ IBAQ_LOG = "IbaqLog"
 IBAQ_PPB = "IbaqPpb"
 
 parquet_map = {
-    "protein_accessions": PROTEIN_NAME,
+    "pg_accessions": PROTEIN_NAME,
     "peptidoform": PEPTIDE_SEQUENCE,
     "sequence": PEPTIDE_CANONICAL,
-    "charge": PEPTIDE_CHARGE,
-    "fragment_ion": FRAGMENT_ION,
-    "isotope_label_type": ISOTOPE_LABEL_TYPE,
+    "precursor_charge": PEPTIDE_CHARGE,
+    #"fragment_ion": FRAGMENT_ION,
+    #"isotope_label_type": ISOTOPE_LABEL_TYPE,
     "channel": CHANNEL,
     "condition": CONDITION,
     "biological_replicate": BIOREPLICATE,

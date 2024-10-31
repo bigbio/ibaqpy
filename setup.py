@@ -37,7 +37,7 @@ setup(
         "qnorm",
         "seaborn",
         "typing_extensions",
-        "combat",
+        #"combat",
     ],
     entry_points={"console_scripts": ["ibaqpy=ibaqpy.ibaqpyc:main"]},
     classifiers=[
