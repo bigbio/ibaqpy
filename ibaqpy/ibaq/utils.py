@@ -10,7 +10,7 @@ from sklearn.cluster._hdbscan import hdbscan
 from sklearn.decomposition import PCA
 from sklearn.impute import KNNImputer
 
-from combat.pycombat import pycombat
+#from combat.pycombat import pycombat
 
 logging.basicConfig(
     format="%(asctime)s [%(funcName)s] - %(message)s", level=logging.DEBUG
