@@ -14,3 +14,5 @@ venv
 /tests/PXD003947/PXD003947-ibaq-norm.csv
 /tests/PXD003947/PXD003947-peptides-norm.csv
 /tests/PXD003947/PXD003947-peptides-norm.parquet
+/build/
+/dist/

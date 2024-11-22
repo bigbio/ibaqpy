@@ -439,9 +439,9 @@ class Feature:
         return: A list of labels.
         """
         unique = self.parquet_db.sql(
-            "SELECT DISTINCT isotope_label_type FROM parquet_db"
+            "SELECT DISTINCT channel FROM parquet_db"
         ).df()
-        return unique["isotope_label_type"].tolist()
+        return unique["channel"].tolist()
 
     def get_unique_tec_reps(self):
         """
