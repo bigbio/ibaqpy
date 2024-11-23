@@ -6,11 +6,10 @@ from typing import List, Optional, Union
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+from inmoose.pycombat import pycombat_norm
 from sklearn.cluster._hdbscan import hdbscan
 from sklearn.decomposition import PCA
 from sklearn.impute import KNNImputer
-
-#from combat.pycombat import pycombat
 
 logging.basicConfig(
     format="%(asctime)s [%(funcName)s] - %(message)s", level=logging.DEBUG
@@ -394,7 +393,7 @@ def apply_batch_correction(
                 "The number of samples should match the number of covariates."
             )
 
-    df_co = pycombat(data=df, batch=batch, mod=covs, mean_only=False)
+    df_co = pycombat_norm(counts=df, batch=batch, covar_mod=covs, mean_only=False)
     return df_co
 
 
