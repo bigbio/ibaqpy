@@ -27,14 +27,14 @@ class TestIbaqpy(TestCase):
     def test_ibaq_compute(self):
         args = {
             "fasta": datafile("Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta"),
-            "peptides": datafile("example/PXD017834-peptides-norm.csv"),
+            "peptides": datafile("PXD017834-peptides-norm.csv"),
             "enzyme": "Trypsin",
             "normalize": True,
             "min_aa": 7,
             "max_aa": 30,
-            "output": datafile("example/PXD017834-ibaq-norm.csv"),
+            "output": datafile("PXD017834-ibaq-norm.csv"),
             "verbose": True,
-            "qc_report": datafile("example/IBAQ-QCprofile.pdf"),
+            "qc_report": datafile("IBAQ-QCprofile.pdf"),
         }
         print(args)
         ibaq_compute(**args)
