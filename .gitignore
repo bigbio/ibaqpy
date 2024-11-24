@@ -16,3 +16,4 @@ venv
 /tests/PXD003947/PXD003947-peptides-norm.parquet
 /build/
 /dist/
+/**/__pycache__/

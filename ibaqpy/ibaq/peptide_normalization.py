@@ -327,30 +327,30 @@ class Feature:
         """Return peptides with low frequency"""
         f_table = self.parquet_db.sql(
             """
-                SELECT "sequence","protein_accessions",COUNT(DISTINCT sample_accession) as "count" from parquet_db
-                GROUP BY "sequence","protein_accessions"
+                SELECT "sequence","pg_accessions",COUNT(DISTINCT sample_accession) as "count" from parquet_db
+                GROUP BY "sequence","pg_accessions"
                 """
         ).df()
         try:
-            f_table["protein_accessions"] = f_table["protein_accessions"].apply(
+            f_table["pg_accessions"] = f_table["pg_accessions"].apply(
                 lambda x: x[0].split("|")[1]
             )
         except IndexError:
-            f_table["protein_accessions"] = f_table["protein_accessions"].apply(
+            f_table["pg_accessions"] = f_table["pg_accessions"].apply(
                 lambda x: x[0]
             )
         except Exception as e:
             print(e)
             exit(
-                "Some errors occurred when parsing protein_accessions column in feature parquet!"
+                "Some errors occurred when parsing pg_accessions column in feature parquet!"
             )
-        f_table.set_index(["sequence", "protein_accessions"], inplace=True)
+        f_table.set_index(["sequence", "pg_accessions"], inplace=True)
         f_table.drop(
             f_table[f_table["count"] >= (percentage * len(self.samples))].index,
             inplace=True,
         )
         f_table.reset_index(inplace=True)
-        return tuple(zip(f_table["protein_accessions"], f_table["sequence"]))
+        return tuple(zip(f_table["pg_accessions"], f_table["sequence"]))
 
     @staticmethod
     def csv2parquet(csv):
