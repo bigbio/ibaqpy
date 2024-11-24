@@ -2,40 +2,40 @@ from unittest import TestCase
 
 from ibaqpy.ibaq.peptide_normalization import peptide_normalization
 from ibaqpy.ibaq.compute_ibaq import ibaq_compute
-
+from .common import datafile, DATA_ROOT
 
 class TestIbaqpy(TestCase):
     def test_feature_assembly(self):
         args = {
-            "parquet": __package__ + "PXD003947/PXD003947-feature.parquet",
-            "sdrf": __package__ + "PXD003947/PXD003947.sdrf.tsv",
+            "parquet":  datafile("feature.parquet"),
+            "sdrf": datafile("PXD017834-TMT.sdrf.tsv"),
             "min_aa": 7,
             "min_unique": 2,
-            "remove_ids": __package__ + "../data/contaminants_ids.tsv",
+            "remove_ids": str(DATA_ROOT) + "/contaminants_ids.tsv",
             "remove_decoy_contaminants": True,
             "remove_low_frequency_peptides": True,
-            "output": __package__ + "PXD003947/PXD003947-peptides-norm.csv",
+            "output": datafile("PXD017834-peptides-norm.csv"),
             "skip_normalization": False,
             "nmethod": "median",
             "pnmethod": "max_min",
             "log2": True,
             "save_parquet": True,
         }
+        print(__package__)
         print(args)
         peptide_normalization(**args)
 
     def test_ibaq_compute(self):
         args = {
-            "fasta": __package__
-            + "PXD003947/Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta",
-            "peptides": __package__ + "PXD003947/PXD003947-peptides-norm.csv",
+            "fasta": datafile("Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta"),
+            "peptides": datafile("example/PXD017834-peptides-norm.csv"),
             "enzyme": "Trypsin",
             "normalize": True,
             "min_aa": 7,
             "max_aa": 30,
-            "output": __package__ + "PXD003947/PXD003947-ibaq-norm.csv",
+            "output": datafile("example/PXD017834-ibaq-norm.csv"),
             "verbose": True,
-            "qc_report": __package__ + "PXD003947/IBAQ-QCprofile.pdf",
+            "qc_report": datafile("example/IBAQ-QCprofile.pdf"),
         }
         print(args)
         ibaq_compute(**args)
