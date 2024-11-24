@@ -1,17 +1,16 @@
 from unittest import TestCase
-
 from ibaqpy.ibaq.peptide_normalization import peptide_normalization
 from ibaqpy.ibaq.compute_ibaq import ibaq_compute
-from .common import datafile, DATA_ROOT
+from .common import datafile
 
 class TestIbaqpy(TestCase):
     def test_feature_assembly(self):
         args = {
-            "parquet":  datafile("feature.parquet"),
+            "parquet": datafile("feature.parquet"),
             "sdrf": datafile("PXD017834-TMT.sdrf.tsv"),
             "min_aa": 7,
             "min_unique": 2,
-            "remove_ids": str(DATA_ROOT) + "/contaminants_ids.tsv",
+            "remove_ids": None,
             "remove_decoy_contaminants": True,
             "remove_low_frequency_peptides": True,
             "output": datafile("PXD017834-peptides-norm.csv"),
