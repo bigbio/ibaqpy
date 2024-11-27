@@ -1,6 +1,6 @@
 
 import click
-from ibaqpy.ibaq.compute_ibaq import ibaq_compute
+from ibaqpy.bin.compute_ibaq import ibaq_compute
 
 
 @click.command("computeibaq", short_help="Compute IBAQ values for proteins")
