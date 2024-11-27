@@ -3,7 +3,7 @@ import os
 import click
 import pandas as pd
 
-from ibaqpy.ibaq.ibaqpy_commons import CONDITION
+from ibaqpy.bin.ibaqpy_commons import CONDITION
 
 
 @click.command()

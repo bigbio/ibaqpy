@@ -5,8 +5,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from ibaqpy.ibaq.ibaqpy_commons import load_feature, load_sdrf
-from ibaqpy.ibaq.utils import (
+from ibaqpy.bin.ibaqpy_commons import load_feature, load_sdrf
+from ibaqpy.bin.utils import (
     apply_batch_correction,
     compute_pca,
     fill_samples,
