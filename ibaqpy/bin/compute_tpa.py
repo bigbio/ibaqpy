@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
-from pyopenms import *
+from pyopenms import FASTAFile, FASTAEntry, AASequence
 from ibaqpy.data.data import histones
 
 from ibaqpy.bin.ibaqpy_commons import (
@@ -15,7 +15,7 @@ from ibaqpy.bin.ibaqpy_commons import (
 )
 
 
-def handle_nonstandard_aa(aa_seq: str) -> (list, str):
+def handle_nonstandard_aa(aa_seq: str):
     """Any nonstandard amoni acid will be removed.
 
     :param aa_seq: Protein sequences from multiple database.
