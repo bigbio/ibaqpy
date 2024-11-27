@@ -5,7 +5,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from pandas import DataFrame, Series
 from pyopenms import *
 
-from ibaqpy.ibaq.ibaqpy_commons import (
+from ibaqpy.bin.ibaqpy_commons import (
     CONDITION,
     IBAQ,
     IBAQ_LOG,

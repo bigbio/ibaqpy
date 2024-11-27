@@ -3,7 +3,7 @@ import click
 from ibaqpy.ibaq.compute_ibaq import ibaq_compute
 
 
-@click.command("peptides2proteins", short_help="Compute IBAQ values for proteins")
+@click.command("computeibaq", short_help="Compute IBAQ values for proteins")
 @click.option(
     "-f",
     "--fasta",
@@ -49,7 +49,7 @@ from ibaqpy.ibaq.compute_ibaq import ibaq_compute
     default="IBAQ-QCprofile.pdf",
 )
 @click.pass_context
-def peptides2proteins(
+def compute_ibaq(
     click_context,
     fasta: str,
     peptides: str,

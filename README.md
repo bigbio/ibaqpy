@@ -165,7 +165,7 @@ Options:
 ####  Compute IBAQ
 
 ```asciidoc
-ibaqpy peptides2proteins --fasta tests/PXD003947/Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta --peptides tests/PXD003947/PXD003947-peptides-norm.csv --enzyme Trypsin --output tests/PXD003947/PXD003947-ibaq-norm.csv --normalize --verbose
+ibaqpy computeibaq --fasta tests/PXD003947/Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta --peptides tests/PXD003947/PXD003947-peptides-norm.csv --enzyme Trypsin --output tests/PXD003947/PXD003947-ibaq-norm.csv --normalize --verbose
 ``` 
 
 The command provides an additional `flag` for normalize IBAQ values.
@@ -194,7 +194,7 @@ Options:
 #### Compute TPA
 
 ```asciidoc
-ibaqpy tpa --fasta Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta --organism human --peptides PXD003947-peptides.csv --ruler --ploidy 2 --cpc 200 --output PXD003947-tpa.tsv --verbose
+ibaqpy computetpa --fasta Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta --organism human --peptides PXD003947-peptides.csv --ruler --ploidy 2 --cpc 200 --output PXD003947-tpa.tsv --verbose
 ```
 
 ```asciidoc
