@@ -77,7 +77,7 @@ def compute_tpa(
             try:
                 mw = AASequence().fromString(entry.sequence).getMonoWeight()
                 mw_dict[accession] = mw
-            except:
+            except ValueError:
                 error_aa, seq = handle_nonstandard_aa(entry.sequence)
                 mw = AASequence().fromString(seq).getMonoWeight()
                 mw_dict[accession] = mw
