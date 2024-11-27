@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 from pyopenms import *
+from ibaqpy.data.data import histones
 
 from ibaqpy.ibaq.ibaqpy_commons import (
     CONDITION,
@@ -156,11 +157,8 @@ def tpa_compute(
     if ruler:
         avogadro = 6.02214129e23
         average_base_pair_mass = 617.96  # 615.8771
-
         organism = organism.lower()
-        histone_df = pd.read_json(
-            open(os.path.split(__file__)[0] + "../data/histones.json", "rb")
-        ).T
+        histone_df = pd.DataFrame(histones).T
         target_histones = histone_df[histone_df["name"] == organism.lower()]
         genome_size = target_histones["genome_size"].values[0]
         histones_list = target_histones["histone_entries"].values[0]
