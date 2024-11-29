@@ -5,6 +5,7 @@ from ibaqpy.data.data import histones
 from matplotlib.backends.backend_pdf import PdfPages
 from pandas import DataFrame, Series
 from pyopenms import *
+from typing import List
 
 from ibaqpy.bin.ibaqpy_commons import (
     CONDITION,
