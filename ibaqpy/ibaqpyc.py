@@ -17,7 +17,7 @@ def cli():
     """
     Main entry point for the CLI
     """
-    
+
 cli.add_command(features2parquet)
 cli.add_command(merge_condition_generation)
 cli.add_command(peptide2protein)

@@ -4,7 +4,7 @@ import numpy as np
 from ibaqpy.data.data import histones
 from matplotlib.backends.backend_pdf import PdfPages
 from pandas import DataFrame, Series
-from pyopenms import *
+from pyopenms import AASequence, ProteaseDigestion, FASTAFile
 from typing import List
 
 from ibaqpy.bin.ibaqpy_commons import (
@@ -62,7 +62,7 @@ def extract_fasta(fasta:str, enzyme:str, proteins:List ,min_aa:int, max_aa:int, 
     mw_dict = dict()
     fasta_proteins = list()
     FASTAFile().load(fasta, fasta_proteins)
-    
+
     uniquepepcounts = dict()
     digestor = ProteaseDigestion()
     digestor.setEnzyme(enzyme)
@@ -194,8 +194,8 @@ def peptides_to_protein(
     res = pd.DataFrame(
         data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION])[NORM_INTENSITY].sum()
     )
-    
-    #ibaq 
+
+    #ibaq
     res[IBAQ] = res.apply(get_average_nr_peptides_unique_bygroup, 1)
     res = res.reset_index()
     
