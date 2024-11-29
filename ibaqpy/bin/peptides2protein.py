@@ -34,17 +34,13 @@ def normalize_ibaq(res: DataFrame) -> DataFrame:
     :param res: Dataframe
     :return:
     """
-
     res = res.groupby([SAMPLE_ID, CONDITION]).apply(normalize)
-
     # Normalization method used by Proteomics DB 10 + log10(ibaq/sum(ibaq))
     res[IBAQ_LOG] = res[IBAQ_NORMALIZED].apply(
         lambda x: (math.log10(x) + 10) if x > 0 else 0
     )
-
     # Normalization used by PRIDE Team (no log transformation) (ibaq/total_ibaq) * 100'000'000
     res[IBAQ_PPB] = res[IBAQ_NORMALIZED].apply(lambda x: x * 100000000)
-
     return res
 
 def handle_nonstandard_aa(aa_seq: str):
@@ -62,11 +58,9 @@ def extract_fasta(fasta:str, enzyme:str, proteins:List ,min_aa:int, max_aa:int, 
     mw_dict = dict()
     fasta_proteins = list()
     FASTAFile().load(fasta, fasta_proteins)
-
     uniquepepcounts = dict()
     digestor = ProteaseDigestion()
     digestor.setEnzyme(enzyme)
-
     mw_dict = dict()
     for entry in fasta_proteins:
         accession = get_accession(entry.identifier)
@@ -98,14 +92,12 @@ def calculate_weight_and_concentration(res:pd.DataFrame, ploidy:int, cpc: float,
     genome_size = target_histones["genome_size"].values[0]
     histones_list = target_histones["histone_entries"].values[0]
     dna_mass = ploidy * genome_size * average_base_pair_mass / avogadro
-
     def calculate(protein_intensity, histone_intensity, mw):
         copy = (protein_intensity / histone_intensity) * dna_mass * avogadro / mw
         # The number of moles is equal to the number of particles divided by Avogadro's constant
         moles = copy * 1e9 / avogadro  # unit nmol
         weight = moles * mw  # unit ng
         return tuple([copy, moles, weight])
-
     def proteomic_ruler(df):
         histone_intensity = df[df[PROTEIN_NAME].isin(histones_list)][
             NORM_INTENSITY
@@ -169,36 +161,29 @@ def peptides_to_protein(
             return pdrow.NormIntensity / map_size[pdrow.name] / (summ / len(proteins))
         # If there is no protein in the group, return np nan
         return np.nan  # type: ignore
-
     def get_protein_group_mw(group: str) -> float:
         mw_list = [mw_dict[i] for i in group.split(";")]
         return sum(mw_list)
-
     if peptides is None or fasta is None:
         raise ValueError("Fasta and peptides files are required")
-
     # load data
     data = pd.read_csv(peptides, sep=",")
     data[NORM_INTENSITY] = data[NORM_INTENSITY].astype("float")
     data = data.dropna(subset=[NORM_INTENSITY])
     data = data[data[NORM_INTENSITY] > 0]
-
     # get fasta info
     proteins = data[PROTEIN_NAME].unique().tolist()
     proteins = sum([i.split(";") for i in proteins], [])
     uniquepepcounts, mw_dict = extract_fasta(fasta, enzyme, proteins, min_aa, max_aa, tpa)
-
     # data processing
     print(data.head())
     map_size = data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION]).size().to_dict()
     res = pd.DataFrame(
         data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION])[NORM_INTENSITY].sum()
     )
-
     #ibaq
     res[IBAQ] = res.apply(get_average_nr_peptides_unique_bygroup, 1)
     res = res.reset_index()
-    
     #normalize ibaq
     if normalize:
         res = normalize_ibaq(res)
@@ -210,7 +195,6 @@ def peptides_to_protein(
         res = res.dropna(subset=[IBAQ])
         plot_column = IBAQ
     res = res.reset_index(drop=True)
-    
     # tpa
     if tpa:
         res["MolecularWeight"] = res.apply(
@@ -219,13 +203,11 @@ def peptides_to_protein(
         res["MolecularWeight"] = res["MolecularWeight"].fillna(1)
         res["MolecularWeight"] = res["MolecularWeight"].replace(0, 1)
         res["TPA"] = res[NORM_INTENSITY] / res["MolecularWeight"]
-
     # calculate protein weight(ng) and concentration(nM)
     if ruler:
         if not ploidy or not cpc or not organism or not tpa:
             raise ValueError("Ploidy, cpc and organism tpa are required for calculate protein weight(ng) and concentration(nM)")
         res = calculate_weight_and_concentration(res, ploidy, cpc, organism, histones)
-
     # Print the distribution of the protein IBAQ values
     if verbose:
         plot_width = len(set(res["SampleID"])) * 0.5 + 10
