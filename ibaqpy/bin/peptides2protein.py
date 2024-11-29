@@ -169,11 +169,11 @@ def peptides_to_protein(
             return pdrow.NormIntensity / map_size[pdrow.name] / (summ / len(proteins))
         # If there is no protein in the group, return np nan
         return np.nan  # type: ignore
-    
+
     def get_protein_group_mw(group: str) -> float:
         mw_list = [mw_dict[i] for i in group.split(";")]
         return sum(mw_list)
-    
+
     if peptides is None or fasta is None:
         raise ValueError("Fasta and peptides files are required")
 
