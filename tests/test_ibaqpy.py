@@ -1,5 +1,5 @@
 from unittest import TestCase
-from ibaqpy.bin.compute_ibaq import ibaq_compute
+from ibaqpy.bin.peptides2protein import peptides_to_protein
 from .common import datafile
 
 class TestIbaqpy(TestCase):
@@ -12,9 +12,14 @@ class TestIbaqpy(TestCase):
             "normalize": True,
             "min_aa": 7,
             "max_aa": 30,
-            "output": datafile("PXD017834-ibaq-norm.csv"),
+            "tpa": True,
+            "ruler": True,
+            "ploidy": 2,
+            "cpc": 200,
+            "organism": "human",
+            "output": datafile("PXD017834-norm.csv"),
             "verbose": True,
-            "qc_report": datafile("IBAQ-QCprofile.pdf"),
+            "qc_report": datafile("QCprofile.pdf"),
         }
         print(args)
-        ibaq_compute(**args)
+        peptides_to_protein(**args)

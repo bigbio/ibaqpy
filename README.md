@@ -162,13 +162,19 @@ Options:
 ```
 
 
-####  Compute IBAQ
+####  Compute IBAQ/TPA
 
 ```asciidoc
-ibaqpy computeibaq --fasta tests/PXD003947/Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta --peptides tests/PXD003947/PXD003947-peptides-norm.csv --enzyme Trypsin --output tests/PXD003947/PXD003947-ibaq-norm.csv --normalize --verbose
+ibaqpy peptide2protein -f Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta -p PXD017834-peptides.csv -e Trypsin -n -t -r --ploidy 2 --cpc 200 --organism human --output PXD003947.tsv --verbose
 ``` 
 
-The command provides an additional `flag` for normalize IBAQ values.
+This command provides optional parameters to calculate TPA and protein copy. The protein copy calculation follows the following formula:
+
+```
+protein copies per cell = protein MS-signal *  (avogadro / molecular mass) * (DNA mass / histone MS-signal)
+```
+
+For cellular protein copy number calculation, the uniprot accession of histones was obtained from species first, and the molecular mass of DNA was calculated. Then the dataframe was grouped according to different conditions, and the copy number, molar number and mass of proteins were calculated. In the calculation of protein concentration, the volume is calculated according to the cell protein concentration first, and then the protein mass is divided by the volume to calculate the intracellular protein concentration.
 
 ```asciidoc
 Usage: peptides2proteins [OPTIONS]
@@ -183,6 +189,11 @@ Options:
                        the experiment
   --min_aa INTEGER     Minimum number of amino acids to consider a peptide
   --max_aa INTEGER     Maximum number of amino acids to consider a peptide
+  -t, --tpa            Whether calculate TPA (is_flag=True)
+  -r, --ruler          Whether to use ProteomicRuler (is_flag=True)
+  -i, --ploidy         Ploidy number (default=2)
+  -m, --organism       Organism source of the data (default human)
+  -c, --cpcCellular    protein concentration(g/L)(default 200)
   -o, --output TEXT    Output file with the proteins and ibaq values
   --verbose            Print addition information about the distributions of
                        the intensities, number of peptides remove after
@@ -190,54 +201,6 @@ Options:
   --qc_report TEXT     PDF file to store multiple QC images
   --help               Show this message and exit.
 ```
-
-#### Compute TPA
-
-```asciidoc
-ibaqpy computetpa --fasta Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta --organism human --peptides PXD003947-peptides.csv --ruler --ploidy 2 --cpc 200 --output PXD003947-tpa.tsv --verbose
-```
-
-```asciidoc
-ibaqpyc tpa --help
-Usage: tpa [OPTIONS]
-
-  Compute the protein copy numbers and concentrations according to a file output of peptides with the
-  format described in peptide_normalization.py.
-
-  :param fasta: Fasta file used to perform the peptide identification
-  :param peptides: Peptide intensity file
-  :param organism: Organism source of the data
-  :param ruler: Whether to compute protein copy number, weight and concentration.
-  :param ploidy: Ploidy number
-  :param cpc: Cellular protein concentration(g/L)
-  :param output: Output format containing the TPA values, protein copy numbers and concentrations
-  :param verbose: Print addition information about the distributions of the intensities, 
-                  number of peptides remove after normalization, etc.
-  :param qc_report: PDF file to store multiple QC images
-
-Options:
-  -f, --fasta TEXT      Protein database to compute IBAQ values  [required]
-  -p, --peptides TEXT   Peptide identifications with intensities following the peptide intensity output  [required]
-  -m, --organism        Organism source of the data.
-  -r, --ruler           Calculate protein copy number and concentration according to ProteomicRuler
-  -n, --ploidy          Ploidy number (default: 2)
-  -c, --cpc             Cellular protein concentration(g/L) (default: 200)
-  -o, --output TEXT     Output format containing the TPA values, protein copy numbers and concentrations
-  --verbose             Print addition information about the distributions of the intensities, 
-                        number of peptides remove after normalization, etc.
-  --qc_report           PDF file to store multiple QC images (default: "TPA-QCprofile.pdf")
-  --help                Show this message and exit.
-```
-
-### Calculate the Cellular Protein Copy Number and Concentration
-
-The protein copy calculation follows the following formula:
-
-```
-protein copies per cell = protein MS-signal *  (avogadro / molecular mass) * (DNA mass / histone MS-signal)
-```
-
-For cellular protein copy number calculation, the uniprot accession of histones was obtained from species first, and the molecular mass of DNA was calculated. Then the dataframe was grouped according to different conditions, and the copy number, molar number and mass of proteins were calculated. In the calculation of protein concentration, the volume is calculated according to the cell protein concentration first, and then the protein mass is divided by the volume to calculate the intracellular protein concentration.
 
 ### How to cite ibaqpy
 

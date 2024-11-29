@@ -1,8 +1,7 @@
 import click
 from ibaqpy.commands.features2peptides import features2parquet
-from ibaqpy.commands.compute_tpa import tpa_compute
 from ibaqpy.commands.merge_condition_files import merge_condition_generation
-from ibaqpy.commands.compute_ibaq import compute_ibaq
+from ibaqpy.commands.peptide2protein import peptide2protein
 from ibaqpy.commands.tsne_visualization import tsne_visualization
 import ibaqpy.__init__ as __init__
 
@@ -18,12 +17,10 @@ def cli():
     """
     Main entry point for the CLI
     """
-
-
-cli.add_command(tpa_compute)
+    
 cli.add_command(features2parquet)
 cli.add_command(merge_condition_generation)
-cli.add_command(compute_ibaq)
+cli.add_command(peptide2protein)
 cli.add_command(tsne_visualization)
 
 
