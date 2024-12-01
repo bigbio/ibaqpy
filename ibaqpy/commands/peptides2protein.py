@@ -3,7 +3,7 @@ import click
 from ibaqpy.bin.peptides2protein import peptides_to_protein
 
 
-@click.command("peptide2protein", short_help="Compute IBAQ values for proteins")
+@click.command("peptides2protein", short_help="Compute IBAQ values for proteins")
 @click.option(
     "-f",
     "--fasta",
@@ -54,7 +54,7 @@ from ibaqpy.bin.peptides2protein import peptides_to_protein
     default="QCprofile.pdf",
 )
 @click.pass_context
-def peptide2protein(
+def peptides2protein(
     click_context,
     fasta: str,
     peptides: str,
@@ -72,7 +72,7 @@ def peptide2protein(
     qc_report: str,
 ) -> None:
     """
-    This command computes the IBAQ values for a file output of peptides with the format described in
+    This command computes the IBAQ/TPA values for a file output of peptides with the format described in
     peptide_contaminants_file_generation.py.
     :param click_context: Click context
     :param min_aa: Minimum number of amino acids to consider a peptide.

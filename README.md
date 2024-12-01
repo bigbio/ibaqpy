@@ -165,7 +165,7 @@ Options:
 ####  Compute IBAQ/TPA
 
 ```asciidoc
-ibaqpy peptide2protein -f Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta -p PXD017834-peptides.csv -e Trypsin -n -t -r --ploidy 2 --cpc 200 --organism human --output PXD003947.tsv --verbose
+ibaqpy peptides2protein -f Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta -p PXD017834-peptides.csv -e Trypsin -n -t -r --ploidy 2 --cpc 200 --organism human --output PXD003947.tsv --verbose
 ``` 
 
 This command provides optional parameters to calculate TPA and protein copy. The protein copy calculation follows the following formula:
@@ -177,7 +177,7 @@ protein copies per cell = protein MS-signal *  (avogadro / molecular mass) * (DN
 For cellular protein copy number calculation, the uniprot accession of histones was obtained from species first, and the molecular mass of DNA was calculated. Then the dataframe was grouped according to different conditions, and the copy number, molar number and mass of proteins were calculated. In the calculation of protein concentration, the volume is calculated according to the cell protein concentration first, and then the protein mass is divided by the volume to calculate the intracellular protein concentration.
 
 ```asciidoc
-Usage: peptides2proteins [OPTIONS]
+Usage: peptides2protein [OPTIONS]
 
 Options:
   -f, --fasta TEXT     Protein database to compute IBAQ values
