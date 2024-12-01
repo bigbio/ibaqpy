@@ -58,6 +58,7 @@ def extract_fasta(fasta:str, enzyme:str, proteins:List ,min_aa:int, max_aa:int, 
     mw_dict = dict()
     fasta_proteins = list()
     FASTAFile().load(fasta, fasta_proteins)
+    found_proteins = set()
     uniquepepcounts = dict()
     digestor = ProteaseDigestion()
     digestor.setEnzyme(enzyme)
@@ -65,6 +66,7 @@ def extract_fasta(fasta:str, enzyme:str, proteins:List ,min_aa:int, max_aa:int, 
     for entry in fasta_proteins:
         accession = get_accession(entry.identifier)
         if accession in proteins:
+            found_proteins.add(accession)
             digest = list()
             digestor.digest(AASequence().fromString(entry.sequence), digest, min_aa, max_aa)
             digestuniq = set(digest)
@@ -80,6 +82,8 @@ def extract_fasta(fasta:str, enzyme:str, proteins:List ,min_aa:int, max_aa:int, 
                     print(
                         f"Nonstandard amino acids found in {accession}: {error_aa}, ignored!"
                     )
+    if not found_proteins:
+        raise ValueError(f"None of the {len(proteins)} proteins were found in the FASTA file")
     return uniquepepcounts, mw_dict
 
 # calculate protein weight(ng) and concentration(nM)
