@@ -1,9 +1,9 @@
 
 import click
-from ibaqpy.ibaq.compute_ibaq import ibaq_compute
+from ibaqpy.bin.peptides2protein import peptides_to_protein
 
 
-@click.command("peptides2proteins", short_help="Compute IBAQ values for proteins")
+@click.command("peptides2protein", short_help="Compute IBAQ values for proteins")
 @click.option(
     "-f",
     "--fasta",
@@ -36,6 +36,11 @@ from ibaqpy.ibaq.compute_ibaq import ibaq_compute
 @click.option(
     "--max_aa", help="Maximum number of amino acids to consider a peptide", default=30
 )
+@click.option("-t", "--tpa", help="Whether calculate TPA", is_flag=True)
+@click.option("-r", "--ruler", help="Whether to use ProteomicRuler", is_flag=True)
+@click.option("-i", "--ploidy", help="Ploidy number", default=2)
+@click.option("-m", "--organism", help="Organism source of the data", default="human")
+@click.option("-c", "--cpc", help="Cellular protein concentration(g/L)", default=200)
 @click.option("-o", "--output", help="Output file with the proteins and ibaq values")
 @click.option(
     "--verbose",
@@ -46,10 +51,10 @@ from ibaqpy.ibaq.compute_ibaq import ibaq_compute
 @click.option(
     "--qc_report",
     help="PDF file to store multiple QC images",
-    default="IBAQ-QCprofile.pdf",
+    default="QCprofile.pdf",
 )
 @click.pass_context
-def peptides2proteins(
+def peptides2protein(
     click_context,
     fasta: str,
     peptides: str,
@@ -57,12 +62,17 @@ def peptides2proteins(
     normalize: bool,
     min_aa: int,
     max_aa: int,
+    tpa: bool,
+    ruler: bool,
+    organism: str,
+    ploidy: int,
+    cpc: float,
     output: str,
     verbose: bool,
     qc_report: str,
 ) -> None:
     """
-    This command computes the IBAQ values for a file output of peptides with the format described in
+    This command computes the IBAQ/TPA values for a file output of peptides with the format described in
     peptide_contaminants_file_generation.py.
     :param click_context: Click context
     :param min_aa: Minimum number of amino acids to consider a peptide.
@@ -71,18 +81,28 @@ def peptides2proteins(
     :param peptides: Peptide intensity file.
     :param enzyme: Enzyme used to digest the protein sample.
     :param normalize: use some basic normalization steps.
+    :param tpa: Whether calculate TPA.
+    :param ruler: Whether to compute protein copies, weight and concentration.
+    :param organism: Organism source of the data.
+    :param ploidy: Ploidy number.
+    :param cpc: Cellular protein concentration(g/L).
     :param output: output format containing the ibaq values.
     :param verbose: Print addition information.
     :param qc_report: PDF file to store multiple QC images.
     :return:
     """
-    ibaq_compute(
+    peptides_to_protein(
         fasta=fasta,
         peptides=peptides,
         enzyme=enzyme,
         normalize=normalize,
         min_aa=min_aa,
         max_aa=max_aa,
+        tpa=tpa,
+        ruler=ruler,
+        ploidy=ploidy,
+        cpc=cpc,
+        organism=organism,
         output=output,
         verbose=verbose,
         qc_report=qc_report,
