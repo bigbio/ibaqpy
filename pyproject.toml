@@ -8,7 +8,6 @@ authors = [
     "Yasset Perez-Riverol <ypriverol@gmail.com>",
     "Dai Chengxin <chengxin2024@126.com>",
     "Julianus Pfeuffer <jule.pf@gmail.com>",
-    "Ping "
 ]
 keywords = [
     "quantms",
@@ -51,7 +50,7 @@ Quantms = "https://quantms.org"
 LICENSE = "https://github.com/bigbio/ibaqpy/blob/main/LICENSE"
 
 [tool.poetry.scripts]
-quantmsutilsc = "ibaqpy.ibaqpy:main"
+quantmsutilsc = "ibaqpy:main"
 
 [tool.isort]
 profile = "black"
