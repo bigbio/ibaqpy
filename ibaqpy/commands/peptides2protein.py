@@ -1,4 +1,3 @@
-
 import click
 from ibaqpy.bin.peptides2protein import peptides_to_protein
 
@@ -30,12 +29,8 @@ from ibaqpy.bin.peptides2protein import peptides_to_protein
     help="Normalize IBAQ values using by using the total IBAQ of the experiment",
     is_flag=True,
 )
-@click.option(
-    "--min_aa", help="Minimum number of amino acids to consider a peptide", default=7
-)
-@click.option(
-    "--max_aa", help="Maximum number of amino acids to consider a peptide", default=30
-)
+@click.option("--min_aa", help="Minimum number of amino acids to consider a peptide", default=7)
+@click.option("--max_aa", help="Maximum number of amino acids to consider a peptide", default=30)
 @click.option("-t", "--tpa", help="Whether calculate TPA", is_flag=True)
 @click.option("-r", "--ruler", help="Whether to use ProteomicRuler", is_flag=True)
 @click.option("-i", "--ploidy", help="Ploidy number", default=2)
