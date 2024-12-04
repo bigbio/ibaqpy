@@ -6,15 +6,16 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - pyopenms
-  - python
-  - pandas
   - scikit-learn
+  - pyopenms
   - numpy
-  - pyarrow
   - click
+  - pandas>=2.0.2
   - matplotlib
-  - duckdb
+  - pyarrow>=16.1.0
+  - duckdb>=0.10.1
+  - qnorm
+  - scipy>=1.10
   - seaborn
-  - typing_extensions
-  - setuptools
+  - typing_extensions>=4.6.3
+  - inmoose
