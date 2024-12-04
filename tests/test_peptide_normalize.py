@@ -1,6 +1,8 @@
 from ibaqpy.bin.peptide_normalization import peptide_normalization
 from pathlib import Path
+
 TESTS_DIR = Path(__file__).parent
+
 
 def test_feature_assembly():
     args = {
