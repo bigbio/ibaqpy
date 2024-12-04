@@ -1,6 +1,6 @@
 
 import click
-from ibaqpy.ibaq.peptide_normalization import peptide_normalization
+from ibaqpy.bin.peptide_normalization import peptide_normalization
 
 
 @click.command("features2peptides", short_help="Convert features to parquet file.")
