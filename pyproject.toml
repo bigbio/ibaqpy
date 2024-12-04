@@ -50,7 +50,7 @@ Quantms = "https://quantms.org"
 LICENSE = "https://github.com/bigbio/ibaqpy/blob/main/LICENSE"
 
 [tool.poetry.scripts]
-quantmsutilsc = "ibaqpy:main"
+ibaqpyc = "ibaqpy:ibaqpyc:main"
 
 [tool.isort]
 profile = "black"
