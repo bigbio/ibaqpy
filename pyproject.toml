@@ -29,6 +29,7 @@ packages = [
 ]
 
 [tool.poetry.dependencies]
+python = ">=3.9"
 scikit-learn = "*"
 pyopenms = "*"
 numpy = "<2.1.0"

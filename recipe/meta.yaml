@@ -21,6 +21,7 @@ requirements:
     - pip
     - poetry-core >=1.2.0
   run:
+    - python>=3.9
     - scikit-learn
     - pyopenms
     - numpy<2.1.0
