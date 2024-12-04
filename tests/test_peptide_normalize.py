@@ -1,16 +1,17 @@
 from ibaqpy.bin.peptide_normalization import peptide_normalization
-
+from pathlib import Path
+TESTS_DIR = Path(__file__).parent
 
 def test_feature_assembly():
     args = {
-        "parquet": "tests/example/feature.parquet",
-        "sdrf": "tests/example/PXD017834-TMT.sdrf.tsv",
+        "parquet": str(TESTS_DIR / "example/feature.parquet"),
+        "sdrf": str(TESTS_DIR / "example/PXD017834-TMT.sdrf.tsv"),
         "min_aa": 7,
         "min_unique": 2,
         "remove_ids": None,
         "remove_decoy_contaminants": True,
         "remove_low_frequency_peptides": True,
-        "output": "tests/example/PXD017834-peptides-norm.csv",
+        "output": str(TESTS_DIR / "example/PXD017834-peptides-norm.csv"),
         "skip_normalization": False,
         "nmethod": "median",
         "pnmethod": "max_min",
