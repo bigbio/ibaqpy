@@ -21,6 +21,7 @@ from ibaqpy.bin.ibaqpy_commons import (
     get_accession,
 )
 
+
 def normalize(group):
     group[IBAQ_NORMALIZED] = group[IBAQ] / group[IBAQ].sum()
     return group
@@ -36,12 +37,11 @@ def normalize_ibaq(res: DataFrame) -> DataFrame:
     """
     res = res.groupby([SAMPLE_ID, CONDITION]).apply(normalize)
     # Normalization method used by Proteomics DB 10 + log10(ibaq/sum(ibaq))
-    res[IBAQ_LOG] = res[IBAQ_NORMALIZED].apply(
-        lambda x: (math.log10(x) + 10) if x > 0 else 0
-    )
+    res[IBAQ_LOG] = res[IBAQ_NORMALIZED].apply(lambda x: (math.log10(x) + 10) if x > 0 else 0)
     # Normalization used by PRIDE Team (no log transformation) (ibaq/total_ibaq) * 100'000'000
     res[IBAQ_PPB] = res[IBAQ_NORMALIZED].apply(lambda x: x * 100000000)
     return res
+
 
 def handle_nonstandard_aa(aa_seq: str):
     """Any nonstandard amoni acid will be removed.
@@ -54,7 +54,8 @@ def handle_nonstandard_aa(aa_seq: str):
     considered_seq = "".join([aa for aa in aa_seq if aa in standard_aa])
     return nonstandard_aa_lst, considered_seq
 
-def extract_fasta(fasta:str, enzyme:str, proteins:List ,min_aa:int, max_aa:int, tpa: bool):
+
+def extract_fasta(fasta: str, enzyme: str, proteins: List, min_aa: int, max_aa: int, tpa: bool):
     mw_dict = dict()
     fasta_proteins = list()
     FASTAFile().load(fasta, fasta_proteins)
@@ -79,15 +80,16 @@ def extract_fasta(fasta:str, enzyme:str, proteins:List ,min_aa:int, max_aa:int, 
                     error_aa, seq = handle_nonstandard_aa(entry.sequence)
                     mw = AASequence().fromString(seq).getMonoWeight()
                     mw_dict[accession] = mw
-                    print(
-                        f"Nonstandard amino acids found in {accession}: {error_aa}, ignored!"
-                    )
+                    print(f"Nonstandard amino acids found in {accession}: {error_aa}, ignored!")
     if not found_proteins:
         raise ValueError(f"None of the {len(proteins)} proteins were found in the FASTA file")
     return uniquepepcounts, mw_dict
 
+
 # calculate protein weight(ng) and concentration(nM)
-def calculate_weight_and_concentration(res:pd.DataFrame, ploidy:int, cpc: float, organism:str, histones: dict):
+def calculate_weight_and_concentration(
+    res: pd.DataFrame, ploidy: int, cpc: float, organism: str, histones: dict
+):
     avogadro = 6.02214129e23
     average_base_pair_mass = 617.96  # 615.8771
     organism = organism.lower()
@@ -96,29 +98,29 @@ def calculate_weight_and_concentration(res:pd.DataFrame, ploidy:int, cpc: float,
     genome_size = target_histones["genome_size"].values[0]
     histones_list = target_histones["histone_entries"].values[0]
     dna_mass = ploidy * genome_size * average_base_pair_mass / avogadro
+
     def calculate(protein_intensity, histone_intensity, mw):
         copy = (protein_intensity / histone_intensity) * dna_mass * avogadro / mw
         # The number of moles is equal to the number of particles divided by Avogadro's constant
         moles = copy * 1e9 / avogadro  # unit nmol
         weight = moles * mw  # unit ng
         return tuple([copy, moles, weight])
+
     def proteomic_ruler(df):
-        histone_intensity = df[df[PROTEIN_NAME].isin(histones_list)][
-            NORM_INTENSITY
-        ].sum()
+        histone_intensity = df[df[PROTEIN_NAME].isin(histones_list)][NORM_INTENSITY].sum()
         histone_intensity = histone_intensity if histone_intensity > 0 else 1
         df[["Copy", "Moles[nmol]", "Weight[ng]"]] = df.apply(
-            lambda x: calculate(
-                x[NORM_INTENSITY], histone_intensity, x["MolecularWeight"]
-            ),
+            lambda x: calculate(x[NORM_INTENSITY], histone_intensity, x["MolecularWeight"]),
             axis=1,
             result_type="expand",
         )
         volume = df["Weight[ng]"].sum() * 1e-9 / cpc  # unit L
         df["Concentration[nM]"] = df["Moles[nmol]"] / volume  # unit nM
         return df
+
     res = res.groupby([CONDITION]).apply(proteomic_ruler)
     return res
+
 
 def peptides_to_protein(
     fasta: str,
@@ -131,7 +133,7 @@ def peptides_to_protein(
     ruler: bool,
     ploidy: int,
     cpc: float,
-    organism:str,
+    organism: str,
     output: str,
     verbose: bool,
     qc_report: str,
@@ -150,6 +152,7 @@ def peptides_to_protein(
     :param qc_report: PDF file to store multiple QC images.
     :return:
     """
+
     def get_average_nr_peptides_unique_bygroup(pdrow: Series) -> Series:
         """
         Get the average intensity for protein groups
@@ -165,9 +168,11 @@ def peptides_to_protein(
             return pdrow.NormIntensity / map_size[pdrow.name] / (summ / len(proteins))
         # If there is no protein in the group, return np nan
         return np.nan  # type: ignore
+
     def get_protein_group_mw(group: str) -> float:
         mw_list = [mw_dict[i] for i in group.split(";")]
         return sum(mw_list)
+
     if peptides is None or fasta is None:
         raise ValueError("Fasta and peptides files are required")
     # load data
@@ -182,13 +187,11 @@ def peptides_to_protein(
     # data processing
     print(data.head())
     map_size = data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION]).size().to_dict()
-    res = pd.DataFrame(
-        data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION])[NORM_INTENSITY].sum()
-    )
-    #ibaq
+    res = pd.DataFrame(data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION])[NORM_INTENSITY].sum())
+    # ibaq
     res[IBAQ] = res.apply(get_average_nr_peptides_unique_bygroup, 1)
     res = res.reset_index()
-    #normalize ibaq
+    # normalize ibaq
     if normalize:
         res = normalize_ibaq(res)
         # Remove IBAQ_NORMALIZED NAN values
@@ -201,16 +204,16 @@ def peptides_to_protein(
     res = res.reset_index(drop=True)
     # tpa
     if tpa:
-        res["MolecularWeight"] = res.apply(
-            lambda x: get_protein_group_mw(x[PROTEIN_NAME]), axis=1
-        )
+        res["MolecularWeight"] = res.apply(lambda x: get_protein_group_mw(x[PROTEIN_NAME]), axis=1)
         res["MolecularWeight"] = res["MolecularWeight"].fillna(1)
         res["MolecularWeight"] = res["MolecularWeight"].replace(0, 1)
         res["TPA"] = res[NORM_INTENSITY] / res["MolecularWeight"]
     # calculate protein weight(ng) and concentration(nM)
     if ruler:
         if not ploidy or not cpc or not organism or not tpa:
-            raise ValueError("Ploidy, cpc and organism tpa are required for calculate protein weight(ng) and concentration(nM)")
+            raise ValueError(
+                "Ploidy, cpc and organism tpa are required for calculate protein weight(ng) and concentration(nM)"
+            )
         res = calculate_weight_and_concentration(res, ploidy, cpc, organism, histones)
     # Print the distribution of the protein IBAQ values
     if verbose:
@@ -291,4 +294,3 @@ def peptides_to_protein(
             pdf.savefig(box4)
     pdf.close()
     res.to_csv(output, sep="\t", index=False)
-

@@ -11,9 +11,7 @@ from sklearn.cluster._hdbscan import hdbscan
 from sklearn.decomposition import PCA
 from sklearn.impute import KNNImputer
 
-logging.basicConfig(
-    format="%(asctime)s [%(funcName)s] - %(message)s", level=logging.DEBUG
-)
+logging.basicConfig(format="%(asctime)s [%(funcName)s] - %(message)s", level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
@@ -74,9 +72,7 @@ def generate_meta(sdrf_df: pd.DataFrame) -> pd.DataFrame:
     sdrf_df.columns = [col.lower() for col in sdrf_df.columns]
     pxd = sdrf_df["source name"].values[0].split("-")[0]
     organism_part = [
-        col
-        for col in sdrf_df.columns
-        if col.startswith("characteristics[organism part]")
+        col for col in sdrf_df.columns if col.startswith("characteristics[organism part]")
     ]
     if len(organism_part) > 2:
         print(
@@ -117,9 +113,7 @@ def generate_meta(sdrf_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def fill_samples(df, proteins):
-    df = pd.pivot_table(
-        df, index="ProteinName", columns="SampleID", values=["IbaqNorm"]
-    )
+    df = pd.pivot_table(df, index="ProteinName", columns="SampleID", values=["IbaqNorm"])
     df = df.reindex(proteins)
     df.columns = [pair[1] for pair in df.columns]
     df.index.rename(None, inplace=True)
@@ -164,14 +158,11 @@ def impute_missing_values(
 
     if isinstance(data, pd.DataFrame):
         # If it's a single DataFrame, transform it and return immediately
-        return pd.DataFrame(
-            imputer.fit_transform(data), columns=data.columns, index=data.index
-        )
+        return pd.DataFrame(imputer.fit_transform(data), columns=data.columns, index=data.index)
     else:
         # Otherwise, use list comprehension to apply the imputer to each DataFrame
         return [
-            pd.DataFrame(imputer.fit_transform(t), columns=t.columns, index=t.index)
-            for t in data
+            pd.DataFrame(imputer.fit_transform(t), columns=t.columns, index=t.index) for t in data
         ]
 
 
@@ -193,9 +184,7 @@ def split_df_by_column(df: pd.DataFrame, cov_index_col: str) -> List[pd.DataFram
     """
     # Check if cov_index_col is in df
     if cov_index_col not in df.columns:
-        raise ValueError(
-            f"'{cov_index_col}' is not a column in the provided DataFrame."
-        )
+        raise ValueError(f"'{cov_index_col}' is not a column in the provided DataFrame.")
 
     # Use list comprehension to create the list of dataframes
     df_split = [df_group for _, df_group in df.groupby(cov_index_col)]
@@ -378,9 +367,7 @@ def apply_batch_correction(
 
     # check if the number of samples match the number of batch indices
     if len(df.columns) != len(batch):
-        raise ValueError(
-            "The number of samples should match the number of batch indices."
-        )
+        raise ValueError("The number of samples should match the number of batch indices.")
 
     # check if every batch factor has at least 2 samples
     if any([batch.count(i) < 2 for i in set(batch)]):
@@ -389,9 +376,7 @@ def apply_batch_correction(
     # If not None, check if the number of covariates match the number of samples
     if covs:
         if len(df.columns) != len(covs):
-            raise ValueError(
-                "The number of samples should match the number of covariates."
-            )
+            raise ValueError("The number of samples should match the number of covariates.")
 
     df_co = pycombat_norm(counts=df, batch=batch, covar_mod=covs, mean_only=False)
     return df_co

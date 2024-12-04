@@ -112,9 +112,7 @@ def compute_tsne(df_pca, n_components=2, perplexity=30, learning_rate=200, n_ite
 
 def plot_tsne(df, x_col, y_col, hue_col, file_name):
     fig, ax = plt.subplots(1, 1, figsize=(20, 10))
-    sns.scatterplot(
-        x=x_col, y=y_col, hue=hue_col, data=df, ax=ax, markers=["o", "+", "x"]
-    )
+    sns.scatterplot(x=x_col, y=y_col, hue=hue_col, data=df, ax=ax, markers=["o", "+", "x"])
     ax.set_xlabel(x_col)
     ax.set_ylabel(y_col)
     ax.set_title(f"{x_col} vs {y_col} with {hue_col} information")
@@ -125,9 +123,7 @@ def plot_tsne(df, x_col, y_col, hue_col, file_name):
 
 
 @click.command()
-@click.option(
-    "-f", "--folder", help="Folder that contains all the protein files", required=True
-)
+@click.option("-f", "--folder", help="Folder that contains all the protein files", required=True)
 @click.option(
     "-o",
     "--pattern",
@@ -174,9 +170,7 @@ def tsne_visualization(folder: str, pattern: str):
     df_tsne["batch"] = batch
 
     # plot the t-SNE components tSNE1 vs tSNE2 with batch information using seaborn
-    plot_tsne(
-        df_tsne, "tSNE1", "tSNE2", "batch", "5.tsne_plot_with_batch_information.pdf"
-    )
+    plot_tsne(df_tsne, "tSNE1", "tSNE2", "batch", "5.tsne_plot_with_batch_information.pdf")
 
     print(total_proteins.shape)
 

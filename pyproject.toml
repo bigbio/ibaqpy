@@ -1,0 +1,65 @@
+[tool.poetry]
+name = "ibaqpy"
+description = "Python package to compute intensity base absolute expression values"
+readme = "README.md"
+license = "MIT"
+version = "0.0.3"
+authors = [
+    "Yasset Perez-Riverol <ypriverol@gmail.com>",
+    "Dai Chengxin <chengxin2024@126.com>",
+    "Julianus Pfeuffer <jule.pf@gmail.com>",
+]
+keywords = [
+    "quantms",
+    "proteomics",
+    "mass-spectrometry",
+    "data-analysis",
+    "big data"
+]
+classifiers = [
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+    "Development Status :: 5 - Production/Stable"
+]
+packages = [
+    { include = "ibaqpy" }
+]
+
+[tool.poetry.dependencies]
+python = ">=3.9"
+scikit-learn = "*"
+pyopenms = "*"
+numpy = "<2.1.0"
+click = "*"
+pandas = "*"
+matplotlib = "*"
+pyarrow = ">=16.1.0"
+duckdb = ">=0.10.1"
+qnorm  = "*"
+scipy  = ">=1.10"
+seaborn = "*"
+typing_extensions = ">=4.6.3"
+inmoose = "*"
+
+[tool.poetry.urls]
+GitHub = "https://github.com/bigbio/ibaqpy/"
+PyPi = "https://pypi.org/project/ibaqpy/"
+Quantms = "https://quantms.org"
+LICENSE = "https://github.com/bigbio/ibaqpy/blob/main/LICENSE"
+
+[tool.poetry.scripts]
+ibaqpyc = "ibaqpy.ibaqpyc:main"
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+line-length = 99
+target-version = ["py39"]
+
+[build-system]
+requires = ["poetry-core>=1.2.0"]
+build-backend = "poetry.core.masonry.api"
