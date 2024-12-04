@@ -8,7 +8,7 @@ source:
 
 build:
   entry_points:
-    - ibaqpy=ibaqpy.ibaqpy:main
+    - ibaqpy=ibaqpy:main
   run_exports:
     - {{ pin_subpackage('ibaqpy', max_pin="x.x") }}
   script: "{{ PYTHON }} -m pip install . --no-deps --no-build-isolation --no-cache-dir -vvv"
