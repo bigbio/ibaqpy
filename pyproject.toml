@@ -31,9 +31,9 @@ packages = [
 [tool.poetry.dependencies]
 scikit-learn = "*"
 pyopenms = "*"
-numpy = "*"
+numpy = "<2.1.0"
 click = "*"
-pandas = ">=2.0.2"
+pandas = "*"
 matplotlib = "*"
 pyarrow = ">=16.1.0"
 duckdb = ">=0.10.1"
