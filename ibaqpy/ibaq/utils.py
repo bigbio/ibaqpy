@@ -9,7 +9,6 @@ import seaborn as sns
 from inmoose.pycombat import pycombat_norm
 from sklearn.cluster._hdbscan import hdbscan
 from sklearn.decomposition import PCA
-from sklearn.impute import KNNImputer
 
 logging.basicConfig(format="%(asctime)s [%(funcName)s] - %(message)s", level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -119,6 +118,7 @@ def fill_samples(df, proteins):
     df.index.rename(None, inplace=True)
 
     return df
+
 
 def split_df_by_column(df: pd.DataFrame, cov_index_col: str) -> List[pd.DataFrame]:
     """

@@ -1,9 +1,10 @@
+from typing import Optional, Union, List
+
 import numpy as np
 import pandas as pd
+from sklearn.impute import KNNImputer
 
 from ibaqpy.ibaq.ibaqpy_commons import PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION, NORM_INTENSITY
-
-
 
 
 def impute_missing_values(
@@ -49,7 +50,6 @@ def impute_missing_values(
         return [
             pd.DataFrame(imputer.fit_transform(t), columns=t.columns, index=t.index) for t in data
         ]
-
 
 
 def impute_missing_values(dataset_df, field, class_field):

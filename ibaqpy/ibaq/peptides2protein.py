@@ -18,7 +18,7 @@ from ibaqpy.ibaq.ibaqpy_commons import (
     SAMPLE_ID,
     plot_box_plot,
     plot_distributions,
-    get_accession,
+    get_accession, TPA, MOLECULARWEIGHT, COPYNUMBER, CONCENTRATION_NM, MOLES_NMOL, WEIGHT_NG,
 )
 
 
@@ -109,13 +109,13 @@ def calculate_weight_and_concentration(
     def proteomic_ruler(df):
         histone_intensity = df[df[PROTEIN_NAME].isin(histones_list)][NORM_INTENSITY].sum()
         histone_intensity = histone_intensity if histone_intensity > 0 else 1
-        df[["Copy", "Moles[nmol]", "Weight[ng]"]] = df.apply(
-            lambda x: calculate(x[NORM_INTENSITY], histone_intensity, x["MolecularWeight"]),
+        df[[COPYNUMBER, MOLES_NMOL, WEIGHT_NG]] = df.apply(
+            lambda x: calculate(x[NORM_INTENSITY], histone_intensity, x[MOLECULARWEIGHT]),
             axis=1,
             result_type="expand",
         )
-        volume = df["Weight[ng]"].sum() * 1e-9 / cpc  # unit L
-        df["Concentration[nM]"] = df["Moles[nmol]"] / volume  # unit nM
+        volume = df[WEIGHT_NG].sum() * 1e-9 / cpc  # unit L
+        df[CONCENTRATION_NM] = df[MOLES_NMOL] / volume  # unit nM
         return df
 
     res = res.groupby([CONDITION]).apply(proteomic_ruler)
@@ -204,10 +204,10 @@ def peptides_to_protein(
     res = res.reset_index(drop=True)
     # tpa
     if tpa:
-        res["MolecularWeight"] = res.apply(lambda x: get_protein_group_mw(x[PROTEIN_NAME]), axis=1)
-        res["MolecularWeight"] = res["MolecularWeight"].fillna(1)
-        res["MolecularWeight"] = res["MolecularWeight"].replace(0, 1)
-        res["TPA"] = res[NORM_INTENSITY] / res["MolecularWeight"]
+        res[MOLECULARWEIGHT] = res.apply(lambda x: get_protein_group_mw(x[PROTEIN_NAME]), axis=1)
+        res[MOLECULARWEIGHT] = res[MOLECULARWEIGHT].fillna(1)
+        res[MOLECULARWEIGHT] = res[MOLECULARWEIGHT].replace(0, 1)
+        res[TPA] = res[NORM_INTENSITY] / res[MOLECULARWEIGHT]
     # calculate protein weight(ng) and concentration(nM)
     if ruler:
         if not ploidy or not cpc or not organism or not tpa:
@@ -225,7 +225,7 @@ def peptides_to_protein(
             SAMPLE_ID,
             log2=True,
             width=plot_width,
-            title="IBAQ Distribution",
+            title="{} Distribution".format(plot_column),
         )
         box1 = plot_box_plot(
             res,
@@ -233,22 +233,22 @@ def peptides_to_protein(
             SAMPLE_ID,
             log2=True,
             width=plot_width,
-            title="IBAQ Distribution",
+            title="{} Distribution".format(plot_column),
             violin=False,
         )
         pdf.savefig(density1)
         pdf.savefig(box1)
         if tpa:
             density2 = plot_distributions(
-                res, "TPA", SAMPLE_ID, log2=True, width=plot_width, title="TPA Distribution"
+                res, TPA, SAMPLE_ID, log2=True, width=plot_width, title="{} Distribution".format(TPA)
             )
             box2 = plot_box_plot(
                 res,
-                "TPA",
+                TPA,
                 SAMPLE_ID,
                 log2=True,
                 width=plot_width,
-                title="TPA Distribution",
+                title="{} Distribution".format(TPA),
                 violin=False,
             )
             pdf.savefig(density2)
@@ -256,38 +256,38 @@ def peptides_to_protein(
         if ruler:
             density3 = plot_distributions(
                 res,
-                "Copy",
+                COPYNUMBER,
                 SAMPLE_ID,
                 width=plot_width,
                 log2=True,
-                title="Copy numbers Distribution",
+                title="{} Distribution".format(COPYNUMBER),
             )
             box3 = plot_box_plot(
                 res,
-                "Copy",
+                COPYNUMBER,
                 SAMPLE_ID,
                 width=plot_width,
                 log2=True,
-                title="Copy numbers Distribution",
+                title="{} Distribution".format(COPYNUMBER),
                 violin=False,
             )
             pdf.savefig(density3)
             pdf.savefig(box3)
             density4 = plot_distributions(
                 res,
-                "Concentration[nM]",
+                CONCENTRATION_NM,
                 SAMPLE_ID,
                 width=plot_width,
                 log2=True,
-                title="Concentration[nM] Distribution",
+                title="{} Distribution".format(CONCENTRATION_NM),
             )
             box4 = plot_box_plot(
                 res,
-                "Concentration[nM]",
+                CONCENTRATION_NM,
                 SAMPLE_ID,
                 width=plot_width,
                 log2=True,
-                title="Concentration[nM] Distribution",
+                title="{} Distribution".format(CONCENTRATION_NM),
                 violin=False,
             )
             pdf.savefig(density4)

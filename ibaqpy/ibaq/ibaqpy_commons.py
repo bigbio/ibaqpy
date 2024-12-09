@@ -48,6 +48,12 @@ IBAQ = "Ibaq"
 IBAQ_NORMALIZED = "IbaqNorm"
 IBAQ_LOG = "IbaqLog"
 IBAQ_PPB = "IbaqPpb"
+TPA = "TPA"
+MOLECULARWEIGHT = "MolecularWeight"
+COPYNUMBER = "CopyNumber"
+CONCENTRATION_NM = "Concentration[nM]"
+WEIGHT_NG = "Weight[ng]"
+MOLES_NMOL = "Moles[nmol]"
 
 parquet_map = {
     "pg_accessions": PROTEIN_NAME,
@@ -262,6 +268,3 @@ def load_feature(feature_path: str) -> pd.DataFrame:
         raise SystemExit(
             f"{suffix} is not allowed as input, please provide msstats_in or feature parquet."
         )
-
-
-
