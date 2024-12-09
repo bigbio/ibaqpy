@@ -1,7 +1,7 @@
 import re
 
 import click
-from ibaqpy.bin.combiner import Combiner
+from ibaqpy.ibaq.combiner import Combiner
 
 
 @click.command("datasets_merge", short_help="Merge ibaq results from compute_ibaq")

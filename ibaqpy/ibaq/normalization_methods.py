@@ -1,6 +1,6 @@
 import pandas as pd
 from sklearn.preprocessing import quantile_transform
-from ibaqpy.bin.ibaqpy_commons import SAMPLE_ID, NORM_INTENSITY, TECHREPLICATE
+from ibaqpy.ibaq.ibaqpy_commons import SAMPLE_ID, NORM_INTENSITY, TECHREPLICATE
 
 
 def normalize_run(df, reps, method):

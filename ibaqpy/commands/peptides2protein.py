@@ -1,5 +1,5 @@
 import click
-from ibaqpy.bin.peptides2protein import peptides_to_protein
+from ibaqpy.ibaq.peptides2protein import peptides_to_protein
 
 
 @click.command("peptides2protein", short_help="Compute IBAQ values for proteins")

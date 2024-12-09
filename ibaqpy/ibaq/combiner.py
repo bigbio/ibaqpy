@@ -5,8 +5,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from ibaqpy.bin.ibaqpy_commons import load_feature, load_sdrf
-from ibaqpy.bin.utils import (
+from ibaqpy.ibaq.ibaqpy_commons import load_feature, load_sdrf
+from ibaqpy.bin import (
     apply_batch_correction,
     compute_pca,
     fill_samples,
@@ -175,7 +175,7 @@ class Combiner:
         )
 
         # keep samples only in tissue_part from metadata
-        ## TODO: specify covariates
+        # TODO: specify covariates
         if tissue_parts_to_keep:
             self.metadata = self.metadata[self.metadata["tissue_part"].isin(tissue_parts_to_keep)]
             samples_to_keep = self.metadata["sample_id"].tolist()
