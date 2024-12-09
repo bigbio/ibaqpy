@@ -331,6 +331,7 @@ class Feature:
                 GROUP BY "sequence","pg_accessions"
                 """
         ).df()
+        f_table.dropna(subset=["pg_accessions"], inplace=True)
         try:
             f_table["pg_accessions"] = f_table["pg_accessions"].apply(
                 lambda x: x[0].split("|")[1]
@@ -569,6 +570,7 @@ def peptide_normalization(
     elif not skip_normalization and pnmethod == "conditionMedian":
         med_map = feature.get_median_map_to_condition()
     for samples, df in feature.iter_samples():
+        df.dropna(subset=["pg_accessions"], inplace=True)
         for sample in samples:
             # Perform data preprocessing on every sample
             print(f"{str(sample).upper()}: Data preprocessing...")
