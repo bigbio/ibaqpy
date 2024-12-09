@@ -3,9 +3,9 @@ import os
 import re
 import numpy as np
 import duckdb
-from ibaqpy.bin.normalization_methods import normalize_run
+from ibaqpy.ibaq.normalization_methods import normalize_run
 
-from ibaqpy.bin.ibaqpy_commons import (
+from ibaqpy.ibaq.ibaqpy_commons import (
     BIOREPLICATE,
     TECHREPLICATE,
     CHANNEL,

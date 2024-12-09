@@ -7,7 +7,7 @@ from pandas import DataFrame, Series
 from pyopenms import AASequence, ProteaseDigestion, FASTAFile
 from typing import List
 
-from ibaqpy.bin.ibaqpy_commons import (
+from ibaqpy.ibaq.ibaqpy_commons import (
     CONDITION,
     IBAQ,
     IBAQ_LOG,

@@ -1,4 +1,4 @@
-from ibaqpy.bin.peptides2protein import peptides_to_protein
+from ibaqpy.ibaq.peptides2protein import peptides_to_protein
 
 from pathlib import Path
 

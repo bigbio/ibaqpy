@@ -1,4 +1,4 @@
-from ibaqpy.bin.peptide_normalization import peptide_normalization
+from ibaqpy.ibaq.peptide_normalization import peptide_normalization
 from pathlib import Path
 
 TESTS_DIR = Path(__file__).parent
