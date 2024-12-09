@@ -18,7 +18,13 @@ from ibaqpy.ibaq.ibaqpy_commons import (
     SAMPLE_ID,
     plot_box_plot,
     plot_distributions,
-    get_accession, TPA, MOLECULARWEIGHT, COPYNUMBER, CONCENTRATION_NM, MOLES_NMOL, WEIGHT_NG,
+    get_accession,
+    TPA,
+    MOLECULARWEIGHT,
+    COPYNUMBER,
+    CONCENTRATION_NM,
+    MOLES_NMOL,
+    WEIGHT_NG,
 )
 
 
@@ -240,7 +246,12 @@ def peptides_to_protein(
         pdf.savefig(box1)
         if tpa:
             density2 = plot_distributions(
-                res, TPA, SAMPLE_ID, log2=True, width=plot_width, title="{} Distribution".format(TPA)
+                res,
+                TPA,
+                SAMPLE_ID,
+                log2=True,
+                width=plot_width,
+                title="{} Distribution".format(TPA),
             )
             box2 = plot_box_plot(
                 res,
