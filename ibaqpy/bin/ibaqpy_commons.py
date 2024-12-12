@@ -48,6 +48,15 @@ IBAQ = "Ibaq"
 IBAQ_NORMALIZED = "IbaqNorm"
 IBAQ_LOG = "IbaqLog"
 IBAQ_PPB = "IbaqPpb"
+TPA = "TPA"
+MOLECULARWEIGHT = "MolecularWeight"
+COPYNUMBER = "CopyNumber"
+CONCENTRATION_NM = "Concentration[nM]"
+WEIGHT_NG = "Weight[ng]"
+MOLES_NMOL = "Moles[nmol]"
+GLOBALMEDIAN = "globalMedian"
+CONDITIONMEDIAN= "conditionMedian"
+
 
 parquet_map = {
     "pg_accessions": PROTEIN_NAME,
@@ -171,16 +180,11 @@ def plot_distributions(
     if log2:
         normalize[field] = np.log2(normalize[field])
     normalize.dropna(subset=[field], inplace=True)
-    plt.figure(dpi=500, figsize=(12, 8))
+    plt.figure(dpi=500, figsize=(width, 8))
     fig = sns.kdeplot(data=normalize, x=field, hue=class_field, palette="Paired", linewidth=2)
     sns.despine(ax=fig, top=True, right=True)
     plt.title(title)
     pd.set_option("mode.chained_assignment", "warn")
-    # data_wide = normalize.pivot(columns=class_field, values=field)
-    # # plotting multiple density plot
-    # data_wide.plot.kde(figsize=(width, 8), linewidth=2, legend=False)
-    # plt.title(title)
-    # pd.set_option("mode.chained_assignment", "warn")
 
     return plt.gcf()
 
