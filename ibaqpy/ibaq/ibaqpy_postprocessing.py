@@ -11,7 +11,6 @@ from ibaqpy.ibaq.ibaqpy_commons import (
     SAMPLE_ID,
 )
 
-
 def remove_samples_low_protein_number(ibaq_df: pd.DataFrame, min_protein_num: int) -> pd.DataFrame:
     """
     This functions takes an ibaq Dataframe with the following columns:

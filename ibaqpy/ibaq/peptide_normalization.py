@@ -141,10 +141,7 @@ def remove_contaminants_entrapments_decoys(
     :param protein_field: protein field
     :return: dataset with the filtered proteins
     """
-    contaminants = []
-    contaminants.append("CONTAMINANT")
-    contaminants.append("ENTRAP")
-    contaminants.append("DECOY")
+    contaminants = ["CONTAMINANT", "ENTRAP", "DECOY"]
     cregex = "|".join(contaminants)
     return dataset[~dataset[protein_field].str.contains(cregex)]
 

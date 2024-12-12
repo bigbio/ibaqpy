@@ -23,8 +23,9 @@ def test_remove_samples_low_protein_number():
 
     number_samples = len(new_ibaq[SAMPLE_ID].unique())
     logging.info(
-        "The number of samples with number of proteins higher than 286 is {}".format( number_samples )
+        "The number of samples with number of proteins higher than 286 is {}".format(number_samples)
     )
+
 
 def test_remove_missing_values():
     ibaq_test = TESTS_DIR / "example/PXD017834-example-ibaq.tsv"

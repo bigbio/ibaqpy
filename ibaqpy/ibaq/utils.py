@@ -10,15 +10,17 @@ from inmoose.pycombat import pycombat_norm
 from sklearn.cluster._hdbscan import hdbscan
 from sklearn.decomposition import PCA
 
+from ibaqpy.ibaq.ibaqpy_commons import IBAQ_NORMALIZED, SAMPLE_ID, PROTEIN_NAME
+
 logging.basicConfig(format="%(asctime)s [%(funcName)s] - %(message)s", level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
 def folder_retrieval(folder: str) -> dict:
-    """Retrieval SDRF and ibaq.csv from a given folder.
-
-    param folder:
-    return:
+    """
+    Retrieve SDRF and ibaq results from a folder.
+    :param folder: Folder to retrieve SDRF and ibaq results.
+    :return:
     """
 
     folder = folder + os.sep if not folder.endswith(os.sep) else folder
@@ -59,11 +61,13 @@ def folder_retrieval(folder: str) -> dict:
 
 
 def generate_meta(sdrf_df: pd.DataFrame) -> pd.DataFrame:
-    """Generate ibaqpy metadata from SDRF. Each metadata contains four columns:
-        - sample_id: Sample ID from every dataset (source name).
-        - batch: PXD of every dataset (source name).
-        - tissue: Tissue name of tissue-based dataset (characteristics[organism part]).
-        - tissue_part: Tissue part of tissue-based dataset (characteristics[organism part]).
+    """
+    Generate ibaqpy metadata from SDRF. Each metadata contains four columns:
+
+    - sample_id: Sample ID from every dataset (source name).
+    - batch: PXD of every dataset (source name).
+    - tissue: Tissue name of tissue-based dataset (characteristics[organism part]).
+    - tissue_part: Tissue part of tissue-based dataset (characteristics[organism part]).
 
     param sdrf_df: _description_
     return: pd.DataFrame
@@ -112,11 +116,16 @@ def generate_meta(sdrf_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def fill_samples(df, proteins):
-    df = pd.pivot_table(df, index="ProteinName", columns="SampleID", values=["IbaqNorm"])
+    """
+    Fill missing samples with 0 for all proteins.
+    :param df: dataframe with samples in columns and proteins in rows.
+    :param proteins: proteins to be used as index.
+    :return:
+    """
+    df = pd.pivot_table(df, index=PROTEIN_NAME, columns=SAMPLE_ID, values=[IBAQ_NORMALIZED])
     df = df.reindex(proteins)
     df.columns = [pair[1] for pair in df.columns]
     df.index.rename(None, inplace=True)
-
     return df
 
 
