@@ -105,12 +105,12 @@ def get_label(labels: list) -> (str, dict):
         label = "LFQ"
     elif "TMT" in ",".join(labels) or "tmt" in ",".join(labels):
         if (
-                len(labels) > 11
-                or "TMT134N" in labels
-                or "TMT133C" in labels
-                or "TMT133N" in labels
-                or "TMT132C" in labels
-                or "TMT132N" in labels
+            len(labels) > 11
+            or "TMT134N" in labels
+            or "TMT133C" in labels
+            or "TMT133N" in labels
+            or "TMT132C" in labels
+            or "TMT132N" in labels
         ):
             choice = TMT16plex
         elif len(labels) == 11 or "TMT131C" in labels:
@@ -132,7 +132,7 @@ def get_label(labels: list) -> (str, dict):
 
 
 def remove_contaminants_entrapments_decoys(
-        dataset: pd.DataFrame, protein_field=PROTEIN_NAME
+    dataset: pd.DataFrame, protein_field=PROTEIN_NAME
 ) -> pd.DataFrame:
     """
     This method reads a file with a list of contaminants and high abudant proteins and
@@ -150,7 +150,7 @@ def remove_contaminants_entrapments_decoys(
 
 
 def remove_protein_by_ids(
-        dataset: pd.DataFrame, protein_file: str, protein_field=PROTEIN_NAME
+    dataset: pd.DataFrame, protein_file: str, protein_field=PROTEIN_NAME
 ) -> pd.DataFrame:
     """
     This method reads a file with a list of contaminants and high abudant proteins and
@@ -167,9 +167,7 @@ def remove_protein_by_ids(
     return dataset[~dataset[protein_field].str.contains(cregex)]
 
 
-def parquet_common_process(
-        data_df: pd.DataFrame, label: str, choice: dict
-) -> pd.DataFrame:
+def parquet_common_process(data_df: pd.DataFrame, label: str, choice: dict) -> pd.DataFrame:
     """
     Apply a common process on data.
     :param data_df: Feature data in dataframe.
@@ -194,9 +192,9 @@ def data_common_process(data_df: pd.DataFrame, min_aa: int) -> pd.DataFrame:
     data_df = data_df[data_df["Condition"] != "Empty"]
 
     # Filter peptides with less amino acids than min_aa (default: 7)
-    data_df.loc[:,'len'] = data_df[PEPTIDE_CANONICAL].apply(len)
-    data_df = data_df[data_df['len']>=min_aa]
-    data_df.drop(['len'],inplace=True,axis=1)
+    data_df.loc[:, "len"] = data_df[PEPTIDE_CANONICAL].apply(len)
+    data_df = data_df[data_df["len"] >= min_aa]
+    data_df.drop(["len"], inplace=True, axis=1)
     data_df[PROTEIN_NAME] = data_df[PROTEIN_NAME].apply(parse_uniprot_accession)
     if FRACTION not in data_df.columns:
         data_df[FRACTION] = 1
@@ -247,7 +245,7 @@ def merge_fractions(dataset: pd.DataFrame) -> pd.DataFrame:
 
 
 def get_peptidoform_normalize_intensities(
-        dataset: pd.DataFrame, higher_intensity: bool = True
+    dataset: pd.DataFrame, higher_intensity: bool = True
 ) -> pd.DataFrame:
     """
     Select the best peptidoform for the same sample and the same replicates. A peptidoform is the combination of
@@ -307,9 +305,7 @@ class Feature:
         if os.path.exists(database_path):
             self.parquet_db = duckdb.connect()
             self.parquet_db = self.parquet_db.execute(
-                "CREATE VIEW parquet_db AS SELECT * FROM parquet_scan('{}')".format(
-                    database_path
-                )
+                "CREATE VIEW parquet_db AS SELECT * FROM parquet_scan('{}')".format(database_path)
             )
             self.samples = self.get_unique_samples()
         else:
@@ -333,18 +329,12 @@ class Feature:
         ).df()
         f_table.dropna(subset=["pg_accessions"], inplace=True)
         try:
-            f_table["pg_accessions"] = f_table["pg_accessions"].apply(
-                lambda x: x[0].split("|")[1]
-            )
+            f_table["pg_accessions"] = f_table["pg_accessions"].apply(lambda x: x[0].split("|")[1])
         except IndexError:
-            f_table["pg_accessions"] = f_table["pg_accessions"].apply(
-                lambda x: x[0]
-            )
+            f_table["pg_accessions"] = f_table["pg_accessions"].apply(lambda x: x[0])
         except Exception as e:
             print(e)
-            exit(
-                "Some errors occurred when parsing pg_accessions column in feature parquet!"
-            )
+            exit("Some errors occurred when parsing pg_accessions column in feature parquet!")
         f_table.set_index(["sequence", "pg_accessions"], inplace=True)
         f_table.drop(
             f_table[f_table["count"] >= (percentage * len(self.samples))].index,
@@ -367,17 +357,17 @@ class Feature:
         """
         choice = None
         if len(labels) == 1 and (
-                "LABEL FREE" in ",".join(labels) or "label free" in ",".join(labels)
+            "LABEL FREE" in ",".join(labels) or "label free" in ",".join(labels)
         ):
             label = "LFQ"
         elif "TMT" in ",".join(labels) or "tmt" in ",".join(labels):
             if (
-                    len(labels) > 11
-                    or "TMT134N" in labels
-                    or "TMT133C" in labels
-                    or "TMT133N" in labels
-                    or "TMT132C" in labels
-                    or "TMT132N" in labels
+                len(labels) > 11
+                or "TMT134N" in labels
+                or "TMT133C" in labels
+                or "TMT133N" in labels
+                or "TMT132C" in labels
+                or "TMT132N" in labels
             ):
                 choice = TMT16plex
             elif len(labels) == 11 or "TMT131C" in labels:
@@ -404,7 +394,7 @@ class Feature:
         :param samples: A list of samples
         :return: The report
         """
-        cols = ','.join(columns) if columns is not None else '*'
+        cols = ",".join(columns) if columns is not None else "*"
         database = self.parquet_db.sql(
             """SELECT {} FROM parquet_db WHERE sample_accession IN {}""".format(
                 cols, tuple(samples)
@@ -418,10 +408,7 @@ class Feature:
         :params file_num: The number of files being processed at the same time (default 20)
         :yield: _description_
         """
-        ref_list = [
-            self.samples[i: i + file_num]
-            for i in range(0, len(self.samples), file_num)
-        ]
+        ref_list = [self.samples[i : i + file_num] for i in range(0, len(self.samples), file_num)]
         for refs in ref_list:
             batch_df = self.get_report_from_database(refs, columns)
             yield refs, batch_df
@@ -430,18 +417,14 @@ class Feature:
         """
         return: A list of samples.
         """
-        unique = self.parquet_db.sql(
-            "SELECT DISTINCT sample_accession FROM parquet_db"
-        ).df()
+        unique = self.parquet_db.sql("SELECT DISTINCT sample_accession FROM parquet_db").df()
         return unique["sample_accession"].tolist()
 
     def get_unique_labels(self):
         """
         return: A list of labels.
         """
-        unique = self.parquet_db.sql(
-            "SELECT DISTINCT channel FROM parquet_db"
-        ).df()
+        unique = self.parquet_db.sql("SELECT DISTINCT channel FROM parquet_db").df()
         return unique["channel"].tolist()
 
     def get_unique_tec_reps(self):
@@ -454,9 +437,7 @@ class Feature:
             unique["run"] = unique["run"].astype("int")
         except ValueError as e:
             print(e)
-            exit(
-                f"Some errors occurred when getting technical repetitions: {Exception}"
-            )
+            exit(f"Some errors occurred when getting technical repetitions: {Exception}")
 
         return unique["run"].tolist()
 
@@ -477,11 +458,9 @@ class Feature:
         :param cons: A list of conditions in
         :return: The report
         """
-        cols = ','.join(columns) if columns is not None else '*'
+        cols = ",".join(columns) if columns is not None else "*"
         database = self.parquet_db.sql(
-            """SELECT {} FROM parquet_db WHERE condition IN {}""".format(
-                cols, tuple(cons)
-            )
+            """SELECT {} FROM parquet_db WHERE condition IN {}""".format(cols, tuple(cons))
         )
         report = database.df()
         return report
@@ -489,8 +468,7 @@ class Feature:
     def iter_conditions(self, conditions: int = 10, columns: list = None):
         condition_list = self.get_unique_conditions()
         ref_list = [
-            condition_list[i: i + conditions]
-            for i in range(0, len(condition_list), conditions)
+            condition_list[i : i + conditions] for i in range(0, len(condition_list), conditions)
         ]
         for refs in ref_list:
             batch_df = self.get_report_condition_from_database(refs, columns)
@@ -506,7 +484,7 @@ class Feature:
     def get_median_map_to_condition(self):
         med_map = {}
         for cons, batch_df in self.iter_conditions(
-                1000, ["condition", "sample_accession", "intensity"]
+            1000, ["condition", "sample_accession", "intensity"]
         ):
             for con in cons:
                 meds = (
@@ -520,19 +498,19 @@ class Feature:
 
 
 def peptide_normalization(
-        parquet: str,
-        sdrf: str,
-        min_aa: int,
-        min_unique: int,
-        remove_ids: str,
-        remove_decoy_contaminants: bool,
-        remove_low_frequency_peptides: bool,
-        output: str,
-        skip_normalization: bool,
-        nmethod: str,
-        pnmethod: str,
-        log2: bool,
-        save_parquet: bool,
+    parquet: str,
+    sdrf: str,
+    min_aa: int,
+    min_unique: int,
+    remove_ids: str,
+    remove_decoy_contaminants: bool,
+    remove_low_frequency_peptides: bool,
+    output: str,
+    skip_normalization: bool,
+    nmethod: str,
+    pnmethod: str,
+    log2: bool,
+    save_parquet: bool,
 ) -> None:
     """
 
@@ -594,11 +572,7 @@ def peptide_normalization(
                 dataset_df = remove_protein_by_ids(dataset_df, remove_ids)
             dataset_df.rename(columns={INTENSITY: NORM_INTENSITY}, inplace=True)
             # Step7: Normalize at feature level between ms runs (technical repetitions)
-            if (
-                    not skip_normalization
-                    and nmethod != "none"
-                    and technical_repetitions > 1
-            ):
+            if not skip_normalization and nmethod != "none" and technical_repetitions > 1:
                 print(f"{str(sample).upper()}: Normalize intensities of features.. ")
                 dataset_df = normalize_run(dataset_df, technical_repetitions, nmethod)
                 print(
@@ -619,19 +593,17 @@ def peptide_normalization(
             if not skip_normalization:
                 if pnmethod == "globalMedian":
                     dataset_df.loc[:, NORM_INTENSITY] = (
-                            dataset_df[NORM_INTENSITY] / med_map[sample]
+                        dataset_df[NORM_INTENSITY] / med_map[sample]
                     )
                 elif pnmethod == "conditionMedian":
                     con = dataset_df[CONDITION].unique()[0]
                     dataset_df.loc[:, NORM_INTENSITY] = (
-                            dataset_df[NORM_INTENSITY] / med_map[con][sample]
+                        dataset_df[NORM_INTENSITY] / med_map[con][sample]
                     )
-            
+
             # Step10: Remove peptides with low frequency.
             if remove_low_frequency_peptides and len(sample_names) > 1:
-                dataset_df.set_index(
-                    [PROTEIN_NAME, PEPTIDE_CANONICAL], drop=True, inplace=True
-                )
+                dataset_df.set_index([PROTEIN_NAME, PEPTIDE_CANONICAL], drop=True, inplace=True)
                 dataset_df = dataset_df[
                     ~dataset_df.index.isin(low_frequency_peptides)
                 ].reset_index()

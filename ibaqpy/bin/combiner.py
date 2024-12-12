@@ -21,16 +21,12 @@ from ibaqpy.bin.utils import (
     split_df_by_column,
 )
 
-logging.basicConfig(
-    format="%(asctime)s [%(funcName)s] - %(message)s", level=logging.DEBUG
-)
+logging.basicConfig(format="%(asctime)s [%(funcName)s] - %(message)s", level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
 class Combiner:
-    def __init__(
-            self, data_folder: os.PathLike, covariate: str = None, organism: str = "HUMAN"
-    ):
+    def __init__(self, data_folder: os.PathLike, covariate: str = None, organism: str = "HUMAN"):
         """Generate concated IbaqNorm and metadata."""
         self.df_pca = compute_pca(self.df_corrected.T, n_components=5)
         self.df_corrected = None
@@ -114,19 +110,17 @@ class Combiner:
         print(self.df.head)
 
     def outlier_removal(
-            self,
-            n_components: int = None,
-            min_cluster_size: int = None,
-            min_samples_num: int = None,
-            n_iter: int = None,
+        self,
+        n_components: int = None,
+        min_cluster_size: int = None,
+        min_samples_num: int = None,
+        n_iter: int = None,
     ):
         logger.info("Removing outliers from imputed data ...")
         # Apply iterative outlier removal on imputed data
         # get batch indices from the columns names
         batches = [sample.split("-")[0] for sample in self.samples]
-        self.samples_number = {
-            dataset: batches.count(dataset) for dataset in self.datasets
-        }
+        self.samples_number = {dataset: batches.count(dataset) for dataset in self.datasets}
         min_samples = round(np.median(list(self.samples_number.values())))
         if min_samples == 1:
             min_samples = 2
@@ -134,9 +128,7 @@ class Combiner:
         self.df_filtered_outliers = iterative_outlier_removal(
             self.df,
             self.batch_index,
-            n_components=(
-                n_components if n_components else round(len(set(self.batch_index)) / 3)
-            ),
+            n_components=(n_components if n_components else round(len(set(self.batch_index)) / 3)),
             min_cluster_size=min_cluster_size if min_cluster_size else min_samples,
             min_samples=min_samples_num if min_samples_num else min_samples,
             n_iter=n_iter if n_iter else 5,
@@ -146,9 +138,7 @@ class Combiner:
         # transpose the dataframe to get samples as rows and features as columns
         self.df_pca = compute_pca(
             self.df_filtered_outliers.T,
-            n_components=(
-                n_components if n_components else round(len(set(self.batch_index)) / 3)
-            ),
+            n_components=(n_components if n_components else round(len(set(self.batch_index)) / 3)),
         )
 
         # add batch information to the dataframe
@@ -163,17 +153,13 @@ class Combiner:
             output_file="pca_corrected_outliers_removed.png",
         )
 
-    def batch_correction(
-            self, n_components: int = None, tissue_parts_to_keep: int = None
-    ):
+    def batch_correction(self, n_components: int = None, tissue_parts_to_keep: int = None):
         logger.info("Applying batch effect correction ...")
         # Plot PCA of uncorrected imputed data
         # transpose the dataframe to get samples as rows and features as columns
         self.df_pca = compute_pca(
             self.df.T,
-            n_components=(
-                n_components if n_components else round(len(set(self.batch_index)) / 3)
-            ),
+            n_components=(n_components if n_components else round(len(set(self.batch_index)) / 3)),
         )
 
         # add batch information to the dataframe
@@ -191,9 +177,7 @@ class Combiner:
         # keep samples only in tissue_part from metadata
         ## TODO: specify covariates
         if tissue_parts_to_keep:
-            self.metadata = self.metadata[
-                self.metadata["tissue_part"].isin(tissue_parts_to_keep)
-            ]
+            self.metadata = self.metadata[self.metadata["tissue_part"].isin(tissue_parts_to_keep)]
             samples_to_keep = self.metadata["sample_id"].tolist()
 
             # keep samples in df that are also in samples_to_keep
@@ -209,9 +193,7 @@ class Combiner:
         self.metadata = self.metadata[self.metadata["sample_id"].isin(columns)]
         # reorder metadata to match the order of columns in df
         self.metadata = self.metadata.reset_index(drop=True)
-        self.metadata = (
-            self.metadata.set_index("sample_id").reindex(columns, axis=0).reset_index()
-        )
+        self.metadata = self.metadata.set_index("sample_id").reindex(columns, axis=0).reset_index()
         if self.covariate:
             # get the covariates from metadata as a list
             covariates_index = self.metadata[self.covariate].tolist()

@@ -11,9 +11,7 @@ from ibaqpy.bin.combiner import Combiner
     help="Data dolfer contains SDRFs and ibaq CSVs.",
     required=True,
 )
-@click.option(
-    "--output", "-o", help="Output file after batch effect removal.", required=True
-)
+@click.option("--output", "-o", help="Output file after batch effect removal.", required=True)
 @click.option(
     "--covariate",
     "-c",
@@ -60,19 +58,19 @@ from ibaqpy.bin.combiner import Combiner
 )
 @click.pass_context
 def datasets_merge(
-        ctx,
-        data_folder: str,
-        output: str,
-        covariate: str,
-        organism: str,
-        covariate_to_keep: list,
-        non_missing_percent_to_keep: float,
-        skip_outliers_removal: bool,
-        n_components: int,
-        min_cluster: int,
-        min_sample_num: int,
-        n_iter: int,
-        verbose: bool,
+    ctx,
+    data_folder: str,
+    output: str,
+    covariate: str,
+    organism: str,
+    covariate_to_keep: list,
+    non_missing_percent_to_keep: float,
+    skip_outliers_removal: bool,
+    n_components: int,
+    min_cluster: int,
+    min_sample_num: int,
+    n_iter: int,
+    verbose: bool,
 ):
     if covariate_to_keep:
         covariate_to_keep = re.split(",\s*", covariate_to_keep)

@@ -1,4 +1,3 @@
-
 import os
 import click
 import pandas as pd
@@ -7,13 +6,9 @@ from ibaqpy.bin.ibaqpy_commons import CONDITION
 
 
 @click.command()
-@click.option(
-    "-i", "--input", help="Folder with all the Intensity files", required=True
-)
+@click.option("-i", "--input", help="Folder with all the Intensity files", required=True)
 @click.option("-o", "--output", help="Prefix name for the file to group by condition")
-@click.option(
-    "-p", "--pattern", help="Prefix of the pattern name for all the files in the folder"
-)
+@click.option("-p", "--pattern", help="Prefix of the pattern name for all the files in the folder")
 def merge_condition_generation(input: str, output: str, pattern: str) -> None:
     """
     Merge all the files in a folder with the specific pattern
@@ -30,6 +25,4 @@ def merge_condition_generation(input: str, output: str, pattern: str) -> None:
     print(concatenated_df.head())
 
     for k, g in concatenated_df.groupby([CONDITION]):
-        g.to_csv(
-            f"{output}/{k}-grouped-Intensities.csv", index=False
-        )  # '{}.csv'.format(k)
+        g.to_csv(f"{output}/{k}-grouped-Intensities.csv", index=False)  # '{}.csv'.format(k)
