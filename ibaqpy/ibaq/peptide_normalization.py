@@ -20,6 +20,8 @@ from ibaqpy.ibaq.ibaqpy_commons import (
     RUN,
     SAMPLE_ID,
     PARQUET_COLUMNS,
+    GLOBALMEDIAN,
+    CONDITIONMEDIAN,
     TMT16plex,
     TMT11plex,
     TMT10plex,
@@ -94,7 +96,7 @@ def analyse_sdrf(sdrf_path: str) -> tuple:
     return technical_repetitions, label, sample_names, choice
 
 
-def get_label(labels: list) -> (str, dict):
+def get_label(labels: list):
     """Return label type and choice dict according to labels list.
 
     :param labels: Labels from SDRF.
@@ -346,7 +348,7 @@ class Feature:
         duckdb.read_csv(csv).to_parquet(parquet_path)
 
     @staticmethod
-    def get_label(labels: list) -> (str, dict):
+    def get_label(labels: list):
         """Return label type and choice dict according to labels list.
 
         :param labels: Labels from SDRF.
@@ -540,9 +542,9 @@ def peptide_normalization(
     if remove_low_frequency_peptides:
         low_frequency_peptides = feature.low_frequency_peptides
     header = False
-    if not skip_normalization and pnmethod == "globalMedian":
+    if not skip_normalization and pnmethod == GLOBALMEDIAN:
         med_map = feature.get_median_map()
-    elif not skip_normalization and pnmethod == "conditionMedian":
+    elif not skip_normalization and pnmethod == CONDITIONMEDIAN:
         med_map = feature.get_median_map_to_condition()
     for samples, df in feature.iter_samples():
         df.dropna(subset=["pg_accessions"], inplace=True)
@@ -588,11 +590,11 @@ def peptide_normalization(
                 )
             # Step9: Normalize the data.
             if not skip_normalization:
-                if pnmethod == "globalMedian":
+                if pnmethod == GLOBALMEDIAN:
                     dataset_df.loc[:, NORM_INTENSITY] = (
                         dataset_df[NORM_INTENSITY] / med_map[sample]
                     )
-                elif pnmethod == "conditionMedian":
+                elif pnmethod == CONDITIONMEDIAN:
                     con = dataset_df[CONDITION].unique()[0]
                     dataset_df.loc[:, NORM_INTENSITY] = (
                         dataset_df[NORM_INTENSITY] / med_map[con][sample]

@@ -7,7 +7,7 @@ from pandas import DataFrame, Series
 from pyopenms import AASequence, ProteaseDigestion, FASTAFile
 from typing import List
 
-from ibaqpy.ibaq.ibaqpy_commons import (
+from ibaqpy.bin.ibaqpy_commons import (
     CONDITION,
     IBAQ,
     IBAQ_LOG,
@@ -16,15 +16,15 @@ from ibaqpy.ibaq.ibaqpy_commons import (
     NORM_INTENSITY,
     PROTEIN_NAME,
     SAMPLE_ID,
-    plot_box_plot,
-    plot_distributions,
-    get_accession,
     TPA,
     MOLECULARWEIGHT,
     COPYNUMBER,
     CONCENTRATION_NM,
     MOLES_NMOL,
     WEIGHT_NG,
+    plot_box_plot,
+    plot_distributions,
+    get_accession,
 )
 
 
@@ -224,7 +224,7 @@ def peptides_to_protein(
         res = calculate_weight_and_concentration(res, ploidy, cpc, organism, histones)
     # Print the distribution of the protein IBAQ values
     if verbose:
-        plot_width = len(set(res["SampleID"])) * 0.5 + 10
+        plot_width = len(set(res[SAMPLE_ID])) * 0.5 + 10
         pdf = PdfPages(qc_report)
         density1 = plot_distributions(
             res,
@@ -247,12 +247,7 @@ def peptides_to_protein(
         pdf.savefig(box1)
         if tpa:
             density2 = plot_distributions(
-                res,
-                TPA,
-                SAMPLE_ID,
-                log2=True,
-                width=plot_width,
-                title="{} Distribution".format(TPA),
+                res, TPA, SAMPLE_ID, log2=True, width=plot_width, title="TPA Distribution"
             )
             box2 = plot_box_plot(
                 res,
