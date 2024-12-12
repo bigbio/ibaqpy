@@ -24,9 +24,6 @@ PROTEIN_NAME = "ProteinName"
 PEPTIDE_SEQUENCE = "PeptideSequence"
 PEPTIDE_CANONICAL = "PeptideCanonical"
 PEPTIDE_CHARGE = "PrecursorCharge"
-FRAGMENT_ION = "FragmentIon"
-PRODUCT_CHARGE = "ProductCharge"
-ISOTOPE_LABEL_TYPE = "IsotopeLabelType"
 CHANNEL = "Channel"
 MIXTRUE = "Mixture"
 TECHREPMIXTURE = "TechRepMixture"
@@ -37,10 +34,8 @@ RUN = "Run"
 FRACTION = "Fraction"
 INTENSITY = "Intensity"
 NORM_INTENSITY = "NormIntensity"
-RT = "Rt"
 REFERENCE = "Reference"
 SAMPLE_ID = "SampleID"
-STUDY_ID = "StudyID"
 SEARCH_ENGINE = "searchScore"
 SCAN = "Scan"
 MBR = "MatchBetweenRuns"
@@ -63,8 +58,6 @@ parquet_map = {
     "peptidoform": PEPTIDE_SEQUENCE,
     "sequence": PEPTIDE_CANONICAL,
     "precursor_charge": PEPTIDE_CHARGE,
-    # "fragment_ion": FRAGMENT_ION,
-    # "isotope_label_type": ISOTOPE_LABEL_TYPE,
     "channel": CHANNEL,
     "condition": CONDITION,
     "biological_replicate": BIOREPLICATE,
