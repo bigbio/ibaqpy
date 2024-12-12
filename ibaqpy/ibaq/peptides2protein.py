@@ -89,7 +89,7 @@ def extract_fasta(fasta: str, enzyme: str, proteins: List, min_aa: int, max_aa: 
                     print(f"Nonstandard amino acids found in {accession}: {error_aa}, ignored!")
     if not found_proteins:
         raise ValueError(f"None of the {len(proteins)} proteins were found in the FASTA file")
-    return uniquepepcounts, mw_dict
+    return uniquepepcounts, mw_dict, found_proteins
 
 
 # calculate protein weight(ng) and concentration(nM)
@@ -189,7 +189,8 @@ def peptides_to_protein(
     # get fasta info
     proteins = data[PROTEIN_NAME].unique().tolist()
     proteins = sum([i.split(";") for i in proteins], [])
-    uniquepepcounts, mw_dict = extract_fasta(fasta, enzyme, proteins, min_aa, max_aa, tpa)
+    uniquepepcounts, mw_dict, found_proteins = extract_fasta(fasta, enzyme, proteins, min_aa, max_aa, tpa)
+    data = data[data[PROTEIN_NAME].isin(found_proteins)]
     # data processing
     print(data.head())
     map_size = data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION]).size().to_dict()
@@ -303,5 +304,5 @@ def peptides_to_protein(
             )
             pdf.savefig(density4)
             pdf.savefig(box4)
-    pdf.close()
+        pdf.close()
     res.to_csv(output, sep="\t", index=False)
