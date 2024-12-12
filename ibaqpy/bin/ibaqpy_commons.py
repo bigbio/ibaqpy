@@ -171,11 +171,16 @@ def plot_distributions(
     if log2:
         normalize[field] = np.log2(normalize[field])
     normalize.dropna(subset=[field], inplace=True)
-    data_wide = normalize.pivot(columns=class_field, values=field)
-    # plotting multiple density plot
-    data_wide.plot.kde(figsize=(width, 8), linewidth=2, legend=False)
+    plt.figure(dpi=500, figsize=(12, 8))
+    fig = sns.kdeplot(data=normalize, x=field, hue=class_field, palette="Paired", linewidth=2)
+    sns.despine(ax=fig, top=True, right=True)
     plt.title(title)
     pd.set_option("mode.chained_assignment", "warn")
+    # data_wide = normalize.pivot(columns=class_field, values=field)
+    # # plotting multiple density plot
+    # data_wide.plot.kde(figsize=(width, 8), linewidth=2, legend=False)
+    # plt.title(title)
+    # pd.set_option("mode.chained_assignment", "warn")
 
     return plt.gcf()
 
