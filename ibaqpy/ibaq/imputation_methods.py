@@ -80,6 +80,6 @@ def impute_missing_values(dataset_df, field, class_field):
                 id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION]
             )
             group_normalize_df.rename(columns={"value": NORM_INTENSITY}, inplace=True)
-            normalize_df = normalize_df.append(group_normalize_df, ignore_index=True)
+            normalize_df = pd.concat([normalize_df, group_normalize_df], ignore_index=True)
 
     return normalize_df
