@@ -29,6 +29,12 @@ from ibaqpy.ibaq.ibaqpy_commons import (
 
 
 def normalize(group):
+    """
+    Normalize the ibaq values using the total ibaq of the sample.
+    This method is called rIBAQ, originally published in https://pubs.acs.org/doi/10.1021/pr401017h
+    :param group: Dataframe with all the ibaq values
+    :return: Dataframe with the normalized ibaq values
+    """
     group[IBAQ_NORMALIZED] = group[IBAQ] / group[IBAQ].sum()
     return group
 
