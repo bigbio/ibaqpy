@@ -3,9 +3,9 @@ import os
 import re
 import numpy as np
 import duckdb
-from ibaqpy.bin.normalization_methods import normalize_run
+from ibaqpy.ibaq.normalization_methods import normalize_run
 
-from ibaqpy.bin.ibaqpy_commons import (
+from ibaqpy.ibaq.ibaqpy_commons import (
     BIOREPLICATE,
     TECHREPLICATE,
     CHANNEL,
@@ -143,10 +143,7 @@ def remove_contaminants_entrapments_decoys(
     :param protein_field: protein field
     :return: dataset with the filtered proteins
     """
-    contaminants = []
-    contaminants.append("CONTAMINANT")
-    contaminants.append("ENTRAP")
-    contaminants.append("DECOY")
+    contaminants = ["CONTAMINANT", "ENTRAP", "DECOY"]
     cregex = "|".join(contaminants)
     return dataset[~dataset[protein_field].str.contains(cregex)]
 

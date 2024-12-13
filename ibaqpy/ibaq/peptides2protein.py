@@ -7,7 +7,7 @@ from pandas import DataFrame, Series
 from pyopenms import AASequence, ProteaseDigestion, FASTAFile
 from typing import List
 
-from ibaqpy.bin.ibaqpy_commons import (
+from ibaqpy.ibaq.ibaqpy_commons import (
     CONDITION,
     IBAQ,
     IBAQ_LOG,
@@ -29,6 +29,12 @@ from ibaqpy.bin.ibaqpy_commons import (
 
 
 def normalize(group):
+    """
+    Normalize the ibaq values using the total ibaq of the sample.
+    This method is called rIBAQ, originally published in https://pubs.acs.org/doi/10.1021/pr401017h
+    :param group: Dataframe with all the ibaq values
+    :return: Dataframe with the normalized ibaq values
+    """
     group[IBAQ_NORMALIZED] = group[IBAQ] / group[IBAQ].sum()
     return group
 
@@ -232,7 +238,7 @@ def peptides_to_protein(
             SAMPLE_ID,
             log2=True,
             width=plot_width,
-            title="IBAQ Distribution",
+            title="{} Distribution".format(plot_column),
         )
         box1 = plot_box_plot(
             res,
@@ -240,7 +246,7 @@ def peptides_to_protein(
             SAMPLE_ID,
             log2=True,
             width=plot_width,
-            title="IBAQ Distribution",
+            title="{} Distribution".format(plot_column),
             violin=False,
         )
         pdf.savefig(density1)
@@ -255,7 +261,7 @@ def peptides_to_protein(
                 SAMPLE_ID,
                 log2=True,
                 width=plot_width,
-                title="TPA Distribution",
+                title="{} Distribution".format(TPA),
                 violin=False,
             )
             pdf.savefig(density2)
@@ -267,7 +273,7 @@ def peptides_to_protein(
                 SAMPLE_ID,
                 width=plot_width,
                 log2=True,
-                title="Copy numbers Distribution",
+                title="{} Distribution".format(COPYNUMBER),
             )
             box3 = plot_box_plot(
                 res,
@@ -275,7 +281,7 @@ def peptides_to_protein(
                 SAMPLE_ID,
                 width=plot_width,
                 log2=True,
-                title="Copy numbers Distribution",
+                title="{} Distribution".format(COPYNUMBER),
                 violin=False,
             )
             pdf.savefig(density3)
@@ -286,7 +292,7 @@ def peptides_to_protein(
                 SAMPLE_ID,
                 width=plot_width,
                 log2=True,
-                title="Concentration[nM] Distribution",
+                title="{} Distribution".format(CONCENTRATION_NM),
             )
             box4 = plot_box_plot(
                 res,
@@ -294,7 +300,7 @@ def peptides_to_protein(
                 SAMPLE_ID,
                 width=plot_width,
                 log2=True,
-                title="Concentration[nM] Distribution",
+                title="{} Distribution".format(CONCENTRATION_NM),
                 violin=False,
             )
             pdf.savefig(density4)

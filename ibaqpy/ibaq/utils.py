@@ -9,17 +9,18 @@ import seaborn as sns
 from inmoose.pycombat import pycombat_norm
 from sklearn.cluster._hdbscan import hdbscan
 from sklearn.decomposition import PCA
-from sklearn.impute import KNNImputer
+
+from ibaqpy.ibaq.ibaqpy_commons import IBAQ_NORMALIZED, SAMPLE_ID, PROTEIN_NAME
 
 logging.basicConfig(format="%(asctime)s [%(funcName)s] - %(message)s", level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
 def folder_retrieval(folder: str) -> dict:
-    """Retrieval SDRF and ibaq.csv from a given folder.
-
-    param folder:
-    return:
+    """
+    Retrieve SDRF and ibaq results from a folder.
+    :param folder: Folder to retrieve SDRF and ibaq results.
+    :return:
     """
 
     folder = folder + os.sep if not folder.endswith(os.sep) else folder
@@ -60,11 +61,13 @@ def folder_retrieval(folder: str) -> dict:
 
 
 def generate_meta(sdrf_df: pd.DataFrame) -> pd.DataFrame:
-    """Generate ibaqpy metadata from SDRF. Each metadata contains four columns:
-        - sample_id: Sample ID from every dataset (source name).
-        - batch: PXD of every dataset (source name).
-        - tissue: Tissue name of tissue-based dataset (characteristics[organism part]).
-        - tissue_part: Tissue part of tissue-based dataset (characteristics[organism part]).
+    """
+    Generate ibaqpy metadata from SDRF. Each metadata contains four columns:
+
+    - sample_id: Sample ID from every dataset (source name).
+    - batch: PXD of every dataset (source name).
+    - tissue: Tissue name of tissue-based dataset (characteristics[organism part]).
+    - tissue_part: Tissue part of tissue-based dataset (characteristics[organism part]).
 
     param sdrf_df: _description_
     return: pd.DataFrame
@@ -113,57 +116,17 @@ def generate_meta(sdrf_df: pd.DataFrame) -> pd.DataFrame:
 
 
 def fill_samples(df, proteins):
-    df = pd.pivot_table(df, index="ProteinName", columns="SampleID", values=["IbaqNorm"])
+    """
+    Fill missing samples with 0 for all proteins.
+    :param df: dataframe with samples in columns and proteins in rows.
+    :param proteins: proteins to be used as index.
+    :return:
+    """
+    df = pd.pivot_table(df, index=PROTEIN_NAME, columns=SAMPLE_ID, values=[IBAQ_NORMALIZED])
     df = df.reindex(proteins)
     df.columns = [pair[1] for pair in df.columns]
     df.index.rename(None, inplace=True)
-
     return df
-
-
-def impute_missing_values(
-    data: Optional[Union[pd.DataFrame, List[pd.DataFrame]]],
-    n_neighbors=5,
-    weights="uniform",
-    metric="nan_euclidean",
-    keep_empty_features=True,
-) -> Union[pd.DataFrame, List[pd.DataFrame]]:
-    """
-    Impute missing values in a DataFrame or each DataFrame in a list using KNNImputer.
-
-    Parameters
-    ----------
-    data : Union[pd.DataFrame, List[pd.DataFrame]]
-        A pandas DataFrame or list of pandas DataFrames with missing values.
-    n_neighbors : int, optional
-        Number of neighboring samples to use for imputation. Default is 5.
-    weights : str, optional
-        Weight function used in prediction. Default is 'uniform'.
-    metric : str, optional
-        Distance metric for searching neighbors. Default is 'nan_euclidean'.
-    keep_empty_features : bool, optional
-        Whether to keep empty features (no known samples). Default is True.
-
-    Returns
-    -------
-    Union[pd.DataFrame, List[pd.DataFrame]]
-        A pandas DataFrame or list of pandas DataFrames with imputed missing values.
-    """
-    imputer = KNNImputer(
-        n_neighbors=n_neighbors,
-        weights=weights,
-        metric=metric,
-        keep_empty_features=keep_empty_features,
-    )
-
-    if isinstance(data, pd.DataFrame):
-        # If it's a single DataFrame, transform it and return immediately
-        return pd.DataFrame(imputer.fit_transform(data), columns=data.columns, index=data.index)
-    else:
-        # Otherwise, use list comprehension to apply the imputer to each DataFrame
-        return [
-            pd.DataFrame(imputer.fit_transform(t), columns=t.columns, index=t.index) for t in data
-        ]
 
 
 def split_df_by_column(df: pd.DataFrame, cov_index_col: str) -> List[pd.DataFrame]:

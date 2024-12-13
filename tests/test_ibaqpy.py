@@ -1,4 +1,4 @@
-from ibaqpy.bin.peptides2protein import peptides_to_protein
+from ibaqpy.ibaq.peptides2protein import peptides_to_protein
 
 from pathlib import Path
 
@@ -20,7 +20,7 @@ def test_ibaq_compute():
         "ploidy": 2,
         "cpc": 200,
         "organism": "human",
-        "output": str(TESTS_DIR / "example/PXD017834-norm.csv"),
+        "output": str(TESTS_DIR / "example/PXD017834-ibaq.tsv"),
         "verbose": True,
         "qc_report": str(TESTS_DIR / "example/QCprofile.pdf"),
     }

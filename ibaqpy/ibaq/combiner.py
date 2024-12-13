@@ -5,21 +5,11 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from ibaqpy.bin.ibaqpy_commons import load_feature, load_sdrf
-from ibaqpy.bin.utils import (
-    apply_batch_correction,
-    compute_pca,
-    fill_samples,
-    filter_missing_value_by_group,
-    folder_retrieval,
-    generate_meta,
-    get_batch_info_from_sample_names,
-    impute_missing_values,
-    iterative_outlier_removal,
-    plot_pca,
-    remove_single_sample_batches,
-    split_df_by_column,
-)
+from ibaqpy.ibaq.ibaqpy_commons import load_feature, load_sdrf
+from ibaqpy.ibaq.imputation_methods import impute_missing_values
+from ibaqpy.ibaq.utils import compute_pca, get_batch_info_from_sample_names, generate_meta, folder_retrieval, \
+    filter_missing_value_by_group, split_df_by_column, fill_samples, iterative_outlier_removal, plot_pca, \
+    remove_single_sample_batches, apply_batch_correction
 
 logging.basicConfig(format="%(asctime)s [%(funcName)s] - %(message)s", level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -175,7 +165,7 @@ class Combiner:
         )
 
         # keep samples only in tissue_part from metadata
-        ## TODO: specify covariates
+        # TODO: specify covariates
         if tissue_parts_to_keep:
             self.metadata = self.metadata[self.metadata["tissue_part"].isin(tissue_parts_to_keep)]
             samples_to_keep = self.metadata["sample_id"].tolist()
