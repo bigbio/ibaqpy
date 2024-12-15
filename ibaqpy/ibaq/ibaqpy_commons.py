@@ -50,7 +50,7 @@ CONCENTRATION_NM = "Concentration[nM]"
 WEIGHT_NG = "Weight[ng]"
 MOLES_NMOL = "Moles[nmol]"
 GLOBALMEDIAN = "globalMedian"
-CONDITIONMEDIAN= "conditionMedian"
+CONDITIONMEDIAN = "conditionMedian"
 
 
 parquet_map = {

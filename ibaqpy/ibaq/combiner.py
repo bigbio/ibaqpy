@@ -7,9 +7,19 @@ import pandas as pd
 
 from ibaqpy.ibaq.ibaqpy_commons import load_feature, load_sdrf
 from ibaqpy.ibaq.imputation_methods import impute_missing_values
-from ibaqpy.ibaq.utils import compute_pca, get_batch_info_from_sample_names, generate_meta, folder_retrieval, \
-    filter_missing_value_by_group, split_df_by_column, fill_samples, iterative_outlier_removal, plot_pca, \
-    remove_single_sample_batches, apply_batch_correction
+from ibaqpy.ibaq.utils import (
+    compute_pca,
+    get_batch_info_from_sample_names,
+    generate_meta,
+    folder_retrieval,
+    filter_missing_value_by_group,
+    split_df_by_column,
+    fill_samples,
+    iterative_outlier_removal,
+    plot_pca,
+    remove_single_sample_batches,
+    apply_batch_correction,
+)
 
 logging.basicConfig(format="%(asctime)s [%(funcName)s] - %(message)s", level=logging.DEBUG)
 logger = logging.getLogger(__name__)

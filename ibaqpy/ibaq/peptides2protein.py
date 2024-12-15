@@ -56,8 +56,8 @@ def normalize_ibaq(res: DataFrame) -> DataFrame:
 
 
 def handle_nonstandard_aa(aa_seq: str):
-    """Any nonstandard amoni acid will be removed.
-
+    """
+    Any nonstandard amoni acid will be removed.
     :param aa_seq: Protein sequences from multiple database.
     :return: One list contains nonstandard amoni acids and one remain sequence.
     """
@@ -102,6 +102,22 @@ def extract_fasta(fasta: str, enzyme: str, proteins: List, min_aa: int, max_aa: 
 def calculate_weight_and_concentration(
     res: pd.DataFrame, ploidy: int, cpc: float, organism: str, histones: dict
 ):
+    """
+    Calculate protein copy number, moles, weight, and concentration for a given dataset.
+
+    This function uses a proteomic ruler approach to estimate the copy number, moles,
+    and weight of proteins in a dataset based on their normalized intensity and molecular
+    weight. It also calculates the concentration in nM using the total weight and a
+    provided concentration per cell (cpc).
+
+    @param res: DataFrame containing protein data with normalized intensity and molecular weight.
+    @:param ploidy (int): Ploidy level of the organism.
+    @:param cpc (float): Concentration per cell.
+    @:param organism (str): Name of the organism.
+    @:param histones (dict): Dictionary containing histone information for different organisms.
+    @:return pd.DataFrame: Updated DataFrame with calculated copy number, moles, weight,
+             and concentration for each protein.
+    """
     avogadro = 6.02214129e23
     average_base_pair_mass = 617.96  # 615.8771
     organism = organism.lower()
@@ -112,6 +128,18 @@ def calculate_weight_and_concentration(
     dna_mass = ploidy * genome_size * average_base_pair_mass / avogadro
 
     def calculate(protein_intensity, histone_intensity, mw):
+        """
+        Calculate the copy number, moles, and weight of a protein.
+
+        This function estimates the copy number, moles, and weight of a protein
+        based on its intensity, histone intensity, and molecular weight (mw).
+
+        @param protein_intensity (float): The intensity of the protein.
+        @param histone_intensity (float): The summed intensity of histones.
+        @param mw (float): The molecular weight of the protein.
+        @return tuple: A tuple containing the calculated copy number, moles (in nmol),
+        """
+
         copy = (protein_intensity / histone_intensity) * dna_mass * avogadro / mw
         # The number of moles is equal to the number of particles divided by Avogadro's constant
         moles = copy * 1e9 / avogadro  # unit nmol
@@ -195,7 +223,9 @@ def peptides_to_protein(
     # get fasta info
     proteins = data[PROTEIN_NAME].unique().tolist()
     proteins = sum([i.split(";") for i in proteins], [])
-    uniquepepcounts, mw_dict, found_proteins = extract_fasta(fasta, enzyme, proteins, min_aa, max_aa, tpa)
+    uniquepepcounts, mw_dict, found_proteins = extract_fasta(
+        fasta, enzyme, proteins, min_aa, max_aa, tpa
+    )
     data = data[data[PROTEIN_NAME].isin(found_proteins)]
     # data processing
     print(data.head())
