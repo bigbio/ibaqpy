@@ -27,7 +27,15 @@ logger = logging.getLogger(__name__)
 
 class Combiner:
     def __init__(self, data_folder: os.PathLike, covariate: str = None, organism: str = "HUMAN"):
-        """Generate concated IbaqNorm and metadata."""
+        """
+        Initialize the Combiner class to process and combine SDRF and IbaqNorm data.
+
+        @:param data_folder: os.PathLike Path to the folder containing SDRF and IbaqNorm files.
+        @:param covariate : Covariate to be used in data processing, by default None.
+        @:param organism : Organism filter for protein names, by default "HUMAN".
+
+        FileNotFoundError: If the specified data folder does not exist or is not a directory.
+        """
         self.df_pca = compute_pca(self.df_corrected.T, n_components=5)
         self.df_corrected = None
         self.batch_index = get_batch_info_from_sample_names(self.df.columns.tolist())
@@ -59,11 +67,19 @@ class Combiner:
         print(self.metadata, self.df.head)
 
     def read_data(self, meta: str, ibaq: str, organism="HUMAN", covariate=None):
-        """Read metadata and IbaqNorm locally.
-
-        param meta:
-        param ibaq:
         """
+        Reads and processes iBAQ and metadata files, filtering protein data by organism.
+
+        @:param meta (str): Path to the metadata CSV file.
+        @:param ibaq (str): Path to the iBAQ CSV file.
+        @:param organism (str, optional): Organism filter for protein names, default is "HUMAN".
+        @:param covariate (str, optional): Covariate to be used in data processing, default is None.
+
+        The method updates the instance's dataframe and metadata attributes by reading
+        the specified files, filtering the protein data to include only those ending
+        with the specified organism, and joining the metadata.
+        """
+
         self.covariate = covariate
         self.df = pd.read_csv(ibaq, index_col=0)
         self.metadata = pd.read_csv(meta)
