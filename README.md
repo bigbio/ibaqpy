@@ -114,7 +114,7 @@ You can install the package from code:
 Absolute quantification files have been stored in the following url:
 
 ```
-http://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/quantms-data/
+https://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/quantms-data/
 ```
 
 Inside each project reanalysis folder, the folder proteomicslfq contains the msstats input file with the structure `{Name of the project}.{Random uuid}.feature.parquet	`. 
