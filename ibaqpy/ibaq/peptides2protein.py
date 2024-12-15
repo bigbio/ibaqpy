@@ -57,7 +57,7 @@ def normalize_ibaq(res: DataFrame) -> DataFrame:
 
 def handle_nonstandard_aa(aa_seq: str):
     """
-    Any nonstandard amoni acid will be removed.
+    Any nonstandard amino acid will be removed.
     :param aa_seq: Protein sequences from multiple database.
     :return: One list contains nonstandard amoni acids and one remain sequence.
     """
