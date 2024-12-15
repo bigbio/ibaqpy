@@ -147,6 +147,19 @@ def calculate_weight_and_concentration(
         return tuple([copy, moles, weight])
 
     def proteomic_ruler(df):
+        """
+        Apply the proteomic ruler approach to calculate protein metrics for each condition.
+
+        This method calculates the copy number, moles, weight, and concentration of proteins
+        in a DataFrame by applying the proteomic ruler approach. It first computes the total
+        intensity of histones and uses it to normalize protein intensities. The results are
+        stored in new columns for each protein entry. The concentration is calculated based
+        on the total weight and a given concentration per cell (cpc).
+
+        @param df (pd.DataFrame): DataFrame containing protein data with normalized intensity and molecular weight.
+        @return pd.DataFrame: Updated DataFrame with calculated protein metrics for each condition.
+        """
+
         histone_intensity = df[df[PROTEIN_NAME].isin(histones_list)][NORM_INTENSITY].sum()
         histone_intensity = histone_intensity if histone_intensity > 0 else 1
         df[[COPYNUMBER, MOLES_NMOL, WEIGHT_NG]] = df.apply(
@@ -179,8 +192,13 @@ def peptides_to_protein(
     qc_report: str,
 ) -> None:
     """
-    This command computes the IBAQ values for a file output of peptides with the format described in
-    peptide_contaminants_file_generation.py.
+    Compute IBAQ values for peptides and generate a QC report.
+
+    This function processes peptide intensity data to compute IBAQ values,
+    optionally normalizes the data, and calculates protein metrics such as
+    weight and concentration using a proteomic ruler approach. It also
+    generates a QC report with distribution plots if verbose mode is enabled.
+
     :param min_aa: Minimum number of amino acids to consider a peptide.
     :param max_aa: Maximum number of amino acids to consider a peptide.
     :param fasta: Fasta file used to perform the peptide identification.
