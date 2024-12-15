@@ -6,7 +6,6 @@ from sklearn.impute import KNNImputer
 
 from ibaqpy.ibaq.ibaqpy_commons import PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION, NORM_INTENSITY
 
-
 def impute_missing_values(
     data: Optional[Union[pd.DataFrame, List[pd.DataFrame]]],
     n_neighbors=5,

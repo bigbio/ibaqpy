@@ -345,7 +345,7 @@ class Feature:
     @staticmethod
     def csv2parquet(csv):
         parquet_path = os.path.splitext(csv)[0] + ".parquet"
-        duckdb.read_csv(csv).to_parquet(parquet_path)
+        duckdb.read_csv(csv).to_parquet(parquet_path, index=False, compression="gzip")
 
     @staticmethod
     def get_label(labels: list):
