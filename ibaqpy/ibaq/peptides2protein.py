@@ -213,21 +213,32 @@ def peptides_to_protein(
 
     def get_average_nr_peptides_unique_bygroup(pdrow: Series) -> Series:
         """
-        Get the average intensity for protein groups
-        :param pdrow: peptide row
-        :return: average intensity
+        Calculate the average number of unique peptides per protein group.
+
+        This function computes the average number of unique peptides for a given
+        protein group by dividing the normalized intensity by the product of the
+        group size and the average unique peptide count. If no proteins are found
+        in the group or the sum of unique peptide counts is zero, it returns NaN.
+        :param pdrow: Series containing the protein group data.
+        :return: Series containing the average number of unique peptides per protein group.
         """
+
         nonlocal map_size
-        proteins = pdrow.name[0].split(";")
+        proteins_list = pdrow.name[0].split(";")
         summ = 0
-        for prot in proteins:
+        for prot in proteins_list:
             summ += uniquepepcounts[prot]
-        if len(proteins) > 0 and summ > 0:
-            return pdrow.NormIntensity / map_size[pdrow.name] / (summ / len(proteins))
+        if len(proteins_list) > 0 and summ > 0:
+            return pdrow.NormIntensity / map_size[pdrow.name] / (summ / len(proteins_list))
         # If there is no protein in the group, return np nan
         return np.nan  # type: ignore
 
     def get_protein_group_mw(group: str) -> float:
+        """
+        Calculate the molecular weight of a protein group.
+        :param group: Protein group.
+        :return: Molecular weight of the protein group.
+        """
         mw_list = [mw_dict[i] for i in group.split(";")]
         return sum(mw_list)
 
