@@ -1,12 +1,10 @@
 import click
 from ibaqpy.commands.features2peptides import features2parquet
-from ibaqpy.commands.merge_condition_files import merge_condition_generation
 from ibaqpy.commands.peptides2protein import peptides2protein
 from ibaqpy.commands.tsne_visualization import tsne_visualization
 import ibaqpy.__init__ as __init__
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
-
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option(
@@ -20,10 +18,8 @@ def cli():
     """
 
 cli.add_command(features2parquet)
-cli.add_command(merge_condition_generation)
 cli.add_command(peptides2protein)
 cli.add_command(tsne_visualization)
-
 
 def main():
     """

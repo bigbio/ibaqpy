@@ -127,7 +127,7 @@ E.g. http://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute
 #### Features to peptides
 
 ```asciidoc
-ibaqpy features2peptides -p tests/PXD003947/PXD003947-featrue.parquet -s tests/PXD003947/PXD003947.sdrf.tsv --remove_ids data/contaminants_ids.tsv --remove_decoy_contaminants --remove_low_frequency_peptides --output tests/PXD003947/PXD003947-peptides-norm.csv
+ibaqpy features2peptides -p tests/PXD003947/PXD003947-feature.parquet -s tests/PXD003947/PXD003947.sdrf.tsv --remove_ids data/contaminants_ids.tsv --remove_decoy_contaminants --remove_low_frequency_peptides --output tests/PXD003947/PXD003947-peptides-norm.csv
 ```
 ```asciidoc
 Usage: features2peptides.py [OPTIONS]
