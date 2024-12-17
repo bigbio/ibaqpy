@@ -24,7 +24,7 @@ jobs:
 
     - name: Setup conda-build and anaconda-client
       run: |
-         mamba install -q conda-build anaconda-client conda-verify
+        mamba install -q conda-build anaconda-client conda-verify
 
     - name: Build package
       run: |

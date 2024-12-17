@@ -11,6 +11,7 @@ from ibaqpy.ibaq.ibaqpy_commons import (
     SAMPLE_ID,
 )
 
+
 def remove_samples_low_protein_number(ibaq_df: pd.DataFrame, min_protein_num: int) -> pd.DataFrame:
     """
     This functions takes an ibaq Dataframe with the following columns:
@@ -78,7 +79,7 @@ def remove_missing_values(
         raise ValueError(f"The expression column '{expression_column}' is not in the DataFrame.")
 
     # Initial number of samples
-    initial_sample_count = ibaq_df['SampleID'].nunique()
+    initial_sample_count = ibaq_df["SampleID"].nunique()
     logging.info(f"Initial number of samples: {initial_sample_count}")
 
     # Create a pivot table to organize data by ProteinName and SampleID
