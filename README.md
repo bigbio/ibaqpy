@@ -48,6 +48,11 @@ As mentioned before, ibaq values are calculated by dividing the total precursor 
 
 The output of quantms is converted into quantms.io feature file. quantms.io provides a unified format for processing report files, including peptide intensity information. In quantms.io, you can use the `convert-ibaq` command, providing a **feature file** and an **SDRF file**, to inject experimental information into the feature file, generating an ibaqpy use case.
 
+```asciidoc
+>$ quantmsioc convert-feature --sdrf_file PXD004452-Hella-trypsin.sdrf.tsv --msstats_file PXD004452-Hella-trypsin.sdrf_openms_design_msstats_in.csv --mztab_file PXD004452-Hella-trypsin.sdrf_openms_design_openms.mzTab --file_num 30 --output_folder res --duckdb_max_memory 64GB --output_prefix_file PXD004452
+>$ quantmsioc convert-ibaq --feature_file res/PXD004452-6c224f5a-7c1f-46f9-9dae-1541baeef8fe.feature.parquet --sdrf_file PXD004452-Hella-trypsin.sdrf.tsv --output_folder ibaq --output_prefix_file PXD004452
+```
+
 A feature in quantms.io is the combination of the following columns: 
 
 - `ProteinName`: Protein name
