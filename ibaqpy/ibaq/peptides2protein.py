@@ -29,6 +29,7 @@ from ibaqpy.ibaq.ibaqpy_commons import (
     CONCENTRATION_NM,
     MOLES_NMOL,
     WEIGHT_NG,
+    is_parquet,
     plot_box_plot,
     plot_distributions,
     get_accession,
@@ -369,7 +370,10 @@ def peptides_to_protein(
             )
 
     # load data
-    data = pd.read_csv(peptides)
+    if is_parquet(peptides):
+        data = pd.read_parquet(peptides)
+    else:
+        data = pd.read_csv(peptides)
     data[NORM_INTENSITY] = data[NORM_INTENSITY].astype(float)
     data = data.dropna(subset=[NORM_INTENSITY])
     data = data[data[NORM_INTENSITY] > 0]

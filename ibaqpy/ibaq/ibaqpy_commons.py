@@ -198,3 +198,9 @@ def load_feature(feature_path: str) -> pd.DataFrame:
         raise SystemExit(
             f"{suffix} is not allowed as input, please provide msstats_in or feature parquet."
         )
+
+
+def is_parquet(path: str) -> bool:
+    with open(path, 'rb') as fh:
+        header = fh.read(4)
+    return header == b"PAR1"

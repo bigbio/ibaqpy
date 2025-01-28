@@ -18,6 +18,10 @@ class OrganismDescription:
     def get(cls, key, default=None) -> "OrganismDescription | None":
         return cls.registry.get(key.upper(), default)
 
+    @classmethod
+    def registered_organisms(cls):
+        return cls.registry.keys()
+
     def __post_init__(self):
         self.registry[self.name.upper()] = self
 
