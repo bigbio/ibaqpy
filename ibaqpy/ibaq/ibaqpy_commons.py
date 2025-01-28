@@ -5,20 +5,6 @@ import pandas as pd
 import seaborn as sns
 from matplotlib import pyplot as plt
 
-PARQUET_COLUMNS = [
-    "pg_accessions",
-    "peptidoform",
-    "sequence",
-    "precursor_charge",
-    "channel",
-    "condition",
-    "biological_replicate",
-    "run",
-    "fraction",
-    "intensity",
-    "reference_file_name",
-    "sample_accession",
-]
 
 PROTEIN_NAME = "ProteinName"
 PEPTIDE_SEQUENCE = "PeptideSequence"
@@ -53,6 +39,22 @@ GLOBALMEDIAN = "globalMedian"
 CONDITIONMEDIAN = "conditionMedian"
 
 
+PARQUET_COLUMNS = [
+    "pg_accessions",
+    "peptidoform",
+    "sequence",
+    "precursor_charge",
+    "channel",
+    "condition",
+    "biological_replicate",
+    "run",
+    "fraction",
+    "intensity",
+    "reference_file_name",
+    "sample_accession",
+]
+
+
 parquet_map = {
     "pg_accessions": PROTEIN_NAME,
     "peptidoform": PEPTIDE_SEQUENCE,
@@ -66,74 +68,6 @@ parquet_map = {
     "intensity": INTENSITY,
     "reference_file_name": REFERENCE,
     "sample_accession": SAMPLE_ID,
-}
-
-TMT16plex = {
-    "TMT126": 1,
-    "TMT127N": 2,
-    "TMT127C": 3,
-    "TMT128N": 4,
-    "TMT128C": 5,
-    "TMT129N": 6,
-    "TMT129C": 7,
-    "TMT130N": 8,
-    "TMT130C": 9,
-    "TMT131N": 10,
-    "TMT131C": 11,
-    "TMT132N": 12,
-    "TMT132C": 13,
-    "TMT133N": 14,
-    "TMT133C": 15,
-    "TMT134N": 16,
-}
-
-TMT11plex = {
-    "TMT126": 1,
-    "TMT127N": 2,
-    "TMT127C": 3,
-    "TMT128N": 4,
-    "TMT128C": 5,
-    "TMT129N": 6,
-    "TMT129C": 7,
-    "TMT130N": 8,
-    "TMT130C": 9,
-    "TMT131N": 10,
-    "TMT131C": 11,
-}
-
-TMT10plex = {
-    "TMT126": 1,
-    "TMT127N": 2,
-    "TMT127C": 3,
-    "TMT128N": 4,
-    "TMT128C": 5,
-    "TMT129N": 6,
-    "TMT129C": 7,
-    "TMT130N": 8,
-    "TMT130C": 9,
-    "TMT131": 10,
-}
-
-TMT6plex = {
-    "TMT126": 1,
-    "TMT127": 2,
-    "TMT128": 3,
-    "TMT129": 4,
-    "TMT130": 5,
-    "TMT131": 6,
-}
-
-ITRAQ4plex = {"ITRAQ114": 1, "ITRAQ115": 2, "ITRAQ116": 3, "ITRAQ117": 4}
-
-ITRAQ8plex = {
-    "ITRAQ113": 1,
-    "ITRAQ114": 2,
-    "ITRAQ115": 3,
-    "ITRAQ116": 4,
-    "ITRAQ117": 5,
-    "ITRAQ118": 6,
-    "ITRAQ119": 7,
-    "ITRAQ121": 8,
 }
 
 
