@@ -1,5 +1,6 @@
 import click
 from ibaqpy.ibaq.peptides2protein import peptides_to_protein
+from ibaqpy.model.organism_metadata import OrganismDescription
 
 
 @click.command("peptides2protein", short_help="Compute IBAQ values for proteins")
@@ -33,9 +34,14 @@ from ibaqpy.ibaq.peptides2protein import peptides_to_protein
 @click.option("--max_aa", help="Maximum number of amino acids to consider a peptide", default=30)
 @click.option("-t", "--tpa", help="Whether calculate TPA", is_flag=True)
 @click.option("-r", "--ruler", help="Whether to use ProteomicRuler", is_flag=True)
-@click.option("-i", "--ploidy", help="Ploidy number", default=2)
-@click.option("-m", "--organism", help="Organism source of the data", default="human")
-@click.option("-c", "--cpc", help="Cellular protein concentration(g/L)", default=200)
+@click.option("-i", "--ploidy", help="Ploidy number (default: 2)", default=2)
+@click.option(
+    "-m",
+    "--organism",
+    help="Organism source of the data (default: human)",
+    type=click.Choice(sorted(map(str.lower, OrganismDescription.registered_organisms())), case_sensitive=False),
+    default="human")
+@click.option("-c", "--cpc", help="Cellular protein concentration(g/L) (default: 200)", default=200)
 @click.option("-o", "--output", help="Output file with the proteins and ibaq values")
 @click.option(
     "--verbose",

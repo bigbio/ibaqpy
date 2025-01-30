@@ -8,7 +8,15 @@
 
 iBAQ (Intensity-Based Absolute Quantification) determines the abundance of a protein by dividing the total precursor intensities by the number of theoretically observable peptides of the protein [manuscript here](https://pubmed.ncbi.nlm.nih.gov/16219938/). ibaqpy is a Python package that computes iBAQ values starting from a feature parquet from [quantmsio](https://github.com/bigbio/quantms.io) and a [SDRF](https://github.com/bigbio/proteomics-sample-metadata) file. In addition, the package computes other ibaq values including rIBAQ, log2, and ppb.
 
-ibaqpy also allows computing the TPA value (Total Protein Approach). TPA is determined by summing peptide intensities of each protein and then dividing by the molecular mass to determine the relative concentration of each protein. By using [ProteomicRuler](https://www.sciencedirect.com/science/article/pii/S1535947620337749), it is possible to calculate the protein copy number and absolute concentration. The OpenMS tool was used to calculate the theoretical molecular mass of each protein. Similar to the calculation of IBAQ, the TPA value of protein-group was the sum of its intensity divided by the sum of the theoretical molecular mass.
+ibaqpy also allows computing the TPA value (Total Protein Approach), protein copy number, and protein concentration. TPA is determined by summing peptide intensities of each protein and then dividing by the molecular mass to determine the relative concentration of each protein. By using [ProteomicRuler](https://www.sciencedirect.com/science/article/pii/S1535947620337749), it is possible to calculate the protein copy number and absolute concentration. The OpenMS tool was used to calculate the theoretical molecular mass of each protein. Similar to the calculation of IBAQ, the TPA value of protein-group was the sum of its intensity divided by the sum of the theoretical molecular mass.
+
+The protein copy calculation follows the following formula:
+
+```
+protein copies per cell = protein MS-signal *  (avogadro / molecular mass) * (DNA mass / histone MS-signal)
+```
+
+For cellular protein copy number calculation, the uniprot accession of histones was obtained from species first, and the molecular mass of DNA was calculated. Then the dataframe was grouped according to different conditions, and the copy number, molar number and mass of proteins were calculated. In the calculation of protein concentration, the volume is calculated according to the cell protein concentration first, and then the protein mass is divided by the volume to calculate the intracellular protein concentration.
 
 ### Overview of ibaq-base values computation
 
@@ -20,7 +28,7 @@ As mentioned before, ibaq values are calculated by dividing the total precursor 
 
 > Note: If protein-group exists in the peptide intensity dataframe, the intensity of all proteins in the protein-group is summed based on the above steps, and then divided by the number of proteins in the protein-group.
 
-### Other normalized IBAQ values  
+### Other values  
 
 - `IbaqNorm` - normalize the ibaq values using the total ibaq of the sample `ibaq / sum(ibaq)`, the sum is applied for proteins in the same _sample + condition_.
 
@@ -28,25 +36,40 @@ As mentioned before, ibaq values are calculated by dividing the total precursor 
 
 - `IbaqPpb` - The resulted IbaqNorm is multiplied by 100M `IbaqNorm * 100'000'000`. This method was developed originally [by PRIDE Team](https://www.nature.com/articles/s41597-021-00890-2).
 
+- `TPA` - TPA value is calculated as `NormIntensity / MolecularWeight`
+
+- `CopyNumber` - Protein copy number is calculated by a proteomic ruler approach.
+
+- `Concentration[nM]` - Protein concentration is calculated using the total weight and a provided concentration per cell (cpc).
+
 ### From quantms to Ibaq values
 
 ![Ibaq](./data/ibaqpy.png "IBAQ")
 
-The output of quantms is converted into quantms.io feature file. A feature in quantms.io is the combination of the following columns: 
+The output of quantms is converted into quantms.io feature file. quantms.io provides a unified format for processing report files, including peptide intensity information. In quantms.io, you can use the `convert-ibaq` command, providing a **feature file** and an **SDRF file**, to inject experimental information into the feature file, generating an ibaqpy use case.
+
+```asciidoc
+>$ quantmsioc convert-feature --sdrf_file PXD004452-Hella-trypsin.sdrf.tsv --msstats_file PXD004452-Hella-trypsin.sdrf_openms_design_msstats_in.csv --mztab_file PXD004452-Hella-trypsin.sdrf_openms_design_openms.mzTab --file_num 30 --output_folder res --duckdb_max_memory 64GB --output_prefix_file PXD004452
+>$ quantmsioc convert-ibaq --feature_file res/PXD004452-6c224f5a-7c1f-46f9-9dae-1541baeef8fe.feature.parquet --sdrf_file PXD004452-Hella-trypsin.sdrf.tsv --output_folder ibaq --output_prefix_file PXD004452
+```
+
+A feature in quantms.io is the combination of the following columns: 
 
 - `ProteinName`: Protein name
 - `Peptidoform`: Peptide sequence including post-translation modifications `(e.g. .(Acetyl)ASPDWGYDDKN(Deamidated)GPEQWSK)`
+- `PEPTIDE_CANONICAL`: Canonical peptide sequence
 - `PrecursorCharge`: Precursor charge
-- `IsotopeLabelType`: Isotope label type
+- `Channel`: Lable channel
 - `Condition`: Condition label `(e.g. heart)`
 - `BioReplicate`: Biological replicate index `(e.g. 1)`
 - `Run`: Run index `(e.g. 1)`
 - `Fraction`: Fraction index `(e.g. 1)`
 - `Intensity`: Peptide intensity
+- `Reference`: reference file
 - `SampleID`: Sample ID `(e.g. PXD003947-Sample-3)`
-- `StudyID`: Study ID `(e.g. PXD003947)`. In most of the cases, the study ID is the same as the ProteomeXchange ID.
 
-In summary, each feature is the unique combination of a peptide sequence including modifications (peptidoform), precursor charge state, condition, biological replicate, run, fraction, isotopic label type, and a given intensity. In order to go from these features into protein ibaq values, the package does the following: 
+
+In summary, each feature is the unique combination of a peptide sequence including modifications (peptidoform), precursor charge state, condition, biological replicate, run, fraction, reference_file_name, sample_accession, and a given intensity. In order to go from these features into protein ibaq values, the package does the following: 
 
 #### Data preprocessing
 
@@ -167,14 +190,6 @@ Options:
 ```asciidoc
 ibaqpy peptides2protein -f Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta -p PXD017834-peptides.csv -e Trypsin -n -t -r --ploidy 2 --cpc 200 --organism human --output PXD003947.tsv --verbose
 ``` 
-
-This command provides optional parameters to calculate TPA and protein copy. The protein copy calculation follows the following formula:
-
-```
-protein copies per cell = protein MS-signal *  (avogadro / molecular mass) * (DNA mass / histone MS-signal)
-```
-
-For cellular protein copy number calculation, the uniprot accession of histones was obtained from species first, and the molecular mass of DNA was calculated. Then the dataframe was grouped according to different conditions, and the copy number, molar number and mass of proteins were calculated. In the calculation of protein concentration, the volume is calculated according to the cell protein concentration first, and then the protein mass is divided by the volume to calculate the intracellular protein concentration.
 
 ```asciidoc
 Usage: peptides2protein [OPTIONS]

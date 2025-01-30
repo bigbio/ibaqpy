@@ -20,9 +20,9 @@ def test_ibaq_compute():
         "ploidy": 2,
         "cpc": 200,
         "organism": "human",
-        "output": str(TESTS_DIR / "example/PXD017834-ibaq.tsv"),
+        "output": str(TESTS_DIR / "example" / "out" / "PXD017834-ibaq.tsv"),
         "verbose": True,
-        "qc_report": str(TESTS_DIR / "example/QCprofile.pdf"),
+        "qc_report": str(TESTS_DIR / "example/out/QCprofile.pdf"),
     }
     print(args)
     peptides_to_protein(**args)

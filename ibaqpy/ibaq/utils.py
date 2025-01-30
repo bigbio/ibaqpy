@@ -6,7 +6,7 @@ from typing import List, Optional, Union
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from inmoose.pycombat import pycombat_norm
+# from inmoose.pycombat import pycombat_norm
 from sklearn.cluster._hdbscan import hdbscan
 from sklearn.decomposition import PCA
 
@@ -341,6 +341,7 @@ def apply_batch_correction(
         if len(df.columns) != len(covs):
             raise ValueError("The number of samples should match the number of covariates.")
 
+    from inmoose.pycombat import pycombat_norm
     df_co = pycombat_norm(counts=df, batch=batch, covar_mod=covs, mean_only=False)
     return df_co
 
