@@ -1,7 +1,7 @@
 import os
 import re
 
-from typing import Iterator
+from typing import Iterator, Optional, Union
 
 import pandas as pd
 import numpy as np
@@ -57,7 +57,7 @@ def get_canonical_peptide(peptide_sequence: str) -> str:
     return clean_peptide
 
 
-def analyse_sdrf(sdrf_path: str) -> tuple[int, QuantificationCategory, list[str], IsobaricLabel | None]:
+def analyse_sdrf(sdrf_path: str) -> tuple[int, QuantificationCategory, list[str], Optional[IsobaricLabel]]:
     """
     This function is aimed to parse SDRF and return four objects:
     1. sdrf_df: A dataframe with channels and references annoted.
@@ -119,7 +119,7 @@ def remove_protein_by_ids(
     return dataset[~dataset[protein_field].str.contains(cregex, regex=True)]
 
 
-def reformat_quantms_feature_table_quant_labels(data_df: pd.DataFrame, label: QuantificationCategory, choice: IsobaricLabel | None) -> pd.DataFrame:
+def reformat_quantms_feature_table_quant_labels(data_df: pd.DataFrame, label: QuantificationCategory, choice: Optional[IsobaricLabel]) -> pd.DataFrame:
     """
     Reformat (a subset of) a ``quantms`` feature table for consistent processing.
 
@@ -262,10 +262,10 @@ def sum_peptidoform_intensities(dataset: pd.DataFrame) -> pd.DataFrame:
 
 
 class Feature:
-    labels: list[str] | None
-    label: QuantificationCategory | None
-    choice: IsobaricLabel | None
-    technical_repetitions: int | None
+    labels: Optional[list[str]]
+    label: Optional[QuantificationCategory]
+    choice: Optional[IsobaricLabel]
+    technical_repetitions: Optional[int]
 
     def __init__(self, database_path: str):
         if os.path.exists(database_path):
@@ -281,7 +281,7 @@ class Feature:
         return df.rename({"protein_accessions": "pg_accessions", "charge": "precursor_charge"}, axis=1)
 
     @property
-    def experimental_inference(self) -> tuple[int, QuantificationCategory, list[str], IsobaricLabel | None]:
+    def experimental_inference(self) -> tuple[int, QuantificationCategory, list[str], Optional[IsobaricLabel]]:
         self.labels = self.get_unique_labels()
         self.label, self.choice = QuantificationCategory.classify(self.labels)
         self.technical_repetitions = self.get_unique_tec_reps()

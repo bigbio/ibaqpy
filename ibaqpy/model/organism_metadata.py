@@ -2,7 +2,7 @@ import json
 
 from dataclasses import dataclass, field
 from importlib.resources import open_text
-from typing import ClassVar
+from typing import ClassVar, Optional
 
 
 @dataclass
@@ -15,7 +15,7 @@ class OrganismDescription:
     histone_entries: list[str] = field(default_factory=list, repr=False)
 
     @classmethod
-    def get(cls, key, default=None) -> "OrganismDescription | None":
+    def get(cls, key, default=None) -> "Optional[OrganismDescription]":
         return cls.registry.get(key.upper(), default)
 
     @classmethod

@@ -2,7 +2,7 @@ from enum import Enum, auto
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import ClassVar, Iterator
+from typing import ClassVar, Iterator, Union, Optional
 
 
 class QuantificationCategory(Enum):
@@ -20,8 +20,8 @@ class QuantificationCategory(Enum):
 
     @classmethod
     def classify(
-        cls, labels: list[str] | set[str]
-    ) -> tuple["QuantificationCategory | None", "IsobaricLabel | None"]:
+        cls, labels: Union[list[str], set[str]]
+    ) -> tuple["Optional[QuantificationCategory]", "Optional[IsobaricLabel]"]:
         label_scheme = None
         label_category = None
 

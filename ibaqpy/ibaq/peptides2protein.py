@@ -1,6 +1,6 @@
 import math
 
-from typing import List
+from typing import List, Union, Optional
 
 import pandas as pd
 import numpy as np
@@ -10,7 +10,6 @@ from matplotlib.backends.backend_pdf import PdfPages
 
 from pyopenms import AASequence, ProteaseDigestion, FASTAFile
 
-from ibaqpy.data.data import histones
 from ibaqpy.model.organism_metadata import OrganismDescription
 
 
@@ -258,9 +257,9 @@ class PeptideProteinMapper:
 
     def __init__(
         self,
-        unique_peptide_counts: dict[str, int] | None = None,
-        map_size: dict[str, int] | None = None,
-        protein_mass_map: dict[str, float] | None = None,
+        unique_peptide_counts: Optional[dict[str, int]] = None,
+        map_size: Optional[dict[str, int]] = None,
+        protein_mass_map: Optional[dict[str, float]] = None,
     ):
         self.unique_peptide_counts = unique_peptide_counts or {}
         self.map_size = map_size or {}
@@ -284,7 +283,7 @@ class PeptideProteinMapper:
             val = self._peptide_protein_ratio[protein_group] = total / len(proteins_list)
         return val
 
-    def get_average_nr_peptides_unique_by_group(self, pdrow: Series) -> float | Series:
+    def get_average_nr_peptides_unique_by_group(self, pdrow: Series) -> Union[float, Series]:
         """
         Calculate the average number of unique peptides per protein group.
 

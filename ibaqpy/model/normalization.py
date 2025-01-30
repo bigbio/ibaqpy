@@ -14,7 +14,7 @@ class FeatureNormalizationMethod(Enum):
     Median = auto()
     Max = auto()
     Global = auto()
-    MinMax = auto()
+    MaxMin = auto()
     IQR = auto()
 
     @classmethod
@@ -106,7 +106,7 @@ def global_normalize(df, *args, **kwargs):
     return df / df.sum()
 
 
-@FeatureNormalizationMethod.MinMax.register_replicate_fn
+@FeatureNormalizationMethod.MaxMin.register_replicate_fn
 def max_min_normalize(df, *args, **kwargs):
     min_ = df.min()
     return (df - min_) / (df.max() - min_)
