@@ -10,7 +10,7 @@ import pyarrow as pa
 from pyarrow import parquet as pq
 
 
-class WriteCSVThread(Thread):
+class WriteCSVTask(Thread):
     path: str
 
     write_options: dict[str, Any]
@@ -40,6 +40,19 @@ class WriteCSVThread(Thread):
         self._queue.put(None)
         self.join()
 
+    def _write(self, table: pd.DataFrame):
+        table.to_csv(
+            self.path,
+            header=not self._wrote_header,
+            mode="a+" if self._wrote_header else "w",
+            index=False,
+            **self.write_options,
+        )
+        self._wrote_header = True
+
+    def _close(self):
+        pass
+
     def run(self):
         while True:
             try:
@@ -50,17 +63,10 @@ class WriteCSVThread(Thread):
             if table is None:
                 break
 
-            table.to_csv(
-                self.path,
-                header=not self._wrote_header,
-                mode="a+" if self._wrote_header else "w",
-                index=False,
-                **self.write_options
-            )
-            self._wrote_header = True
+            self._write(table)
 
 
-class WriteParquetThread(Thread):
+class WriteParquetTask(Thread):
     path: str
     metadata: dict[str, Any]
 
@@ -90,6 +96,18 @@ class WriteParquetThread(Thread):
         self._queue.put(None)
         self.join()
 
+    def _close(self):
+        self._writer.add_key_value_metadata(self.metadata)
+        self._writer.close()
+
+    def _write(self, table: pd.DataFrame):
+        if self._schema is None:
+            self._schema = pa.Schema.from_pandas(table, preserve_index=False)
+            self._writer = pq.ParquetWriter(self.path, schema=self._schema)
+
+        arrow_table = pa.Table.from_pandas(table, preserve_index=False)
+        self._writer.write_table(arrow_table)
+
     def run(self):
         while True:
             try:
@@ -100,12 +118,6 @@ class WriteParquetThread(Thread):
             if table is None:
                 break
 
-            if self._schema is None:
-                self._schema = pa.Schema.from_pandas(table, preserve_index=False)
-                self._writer = pq.ParquetWriter(self.path, schema=self._schema)
+            self._write(table)
 
-            arrow_table = pa.Table.from_pandas(table, preserve_index=False)
-            self._writer.write_table(arrow_table)
-
-        self._writer.add_key_value_metadata(self.metadata)
-        self._writer.close()
+        self._close()

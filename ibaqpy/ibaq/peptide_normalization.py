@@ -27,7 +27,7 @@ from ibaqpy.ibaq.ibaqpy_commons import (
     parquet_map,
 )
 
-from .write_queue import WriteParquetThread, WriteCSVThread
+from .write_queue import WriteParquetTask, WriteCSVTask
 
 
 def parse_uniprot_accession(uniprot_id: str) -> str:
@@ -488,12 +488,12 @@ def peptide_normalization(
     # Incremental CSV writing
     write_csv = True
     if write_csv:
-        write_csv_task = WriteCSVThread(output)
+        write_csv_task = WriteCSVTask(output)
         write_csv_task.start()
 
     # Incremental Parquet writing
     if save_parquet:
-        writer_parquet_task = WriteParquetThread(output)
+        writer_parquet_task = WriteParquetTask(output)
         writer_parquet_task.start()
 
     for samples, df in feature.iter_samples():
