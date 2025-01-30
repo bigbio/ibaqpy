@@ -35,6 +35,11 @@ from ibaqpy.ibaq.ibaqpy_commons import (
 )
 
 
+# Proteomic Ruler constants
+AVAGADRO: float = 6.02214129e23
+AVERAGE_BASE_PAIR_MASS: float = 617.96  # 615.8771
+
+
 def normalize(group):
     """
     Normalize the ibaq values using the total ibaq of the sample.
@@ -105,10 +110,6 @@ def extract_fasta(fasta: str, enzyme: str, proteins: List, min_aa: int, max_aa: 
     return uniquepepcounts, mw_dict, found_proteins
 
 
-AVAGADRO: float = 6.02214129e23
-AVERAGE_BASE_PAIR_MASS: float = 617.96  # 615.8771
-
-
 class ConcentrationWeightByProteomicRuler:
     """
     TODO
@@ -168,83 +169,6 @@ class ConcentrationWeightByProteomicRuler:
     def apply_by_condition(self, protein_intensities: pd.DataFrame):
         protein_intensities = protein_intensities.groupby([CONDITION]).apply(self)
         return protein_intensities
-
-
-# calculate protein weight(ng) and concentration(nM)
-def calculate_weight_and_concentration(
-    res: pd.DataFrame, ploidy: int, cpc: float, organism: str, histones: dict
-):
-    """
-    Calculate protein copy number, moles, weight, and concentration for a given dataset.
-
-    This function uses a proteomic ruler approach to estimate the copy number, moles,
-    and weight of proteins in a dataset based on their normalized intensity and molecular
-    weight. It also calculates the concentration in nM using the total weight and a
-    provided concentration per cell (cpc).
-
-    @param res: DataFrame containing protein data with normalized intensity and molecular weight.
-    @:param ploidy (int): Ploidy level of the organism.
-    @:param cpc (float): Concentration per cell.
-    @:param organism (str): Name of the organism.
-    @:param histones (dict): Dictionary containing histone information for different organisms.
-    @:return pd.DataFrame: Updated DataFrame with calculated copy number, moles, weight,
-             and concentration for each protein.
-    """
-    avogadro = 6.02214129e23
-    average_base_pair_mass = 617.96  # 615.8771
-    organism = organism.lower()
-    histone_df = pd.DataFrame(histones).T
-    target_histones = histone_df[histone_df["name"] == organism.lower()]
-    genome_size = target_histones["genome_size"].values[0]
-    histones_list = target_histones["histone_entries"].values[0]
-    dna_mass = ploidy * genome_size * average_base_pair_mass / avogadro
-
-    def calculate(protein_intensity, histone_intensity, mw):
-        """
-        Calculate the copy number, moles, and weight of a protein.
-
-        This function estimates the copy number, moles, and weight of a protein
-        based on its intensity, histone intensity, and molecular weight (mw).
-
-        @param protein_intensity (float): The intensity of the protein.
-        @param histone_intensity (float): The summed intensity of histones.
-        @param mw (float): The molecular weight of the protein.
-        @return tuple: A tuple containing the calculated copy number, moles (in nmol),
-        """
-
-        copy = (protein_intensity / histone_intensity) * dna_mass * avogadro / mw
-        # The number of moles is equal to the number of particles divided by Avogadro's constant
-        moles = copy * 1e9 / avogadro  # unit nmol
-        weight = moles * mw  # unit ng
-        return tuple([copy, moles, weight])
-
-    def proteomic_ruler(df):
-        """
-        Apply the proteomic ruler approach to calculate protein metrics for each condition.
-
-        This method calculates the copy number, moles, weight, and concentration of proteins
-        in a DataFrame by applying the proteomic ruler approach. It first computes the total
-        intensity of histones and uses it to normalize protein intensities. The results are
-        stored in new columns for each protein entry. The concentration is calculated based
-        on the total weight and a given concentration per cell (cpc).
-
-        @param df (pd.DataFrame): DataFrame containing protein data with normalized intensity and molecular weight.
-        @return pd.DataFrame: Updated DataFrame with calculated protein metrics for each condition.
-        """
-
-        histone_intensity = df[df[PROTEIN_NAME].isin(histones_list)][NORM_INTENSITY].sum()
-        histone_intensity = histone_intensity if histone_intensity > 0 else 1
-        df[[COPYNUMBER, MOLES_NMOL, WEIGHT_NG]] = df.apply(
-            lambda x: calculate(x[NORM_INTENSITY], histone_intensity, x[MOLECULARWEIGHT]),
-            axis=1,
-            result_type="expand",
-        )
-        volume = df[WEIGHT_NG].sum() * 1e-9 / cpc  # unit L
-        df[CONCENTRATION_NM] = df[MOLES_NMOL] / volume  # unit nM
-        return df
-
-    res = res.groupby([CONDITION]).apply(proteomic_ruler)
-    return res
 
 
 class PeptideProteinMapper:
