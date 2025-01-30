@@ -14,7 +14,7 @@ class FeatureNormalizationMethod(Enum):
     Median = auto()
     Max = auto()
     Global = auto()
-    MaxMin = auto()
+    Max_Min = auto()
     IQR = auto()
 
     @classmethod
@@ -106,7 +106,7 @@ def global_normalize(df, *args, **kwargs):
     return df / df.sum()
 
 
-@FeatureNormalizationMethod.MaxMin.register_replicate_fn
+@FeatureNormalizationMethod.Max_Min.register_replicate_fn
 def max_min_normalize(df, *args, **kwargs):
     min_ = df.min()
     return (df - min_) / (df.max() - min_)
@@ -121,6 +121,8 @@ _peptide_method_registry = {}
 
 
 class PeptideNormalizationMethod(Enum):
+    NONE = auto()
+
     GlobalMedian = auto()
     ConditionMedian = auto()
 
@@ -158,3 +160,8 @@ def condition_median(dataset_df, sample: str, med_map: dict):
     dataset_df.loc[:, NORM_INTENSITY] = (
         dataset_df[NORM_INTENSITY] / med_map[con][sample]
     )
+
+
+@PeptideNormalizationMethod.NONE.register_replicate_fn
+def peptide_no_normalization(dataset_df, sample, med_map):
+    return dataset_df

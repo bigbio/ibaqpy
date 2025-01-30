@@ -13,12 +13,15 @@ def test_feature_assembly():
         "remove_ids": None,
         "remove_decoy_contaminants": True,
         "remove_low_frequency_peptides": True,
-        "output": str(TESTS_DIR / "example/PXD017834-peptides-norm.csv"),
+        "output": str(TESTS_DIR / "example" / "out" / "PXD017834-peptides-norm.csv"),
         "skip_normalization": False,
         "nmethod": "median",
-        "pnmethod": "max_min",
+        "pnmethod": "none",
         "log2": True,
         "save_parquet": True,
     }
     print(args)
+    out = Path(args['output'])
+    if out.exists():
+        out.unlink()
     peptide_normalization(**args)

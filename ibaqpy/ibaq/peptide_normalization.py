@@ -52,7 +52,7 @@ def get_canonical_peptide(peptide_sequence: str) -> str:
     :param peptide_sequence: peptide sequence with mods
     :return: peptide sequence
     """
-    clean_peptide = re.sub("[\(\[].*?[\)\]]", "", peptide_sequence)
+    clean_peptide = re.sub(r"[\(\[].*?[\)\]]", "", peptide_sequence)
     clean_peptide = clean_peptide.replace(".", "").replace("-", "")
     return clean_peptide
 
@@ -480,6 +480,7 @@ def peptide_normalization(
     if remove_low_frequency_peptides:
         low_frequency_peptides = feature.low_frequency_peptides
 
+    med_map = {}
     if not skip_normalization and peptide_normalization == PeptideNormalizationMethod.GlobalMedian:
         med_map = feature.get_median_map()
     elif not skip_normalization and peptide_normalization == PeptideNormalizationMethod.ConditionMedian:
