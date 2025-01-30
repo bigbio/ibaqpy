@@ -1,7 +1,7 @@
 import os
 import re
 
-from typing import Iterator, Optional, Union
+from typing import Iterator, Optional
 
 import pandas as pd
 import numpy as np

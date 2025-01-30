@@ -19,7 +19,7 @@ class WriteCSVTask(Thread):
     _wrote_header: bool
 
     def __init__(
-        self, path: str, daemon: bool = True, write_options: dict | None = None, **kwargs
+        self, path: str, daemon: bool = True, write_options: dict = None, **kwargs
     ):
         super().__init__(daemon=daemon)
         if write_options is None:
@@ -56,7 +56,7 @@ class WriteCSVTask(Thread):
     def run(self):
         while True:
             try:
-                table: pd.DataFrame | None = self._queue.get(True)
+                table: pd.DataFrame = self._queue.get(True)
             except Empty:
                 continue
 
@@ -72,10 +72,10 @@ class WriteParquetTask(Thread):
 
     _queue: Queue
 
-    _schema: pa.Schema | None
-    _writer: pq.ParquetWriter | None
+    _schema: pa.Schema
+    _writer: pq.ParquetWriter
 
-    def __init__(self, path: str, daemon: bool = True, metadata: dict | None=None, **kwargs):
+    def __init__(self, path: str, daemon: bool = True, metadata: dict=None, **kwargs):
         super().__init__(daemon=daemon)
 
         if metadata is None:
@@ -111,7 +111,7 @@ class WriteParquetTask(Thread):
     def run(self):
         while True:
             try:
-                table: pd.DataFrame | None = self._queue.get(True)
+                table: pd.DataFrame = self._queue.get(True)
             except Empty:
                 continue
 
