@@ -201,6 +201,9 @@ def load_feature(feature_path: str) -> pd.DataFrame:
 
 
 def is_parquet(path: str) -> bool:
-    with open(path, 'rb') as fh:
-        header = fh.read(4)
-    return header == b"PAR1"
+    try:
+        with open(path, 'rb') as fh:
+            header = fh.read(4)
+        return header == b"PAR1"
+    except IOError:
+        return False
