@@ -44,7 +44,7 @@ As mentioned before, ibaq values are calculated by dividing the total precursor 
 
 ### From quantms to Ibaq values
 
-![Ibaq](./data/ibaqpy.png "IBAQ")
+![Ibaq](./data/ibaqpy.drawio.png "IBAQ")
 
 The output of quantms is converted into quantms.io feature file. quantms.io provides a unified format for processing report files, including peptide intensity information. In quantms.io, you can use the `convert-ibaq` command, providing a **feature file** and an **SDRF file**, to inject experimental information into the feature file, generating an ibaqpy use case.
 
