@@ -226,4 +226,5 @@ Wang H, Dai C, Pfeuffer J, Sachsenberg T, Sanchez A, Bai M, Perez-Riverol Y. Tis
 - [Julianus Pfeuffer](@jpfeuffer)
 - [Yasset Perez-Riverol](@ypriverol)
 - [Hong Wang](@WangHong007)
-- [Ping Zheng](@zprobot) 
+- [Ping Zheng](@zprobot)
+- [Joshua Klein](@mobiusklein) 
