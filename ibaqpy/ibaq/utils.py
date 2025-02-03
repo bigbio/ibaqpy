@@ -302,7 +302,10 @@ def plot_pca(
 
 # define a function for batch correction
 def apply_batch_correction(
-    df: pd.DataFrame, batch: List[int], covs: Optional[List[int]] = None
+    df: pd.DataFrame,
+    batch: List[int],
+    covs: Optional[List[int]] = None,
+    kwargs: Optional[dict] = None
 ) -> pd.DataFrame:
     """
     Get a dataframe and a list of batch indices as input and
@@ -316,6 +319,8 @@ def apply_batch_correction(
     A list of batch indices.
     covs : list
     A list of covariates to be used for batch correction.
+    kwargs : dict (optional)
+    Other keyword arguments to be passed to the batch correction function (combat-norm)
 
     Warning
     -------
@@ -342,7 +347,7 @@ def apply_batch_correction(
             raise ValueError("The number of samples should match the number of covariates.")
 
     from inmoose.pycombat import pycombat_norm
-    df_co = pycombat_norm(counts=df, batch=batch, covar_mod=covs, mean_only=False)
+    df_co = pycombat_norm(counts=df, batch=batch, covar_mod=covs, **kwargs)
     return df_co
 
 
