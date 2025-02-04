@@ -255,22 +255,22 @@ def pivot_longer(df: pd.DataFrame,
                  row_name: str,
                  col_name: str,
                  values: str) -> pd.DataFrame:
-    """
-    Revert a matrix (wide-format DataFrame) back to a long-format DataFrame.
+    # Validate input DataFrame
+    if not isinstance(df, pd.DataFrame):
+        raise ValueError("Input must be a pandas DataFrame")
 
-    Parameters:
-    df (pd.DataFrame): The input df (wide-format DataFrame).
-    row_name (str): The name to use for the row labels in the long-format DataFrame (e.g., sample_ids).
-    col_name (str): The name to use for the column labels in the long-format DataFrame (e.g., protein_names).
-    values (str): The name to use for the values in the long-format DataFrame (e.g., expression_values).
+    # Validate row_name exists in DataFrame
+    if row_name not in df.columns:
+        raise ValueError(f"Row name '{row_name}' not found in DataFrame")
 
-    Returns:
-    pd.DataFrame: A long-format DataFrame with specified row, column, and value columns.
-    """
     # Reset the index to convert the row labels to a column
     matrix_reset = df.reset_index()
 
     # Use pd.melt to convert the wide-format DataFrame to long-format
     long_df = pd.melt(matrix_reset, id_vars=[row_name], var_name=col_name, value_name=values)
+
+    # Remove rows with missing values if any
+    if long_df[values].isna().any():
+        logging.warning(f"Found {long_df[values].isna().sum()} missing values in the result")
 
     return long_df
