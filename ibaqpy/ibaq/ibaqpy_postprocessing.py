@@ -1,4 +1,6 @@
 import logging
+from typing import Union
+
 import pandas as pd
 import glob
 
@@ -150,7 +152,7 @@ def describe_expression_metrics(ibaq_df: pd.DataFrame) -> pd.DataFrame:
 def combine_ibaq_tsv_files(dir_path: str,
                            pattern: str = '*',
                            comment: str = '#',
-                           sep: str = '\t') -> DataFrame | None:
+                           sep: str = '\t') -> DataFrame:
     """
     Combine multiple TSV files from a directory into a single pandas DataFrame.
 
@@ -200,7 +202,7 @@ def pivot_wider(df: pd.DataFrame,
                 row_name: str,
                 col_name: str,
                 values: str,
-                fillna: int | float | bool = False) -> pd.DataFrame:
+                fillna: Union[int, float, bool] = False) -> pd.DataFrame:
     """
     Create a matrix from a DataFrame given the row, column, and value columns.
 
