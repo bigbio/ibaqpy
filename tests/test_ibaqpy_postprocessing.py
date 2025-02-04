@@ -6,6 +6,7 @@ from ibaqpy.ibaq.ibaqpy_postprocessing import (
     remove_samples_low_protein_number,
     remove_missing_values,
     describe_expression_metrics,
+    combine_ibaq_tsv_files
 )
 import logging
 
@@ -52,3 +53,15 @@ def test_describe_expression_metrics():
 
     metrics = describe_expression_metrics(ibaq_df)
     logging.info(metrics)
+
+
+def test_combine_ibaq_tsv_files():
+    ibaq_dir = TESTS_DIR.parent / "data/ibaq-raw-hela"
+    files_pattern = "*ibaq.tsv"
+    df_ibaq = combine_ibaq_tsv_files(
+        dir_path=str(ibaq_dir),
+        pattern=files_pattern,
+        sep="\t"
+    )
+    logging.info(df_ibaq.head())
+    assert df_ibaq.shape == (83725, 14)
