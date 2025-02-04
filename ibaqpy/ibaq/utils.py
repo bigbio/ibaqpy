@@ -333,6 +333,9 @@ def apply_batch_correction(
 
     """
 
+    if kwargs is None:
+        kwargs = {}
+
     # check if the number of samples match the number of batch indices
     if len(df.columns) != len(batch):
         raise ValueError("The number of samples should match the number of batch indices.")
