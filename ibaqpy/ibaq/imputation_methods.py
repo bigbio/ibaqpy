@@ -96,35 +96,3 @@ def impute_missing_values(
             "The input data must be a pandas DataFrame, a list of DataFrames, or None."
         )
 
-
-def impute_missing_values(dataset_df, field, class_field):
-    """
-    Impute the missing values using different methods.
-    :param dataset_df: dataframe with the data
-    :param field: field to impute
-    :param class_field: field to use as class
-    :return:
-    """
-    normalize_df = pd.DataFrame()
-    # group by condition to detect missing values
-    for c, g in dataset_df.groupby(CONDITION):
-        # pivot to have one col per sample
-        group_normalize_df = pd.pivot_table(
-            g,
-            index=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION],
-            columns=class_field,
-            values=field,
-            aggfunc={field: np.nanmean},
-            observed=True,
-        )
-
-        # no missing values group -> only one sample
-        if len(group_normalize_df.columns) < 2:
-            group_normalize_df = group_normalize_df.reset_index()
-            group_normalize_df = group_normalize_df.melt(
-                id_vars=[PEPTIDE_CANONICAL, PROTEIN_NAME, CONDITION]
-            )
-            group_normalize_df.rename(columns={"value": NORM_INTENSITY}, inplace=True)
-            normalize_df = pd.concat([normalize_df, group_normalize_df], ignore_index=True)
-
-    return normalize_df
