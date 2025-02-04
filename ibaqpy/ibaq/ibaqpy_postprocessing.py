@@ -1,5 +1,11 @@
 import logging
+from typing import Union
+
 import pandas as pd
+import glob
+
+from pandas import DataFrame
+
 from ibaqpy.ibaq.ibaqpy_commons import (
     IBAQ,
     IBAQ_NORMALIZED,
@@ -140,3 +146,131 @@ def describe_expression_metrics(ibaq_df: pd.DataFrame) -> pd.DataFrame:
     # Get the metrics
     metrics = ibaq_df.groupby(SAMPLE_ID)[expression_columns].describe()
     return metrics
+
+
+
+def combine_ibaq_tsv_files(dir_path: str,
+                           pattern: str = '*',
+                           comment: str = '#',
+                           sep: str = '\t') -> DataFrame:
+    """
+    Combine multiple TSV files from a directory into a single pandas DataFrame.
+
+    Parameters
+    ----------
+    dir_path : str
+        Directory path containing the TSV files.
+    pattern : str, optional
+        Pattern to match files in the directory (default is '*').
+    comment : str, optional
+        Character to indicate the start of a comment line (default is '#').
+        It will skip lines starting with this character when reading the TSV files.
+    sep : str, optional
+        Delimiter to use for reading the TSV files (default is '\t').
+
+    Returns
+    -------
+    Optional[pd.DataFrame]
+        Combined DataFrame containing data from all TSV files, or None if no files match the pattern.
+
+    Examples
+    --------
+        dir_path = './ibaqpy-research-data/ibaq-hela-raw'
+        combined_df = combine_ibaq_tsv_files(dir_path, pattern='*ibaq.tsv', comment='#', sep='\t')
+    """
+    file_paths = glob.glob(f"{dir_path}/{pattern}")
+
+    if not file_paths:
+        logging.warning(f"No files found in the directory '{dir_path}' matching the pattern '{pattern}'.")
+        return None
+
+    dataframes = []
+
+    for file_path in file_paths:
+        # Read the TSV file, skipping lines that start with the comment character
+        df = pd.read_csv(file_path, sep=sep, comment=comment)
+        dataframes.append(df)
+
+    # Concatenate all DataFrames
+    combined_df = pd.concat(dataframes, ignore_index=True)
+
+    return combined_df
+
+
+
+def pivot_wider(df: pd.DataFrame,
+                row_name: str,
+                col_name: str,
+                values: str,
+                fillna: Union[int, float, bool] = False) -> pd.DataFrame:
+    """
+    Create a matrix from a DataFrame given the row, column, and value columns.
+
+    Parameters:
+    df (pd.DataFrame): The input DataFrame in long format.
+    row_name (str): The column name to use as row labels (e.g., sample_ids).
+    col_name (str): The column name to use as column labels (e.g., protein_names).
+    values (str): The column name to use as cell values (e.g., expression_values).
+    fillna (Optional[Union[bool, int, float]]): Value to fill NaN. If True, fill NaN with 0.
+                                                If False or None, leave NaN as is.
+                                                If a number is provided, use that value.
+
+    Returns:
+    pd.DataFrame: A pivot table (matrix) with specified rows, columns, and values.
+
+    Examples:
+       df_matrix =  pivot_wider(combined_df,
+                    row_name='SampleID',
+                    col_name='ProteinName',
+                    values='Ibaq',
+                    fillna=False)
+    """
+    # Check if the provided columns exist in the DataFrame
+    missing_columns = {row_name, col_name, values} - set(df.columns)
+    if missing_columns:
+        raise ValueError(f"Columns {missing_columns} not found in the DataFrame.")
+
+    # Check for duplicate combinations
+    duplicates = df.groupby([row_name, col_name]).size()
+    if (duplicates > 1).any():
+        raise ValueError(
+            f"Found duplicate combinations of {row_name} and {col_name}. "
+            "Use an aggregation function to handle duplicates."
+        )
+
+    # Use pivot_table to create the matrix
+    matrix = df.pivot_table(index=row_name, columns=col_name, values=values, aggfunc='first')
+
+    # Simplified NaN handling
+    if fillna is True:  # Fill with 0 if True
+        matrix = matrix.fillna(0)
+    elif fillna not in [None, False]:  # Fill if a specific value is provided
+        matrix = matrix.fillna(fillna)
+
+    return matrix
+
+
+
+def pivot_longer(df: pd.DataFrame,
+                 row_name: str,
+                 col_name: str,
+                 values: str) -> pd.DataFrame:
+    # Validate input DataFrame
+    if not isinstance(df, pd.DataFrame):
+        raise ValueError("Input must be a pandas DataFrame")
+
+    # Validate row_name exists in DataFrame
+    if row_name not in df.columns:
+        raise ValueError(f"Row name '{row_name}' not found in DataFrame")
+
+    # Reset the index to convert the row labels to a column
+    matrix_reset = df.reset_index()
+
+    # Use pd.melt to convert the wide-format DataFrame to long-format
+    long_df = pd.melt(matrix_reset, id_vars=[row_name], var_name=col_name, value_name=values)
+
+    # Remove rows with missing values if any
+    if long_df[values].isna().any():
+        logging.warning(f"Found {long_df[values].isna().sum()} missing values in the result")
+
+    return long_df
