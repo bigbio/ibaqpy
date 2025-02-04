@@ -230,6 +230,14 @@ def pivot_wider(df: pd.DataFrame,
     if missing_columns:
         raise ValueError(f"Columns {missing_columns} not found in the DataFrame.")
 
+    # Check for duplicate combinations
+    duplicates = df.groupby([row_name, col_name]).size()
+    if (duplicates > 1).any():
+        raise ValueError(
+            f"Found duplicate combinations of {row_name} and {col_name}. "
+            "Use an aggregation function to handle duplicates."
+        )
+
     # Use pivot_table to create the matrix
     matrix = df.pivot_table(index=row_name, columns=col_name, values=values, aggfunc='first')
 
