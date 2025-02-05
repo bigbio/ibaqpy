@@ -47,18 +47,12 @@ def is_valid_sample_id(samples: Union[str, list, pd.Series],
 
 
 def get_batch_id_from_sample_names(samples: list):
-    """
-    Extracts the batch ID from a list of sample names.
-
-    The batch ID is expected to be the first part of the sample name, separated by a hyphen.
-
-    Args:
-        samples (list): A list of sample names.
-
-    Returns:
-        list: A list of batch IDs.
-    """
-    batch_ids = [sample.split("-")[0] for sample in samples]
+    batch_ids = []
+    for sample in samples:
+        parts = sample.split("-")
+        if not parts or not parts[0]:
+            raise ValueError(f"Invalid sample name format: {sample}. Expected batch-id prefix.")
+        batch_ids.append(parts[0])
     return pd.factorize(batch_ids)[0]
 
 
