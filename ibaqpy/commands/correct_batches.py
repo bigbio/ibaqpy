@@ -104,7 +104,10 @@ def run_batch_correction(
         ibaq_column (str): iBAQ column name.
     """
     # Load the data
-    df_ibaq = combine_ibaq_tsv_files(folder, pattern=pattern, comment=comment, sep=sep)
+    try:
+        df_ibaq = combine_ibaq_tsv_files(folder, pattern=pattern, comment=comment, sep=sep)
+    except Exception as e:
+        raise ValueError(f"Failed to load input files: {str(e)}")
 
     # Reshape the data to wide format
     df_wide = pivot_wider(
@@ -142,10 +145,12 @@ def run_batch_correction(
 
     # Save the corrected iBAQ values to a file
     if output:
-        df_ibaq.to_csv(output, sep=sep, index=False)
+        try:
+            df_ibaq.to_csv(output, sep=sep, index=False)
+        except Exception as e:
+            raise ValueError(f"Failed to save output file: {str(e)}")
 
     return df_ibaq
-
 
 @click.command()
 @click.option(
