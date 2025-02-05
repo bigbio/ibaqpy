@@ -9,6 +9,7 @@ TESTS_DIR = Path(__file__).parent
 
 
 def test_correct_batches():
+    # Test valid case
     args = {
         "folder": TESTS_DIR.parent / "data/ibaq-raw-hela",
         "pattern": "*ibaq.tsv",
@@ -20,6 +21,12 @@ def test_correct_batches():
         "protein_id_column": "ProteinName",
         "ibaq_column": "Ibaq"
     }
+    run_batch_correction(**args)
+    
+    # Test invalid sample IDs
+    with pytest.raises(ValueError):
+        args["folder"] = TESTS_DIR.parent / "data/invalid-samples"
+        run_batch_correction(**args)
     logging.debug("Arguments for run_batch_correction: %s", args)
     run_batch_correction(**args)
     # Assert the output file is created.
