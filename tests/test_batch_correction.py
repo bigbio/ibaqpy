@@ -1,10 +1,10 @@
 import logging
 from pathlib import Path
+import pytest
 
 import pandas as pd
 
 from ibaqpy.commands.correct_batches import run_batch_correction
-
 TESTS_DIR = Path(__file__).parent
 
 
