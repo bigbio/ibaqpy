@@ -16,7 +16,6 @@ def test_correct_batches():
         "comment": "#",
         "sep": "\t",
         "output": TESTS_DIR / "example/ibaq_corrected_combined.tsv",
-        "sample_batch_map": None,
         "sample_id_column": "SampleID",
         "protein_id_column": "ProteinName",
         "ibaq_column": "Ibaq"
