@@ -56,7 +56,7 @@ def get_batch_id_from_sample_names(samples: list):
     return pd.factorize(batch_ids)[0]
 
 
-def run_batch_correction(folder: str, pattern: str, comment: str, sep: str, output: str, sample_batch_map: str,
+def run_batch_correction(folder: str, pattern: str, comment: str, sep: str, output: str,
                          sample_id_column: str, protein_id_column: str, ibaq_column: str) -> pd.DataFrame:
     """
     Runs the batch correction on iBAQ values from TSV files.
@@ -67,7 +67,6 @@ def run_batch_correction(folder: str, pattern: str, comment: str, sep: str, outp
         comment (str): Comment character for the TSV files. Lines starting with this character will be ignored.
         sep (str): Separator for the TSV files.
         output (str): Output file name for the combined iBAQ corrected values.
-        sample_batch_map (str): Two-column TSV file with sample ID and batch ID. Not implemented.
         sample_id_column (str): Sample ID column name.
         protein_id_column (str): Protein ID column name.
         ibaq_column (str): iBAQ column name.
@@ -135,11 +134,6 @@ def run_batch_correction(folder: str, pattern: str, comment: str, sep: str, outp
 @click.option("-o", "--output",
                 help="Output file name for the combined iBAQ corrected values",
                 required=True)
-@click.option("-b", "--sample_batch_map",
-                help="Two-column TSV file with sample ID and batch ID. The first column should be the sample ID "
-                     "and the second column should be the batch ID. Currently not implemented",
-                default=None,
-                required=False)
 @click.option("-sid", "--sample_id_column",
                 help="Sample ID column name",
                 required=False,
@@ -152,9 +146,9 @@ def run_batch_correction(folder: str, pattern: str, comment: str, sep: str, outp
                 help="iBAQ column name",
                 required=False,
                 default="Ibaq")
-def correct_batches(folder: str, pattern: str, comment: str, sep: str, output: str, sample_batch_map: str,
+def correct_batches(folder: str, pattern: str, comment: str, sep: str, output: str,
                     sample_id_column: str, protein_id_column: str, ibaq_column: str):
-    run_batch_correction(folder, pattern, comment, sep, output, sample_batch_map,
+    run_batch_correction(folder, pattern, comment, sep, output,
                          sample_id_column, protein_id_column, ibaq_column)
 
 
