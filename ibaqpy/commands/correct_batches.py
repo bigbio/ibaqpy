@@ -46,15 +46,29 @@ def is_valid_sample_id(samples: Union[str, list, pd.Series],
     return True
 
 
-def get_batch_id_from_sample_names(samples: list):
+def get_batch_id_from_sample_names(samples: list) -> list:
+    """
+    Extract batch IDs from sample names, assuming batch ID is the first part before the hyphen.
+    
+    Args:
+        samples (list): List of sample names in the format 'batch-id-suffix'.
+    
+    Returns:
+        list: List of numeric batch IDs mapped from the extracted batch identifiers.
+        
+    Raises:
+        ValueError: If sample name format is invalid or batch ID is empty.
+    """
     batch_ids = []
     for sample in samples:
         parts = sample.split("-")
         if not parts or not parts[0]:
             raise ValueError(f"Invalid sample name format: {sample}. Expected batch-id prefix.")
-        batch_ids.append(parts[0])
+        batch_id = parts[0]
+        if not re.match(r'^[A-Za-z0-9]+$', batch_id):
+            raise ValueError(f"Invalid batch ID format: {batch_id}. Expected alphanumeric characters only.")
+        batch_ids.append(batch_id)
     return pd.factorize(batch_ids)[0]
-
 
 def run_batch_correction(folder: str, pattern: str, comment: str, sep: str, output: str,
                          sample_id_column: str, protein_id_column: str, ibaq_column: str) -> pd.DataFrame:
