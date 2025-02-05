@@ -5,14 +5,17 @@ import click
 import pandas as pd
 
 from ibaqpy.ibaq.ibaqpy_commons import SAMPLE_ID_REGEX
-from ibaqpy.ibaq.ibaqpy_postprocessing import (combine_ibaq_tsv_files,
-                                               pivot_wider,
-                                               pivot_longer)
+from ibaqpy.ibaq.ibaqpy_postprocessing import (
+    combine_ibaq_tsv_files,
+    pivot_wider,
+    pivot_longer,
+)
 from ibaqpy.ibaq.utils import apply_batch_correction
 
 
-def is_valid_sample_id(samples: Union[str, list, pd.Series],
-                       sample_id_pattern: str = SAMPLE_ID_REGEX) -> bool:
+def is_valid_sample_id(
+    samples: Union[str, list, pd.Series], sample_id_pattern: str = SAMPLE_ID_REGEX
+) -> bool:
     """
     Validates that all sample IDs in the provided input are composed only of alphanumeric
     characters and hyphen-separated alphanumeric parts.
@@ -36,7 +39,9 @@ def is_valid_sample_id(samples: Union[str, list, pd.Series],
         samples = samples.tolist()
 
     # Identify invalid sample names.
-    invalid_samples = [sample for sample in samples if not sample_pattern.fullmatch(sample)]
+    invalid_samples = [
+        sample for sample in samples if not sample_pattern.fullmatch(sample)
+    ]
 
     if invalid_samples:
         print("The following sample IDs are invalid:")
@@ -49,13 +54,13 @@ def is_valid_sample_id(samples: Union[str, list, pd.Series],
 def get_batch_id_from_sample_names(samples: list) -> list:
     """
     Extract batch IDs from sample names, assuming batch ID is the first part before the hyphen.
-    
+
     Args:
         samples (list): List of sample names in the format 'batch-id-suffix'.
-    
+
     Returns:
         list: List of numeric batch IDs mapped from the extracted batch identifiers.
-        
+
     Raises:
         ValueError: If sample name format is invalid or batch ID is empty.
     """
@@ -63,15 +68,28 @@ def get_batch_id_from_sample_names(samples: list) -> list:
     for sample in samples:
         parts = sample.split("-")
         if not parts or not parts[0]:
-            raise ValueError(f"Invalid sample name format: {sample}. Expected batch-id prefix.")
+            raise ValueError(
+                f"Invalid sample name format: {sample}. Expected batch-id prefix."
+            )
         batch_id = parts[0]
-        if not re.match(r'^[A-Za-z0-9]+$', batch_id):
-            raise ValueError(f"Invalid batch ID format: {batch_id}. Expected alphanumeric characters only.")
+        if not re.match(r"^[A-Za-z0-9]+$", batch_id):
+            raise ValueError(
+                f"Invalid batch ID format: {batch_id}. Expected alphanumeric characters only."
+            )
         batch_ids.append(batch_id)
     return pd.factorize(batch_ids)[0]
 
-def run_batch_correction(folder: str, pattern: str, comment: str, sep: str, output: str,
-                         sample_id_column: str, protein_id_column: str, ibaq_column: str) -> pd.DataFrame:
+
+def run_batch_correction(
+    folder: str,
+    pattern: str,
+    comment: str,
+    sep: str,
+    output: str,
+    sample_id_column: str,
+    protein_id_column: str,
+    ibaq_column: str,
+) -> pd.DataFrame:
     """
     Runs the batch correction on iBAQ values from TSV files.
 
@@ -86,17 +104,16 @@ def run_batch_correction(folder: str, pattern: str, comment: str, sep: str, outp
         ibaq_column (str): iBAQ column name.
     """
     # Load the data
-    df_ibaq = combine_ibaq_tsv_files(folder,
-                                     pattern=pattern,
-                                     comment=comment,
-                                     sep=sep)
+    df_ibaq = combine_ibaq_tsv_files(folder, pattern=pattern, comment=comment, sep=sep)
 
     # Reshape the data to wide format
-    df_wide = pivot_wider(df_ibaq,
-                          row_name=protein_id_column,
-                          col_name=sample_id_column,
-                          values=ibaq_column,
-                          fillna=True)
+    df_wide = pivot_wider(
+        df_ibaq,
+        row_name=protein_id_column,
+        col_name=sample_id_column,
+        values=ibaq_column,
+        fillna=True,
+    )
 
     # Validate the sample IDs
     if not is_valid_sample_id(df_wide.columns, SAMPLE_ID_REGEX):
@@ -106,21 +123,22 @@ def run_batch_correction(folder: str, pattern: str, comment: str, sep: str, outp
     batch_ids = get_batch_id_from_sample_names(df_wide.columns)
 
     # Run batch correction
-    df_corrected = apply_batch_correction(df_wide,
-                                          list(batch_ids),
-                                          kwargs={})
+    df_corrected = apply_batch_correction(df_wide, list(batch_ids), kwargs={})
 
     # Convert the data back to long format
     df_corrected = df_corrected.reset_index()
-    df_corrected_long = pivot_longer(df_corrected,
-                                     row_name=protein_id_column,
-                                     col_name=sample_id_column,
-                                     values='IbaqC')
-
+    df_corrected_long = pivot_longer(
+        df_corrected,
+        row_name=protein_id_column,
+        col_name=sample_id_column,
+        values="IbaqC",
+    )
 
     # Add the corrected ibaq values to the original dataframe.
     # Use sample/protein ID keys to merge the dataframes.
-    df_ibaq = df_ibaq.merge(df_corrected_long, how="left", on=[sample_id_column, protein_id_column])
+    df_ibaq = df_ibaq.merge(
+        df_corrected_long, how="left", on=[sample_id_column, protein_id_column]
+    )
 
     # Save the corrected iBAQ values to a file
     if output:
@@ -130,42 +148,70 @@ def run_batch_correction(folder: str, pattern: str, comment: str, sep: str, outp
 
 
 @click.command()
-@click.option("-f", "--folder",
-              help="Folder that contains all TSV files with raw iBAQ values",
-              required=True)
-@click.option("-p", "--pattern",
-              help="Pattern for the TSV files with raw iBAQ values",
-              required=True,
-              default="*ibaq.tsv")
-@click.option("--comment",
-              help="Comment character for the TSV files. Lines starting with this character will be ignored.",
-              required=False,
-              default="#")
-@click.option("--sep",
-                help="Separator for the TSV files",
-                required=False,
-                default="\t")
-@click.option("-o", "--output",
-                help="Output file name for the combined iBAQ corrected values",
-                required=True)
-@click.option("-sid", "--sample_id_column",
-                help="Sample ID column name",
-                required=False,
-                default="SampleID")
-@click.option("-pid", "--protein_id_column",
-                help="Protein ID column name",
-                required=False,
-                default="ProteinName")
-@click.option("-ibaq", "--ibaq_column",
-                help="iBAQ column name",
-                required=False,
-                default="Ibaq")
-def correct_batches(folder: str, pattern: str, comment: str, sep: str, output: str,
-                    sample_id_column: str, protein_id_column: str, ibaq_column: str):
-    run_batch_correction(folder, pattern, comment, sep, output,
-                         sample_id_column, protein_id_column, ibaq_column)
+@click.option(
+    "-f",
+    "--folder",
+    help="Folder that contains all TSV files with raw iBAQ values",
+    required=True,
+)
+@click.option(
+    "-p",
+    "--pattern",
+    help="Pattern for the TSV files with raw iBAQ values",
+    required=True,
+    default="*ibaq.tsv",
+)
+@click.option(
+    "--comment",
+    help="Comment character for the TSV files. Lines starting with this character will be ignored.",
+    required=False,
+    default="#",
+)
+@click.option("--sep", help="Separator for the TSV files", required=False, default="\t")
+@click.option(
+    "-o",
+    "--output",
+    help="Output file name for the combined iBAQ corrected values",
+    required=True,
+)
+@click.option(
+    "-sid",
+    "--sample_id_column",
+    help="Sample ID column name",
+    required=False,
+    default="SampleID",
+)
+@click.option(
+    "-pid",
+    "--protein_id_column",
+    help="Protein ID column name",
+    required=False,
+    default="ProteinName",
+)
+@click.option(
+    "-ibaq", "--ibaq_column", help="iBAQ column name", required=False, default="Ibaq"
+)
+def correct_batches(
+    folder: str,
+    pattern: str,
+    comment: str,
+    sep: str,
+    output: str,
+    sample_id_column: str,
+    protein_id_column: str,
+    ibaq_column: str,
+):
+    run_batch_correction(
+        folder,
+        pattern,
+        comment,
+        sep,
+        output,
+        sample_id_column,
+        protein_id_column,
+        ibaq_column,
+    )
 
 
 if __name__ == "__main__":
     correct_batches()
-
