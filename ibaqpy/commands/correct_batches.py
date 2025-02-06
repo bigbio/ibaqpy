@@ -4,7 +4,7 @@ from typing import Union
 import click
 import pandas as pd
 
-from ibaqpy.ibaq.ibaqpy_commons import SAMPLE_ID_REGEX
+from ibaqpy.ibaq.ibaqpy_commons import SAMPLE_ID_REGEX, IBAQ_BEC
 from ibaqpy.ibaq.ibaqpy_postprocessing import (
     combine_ibaq_tsv_files,
     pivot_wider,
@@ -130,7 +130,7 @@ def run_batch_correction(
         df_corrected,
         row_name=protein_id_column,
         col_name=sample_id_column,
-        values="IbaqC",
+        values=IBAQ_BEC,
     )
 
     # Add the corrected ibaq values to the original dataframe.
