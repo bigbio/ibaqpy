@@ -17,6 +17,8 @@ def create_anndata(
     obs_metadata_cols: Optional[List[str]] = None,
     var_metadata_cols: Optional[List[str]] = None,
 ) -> an.AnnData:
+    if df.empty:
+        raise ValueError("Cannot create AnnData object from empty DataFrame")
     """
     Create an AnnData object from a long-format DataFrame.
 
