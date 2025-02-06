@@ -30,11 +30,15 @@ As mentioned before, ibaq values are calculated by dividing the total precursor 
 
 ### Other values  
 
+- `Ibaq` - the iBAQ value is calculated as `Total precursor intensities / Number of observable peptides`
+
 - `IbaqNorm` - normalize the ibaq values using the total ibaq of the sample `ibaq / sum(ibaq)`, the sum is applied for proteins in the same _sample + condition_.
 
 - `IbaqLog`  - The ibaq log is calculated as `10 + log10(IbaqNorm)`. This normalized ibaq value was developed [by ProteomicsDB Team](https://academic.oup.com/nar/article/46/D1/D1271/4584631).
 
 - `IbaqPpb` - The resulted IbaqNorm is multiplied by 100M `IbaqNorm * 100'000'000`. This method was developed originally [by PRIDE Team](https://www.nature.com/articles/s41597-021-00890-2).
+
+- `IbaqBec` - Ibaq after Batch effect correction using combat-norm algorithm in inmoose package. 
 
 - `TPA` - TPA value is calculated as `NormIntensity / MolecularWeight`
 
