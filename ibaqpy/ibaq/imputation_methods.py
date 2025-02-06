@@ -68,7 +68,9 @@ def impute_missing_values(
         return None
 
     if method not in {"knn", "mean", "median", "constant", "most_frequent"}:
-        raise ValueError("Invalid method. Choose from 'knn', 'mean', 'median', 'most_frequent', or 'constant'.")
+        raise ValueError(
+            "Invalid method. Choose from 'knn', 'mean', 'median', 'most_frequent', or 'constant'."
+        )
 
     if method == "knn":
         imputer = KNNImputer(
@@ -95,4 +97,3 @@ def impute_missing_values(
         raise ValueError(
             "The input data must be a pandas DataFrame, a list of DataFrames, or None."
         )
-

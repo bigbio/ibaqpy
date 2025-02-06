@@ -77,7 +77,7 @@ class IsobaricLabel(Enum):
                 return v
         raise KeyError(name)
 
-    def channels(self) -> 'IsobaricLabelSpec':
+    def channels(self) -> "IsobaricLabelSpec":
         return IsobaricLabelSpec.registry[self.name]
 
 
@@ -110,70 +110,88 @@ class IsobaricLabelSpec(Mapping[str, int]):
     def __contains__(self, key) -> bool:
         return key in self.channels
 
-TMT16plex = IsobaricLabelSpec("TMT16plex", {
-    "TMT126": 1,
-    "TMT127N": 2,
-    "TMT127C": 3,
-    "TMT128N": 4,
-    "TMT128C": 5,
-    "TMT129N": 6,
-    "TMT129C": 7,
-    "TMT130N": 8,
-    "TMT130C": 9,
-    "TMT131N": 10,
-    "TMT131C": 11,
-    "TMT132N": 12,
-    "TMT132C": 13,
-    "TMT133N": 14,
-    "TMT133C": 15,
-    "TMT134N": 16,
-})
 
-TMT11plex = IsobaricLabelSpec("TMT11plex", {
-    "TMT126": 1,
-    "TMT127N": 2,
-    "TMT127C": 3,
-    "TMT128N": 4,
-    "TMT128C": 5,
-    "TMT129N": 6,
-    "TMT129C": 7,
-    "TMT130N": 8,
-    "TMT130C": 9,
-    "TMT131N": 10,
-    "TMT131C": 11,
-})
+TMT16plex = IsobaricLabelSpec(
+    "TMT16plex",
+    {
+        "TMT126": 1,
+        "TMT127N": 2,
+        "TMT127C": 3,
+        "TMT128N": 4,
+        "TMT128C": 5,
+        "TMT129N": 6,
+        "TMT129C": 7,
+        "TMT130N": 8,
+        "TMT130C": 9,
+        "TMT131N": 10,
+        "TMT131C": 11,
+        "TMT132N": 12,
+        "TMT132C": 13,
+        "TMT133N": 14,
+        "TMT133C": 15,
+        "TMT134N": 16,
+    },
+)
 
-TMT10plex = IsobaricLabelSpec("TMT10plex", {
-    "TMT126": 1,
-    "TMT127N": 2,
-    "TMT127C": 3,
-    "TMT128N": 4,
-    "TMT128C": 5,
-    "TMT129N": 6,
-    "TMT129C": 7,
-    "TMT130N": 8,
-    "TMT130C": 9,
-    "TMT131": 10,
-})
+TMT11plex = IsobaricLabelSpec(
+    "TMT11plex",
+    {
+        "TMT126": 1,
+        "TMT127N": 2,
+        "TMT127C": 3,
+        "TMT128N": 4,
+        "TMT128C": 5,
+        "TMT129N": 6,
+        "TMT129C": 7,
+        "TMT130N": 8,
+        "TMT130C": 9,
+        "TMT131N": 10,
+        "TMT131C": 11,
+    },
+)
 
-TMT6plex = IsobaricLabelSpec("TMT6plex", {
-    "TMT126": 1,
-    "TMT127": 2,
-    "TMT128": 3,
-    "TMT129": 4,
-    "TMT130": 5,
-    "TMT131": 6,
-})
+TMT10plex = IsobaricLabelSpec(
+    "TMT10plex",
+    {
+        "TMT126": 1,
+        "TMT127N": 2,
+        "TMT127C": 3,
+        "TMT128N": 4,
+        "TMT128C": 5,
+        "TMT129N": 6,
+        "TMT129C": 7,
+        "TMT130N": 8,
+        "TMT130C": 9,
+        "TMT131": 10,
+    },
+)
 
-ITRAQ4plex = IsobaricLabelSpec("ITRAQ4plex", {"ITRAQ114": 1, "ITRAQ115": 2, "ITRAQ116": 3, "ITRAQ117": 4})
+TMT6plex = IsobaricLabelSpec(
+    "TMT6plex",
+    {
+        "TMT126": 1,
+        "TMT127": 2,
+        "TMT128": 3,
+        "TMT129": 4,
+        "TMT130": 5,
+        "TMT131": 6,
+    },
+)
 
-ITRAQ8plex = IsobaricLabelSpec("ITRAQ8plex", {
-    "ITRAQ113": 1,
-    "ITRAQ114": 2,
-    "ITRAQ115": 3,
-    "ITRAQ116": 4,
-    "ITRAQ117": 5,
-    "ITRAQ118": 6,
-    "ITRAQ119": 7,
-    "ITRAQ121": 8,
-})
+ITRAQ4plex = IsobaricLabelSpec(
+    "ITRAQ4plex", {"ITRAQ114": 1, "ITRAQ115": 2, "ITRAQ116": 3, "ITRAQ117": 4}
+)
+
+ITRAQ8plex = IsobaricLabelSpec(
+    "ITRAQ8plex",
+    {
+        "ITRAQ113": 1,
+        "ITRAQ114": 2,
+        "ITRAQ115": 3,
+        "ITRAQ116": 4,
+        "ITRAQ117": 5,
+        "ITRAQ118": 6,
+        "ITRAQ119": 7,
+        "ITRAQ121": 8,
+    },
+)

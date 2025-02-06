@@ -18,9 +18,7 @@ class WriteCSVTask(Thread):
     _queue: Queue
     _wrote_header: bool
 
-    def __init__(
-        self, path: str, daemon: bool = True, write_options: dict = None, **kwargs
-    ):
+    def __init__(self, path: str, daemon: bool = True, write_options: dict = None, **kwargs):
         super().__init__(daemon=daemon)
         if write_options is None:
             write_options = {}
@@ -75,13 +73,13 @@ class WriteParquetTask(Thread):
     _schema: pa.Schema
     _writer: pq.ParquetWriter
 
-    def __init__(self, path: str, daemon: bool = True, metadata: dict=None, **kwargs):
+    def __init__(self, path: str, daemon: bool = True, metadata: dict = None, **kwargs):
         super().__init__(daemon=daemon)
 
         if metadata is None:
             metadata = {}
         path, _ext = os.path.splitext(path)
-        path += '.parquet'
+        path += ".parquet"
 
         self.path = path
         self.metadata = metadata | kwargs

@@ -12,6 +12,7 @@ from ibaqpy.ibaq.ibaqpy_postprocessing import (
 )
 from ibaqpy.ibaq.utils import apply_batch_correction
 
+
 def is_valid_sample_id(
     samples: Union[str, list, pd.Series], sample_id_pattern: str = SAMPLE_ID_REGEX
 ) -> bool:
@@ -38,9 +39,7 @@ def is_valid_sample_id(
         samples = samples.tolist()
 
     # Identify invalid sample names.
-    invalid_samples = [
-        sample for sample in samples if not sample_pattern.fullmatch(sample)
-    ]
+    invalid_samples = [sample for sample in samples if not sample_pattern.fullmatch(sample)]
 
     if invalid_samples:
         print("The following sample IDs are invalid:")
@@ -67,9 +66,7 @@ def get_batch_id_from_sample_names(samples: list) -> list:
     for sample in samples:
         parts = sample.split("-")
         if not parts or not parts[0]:
-            raise ValueError(
-                f"Invalid sample name format: {sample}. Expected batch-id prefix."
-            )
+            raise ValueError(f"Invalid sample name format: {sample}. Expected batch-id prefix.")
         batch_id = parts[0]
         if not re.match(r"^[A-Za-z0-9]+$", batch_id):
             raise ValueError(
@@ -151,13 +148,14 @@ def run_batch_correction(
 
     return df_ibaq
 
+
 @click.command()
 @click.option(
     "-f",
     "--folder",
     help="Folder that contains all TSV files with raw iBAQ values",
     required=True,
-    default=None
+    default=None,
 )
 @click.option(
     "-p",
@@ -193,9 +191,7 @@ def run_batch_correction(
     required=False,
     default="ProteinName",
 )
-@click.option(
-    "-ibaq", "--ibaq_column", help="iBAQ column name", required=False, default="Ibaq"
-)
+@click.option("-ibaq", "--ibaq_column", help="iBAQ column name", required=False, default="Ibaq")
 @click.pass_context
 def correct_batches(
     ctx,
@@ -216,5 +212,5 @@ def correct_batches(
         output=output,
         sample_id_column=sample_id_column,
         protein_id_column=protein_id_column,
-        ibaq_column=ibaq_column
+        ibaq_column=ibaq_column,
     )

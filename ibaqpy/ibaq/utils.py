@@ -6,6 +6,7 @@ from typing import List, Optional, Union
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+
 # from inmoose.pycombat import pycombat_norm
 from sklearn.cluster._hdbscan import hdbscan
 from sklearn.decomposition import PCA
@@ -305,7 +306,7 @@ def apply_batch_correction(
     df: pd.DataFrame,
     batch: List[int],
     covs: Optional[List[int]] = None,
-    kwargs: Optional[dict] = None
+    kwargs: Optional[dict] = None,
 ) -> pd.DataFrame:
     """
     Get a dataframe and a list of batch indices as input and
@@ -350,6 +351,7 @@ def apply_batch_correction(
             raise ValueError("The number of samples should match the number of covariates.")
 
     from inmoose.pycombat import pycombat_norm
+
     df_co = pycombat_norm(counts=df, batch=batch, covar_mod=covs, **kwargs)
     return df_co
 

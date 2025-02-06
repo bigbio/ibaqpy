@@ -39,9 +39,14 @@ from ibaqpy.model.organism_metadata import OrganismDescription
     "-m",
     "--organism",
     help="Organism source of the data (default: human)",
-    type=click.Choice(sorted(map(str.lower, OrganismDescription.registered_organisms())), case_sensitive=False),
-    default="human")
-@click.option("-c", "--cpc", help="Cellular protein concentration(g/L) (default: 200)", default=200)
+    type=click.Choice(
+        sorted(map(str.lower, OrganismDescription.registered_organisms())), case_sensitive=False
+    ),
+    default="human",
+)
+@click.option(
+    "-c", "--cpc", help="Cellular protein concentration(g/L) (default: 200)", default=200
+)
 @click.option("-o", "--output", help="Output file with the proteins and ibaq values")
 @click.option(
     "--verbose",

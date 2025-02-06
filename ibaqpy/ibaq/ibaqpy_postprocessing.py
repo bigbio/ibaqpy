@@ -148,11 +148,9 @@ def describe_expression_metrics(ibaq_df: pd.DataFrame) -> pd.DataFrame:
     return metrics
 
 
-
-def combine_ibaq_tsv_files(dir_path: str,
-                           pattern: str = '*',
-                           comment: str = '#',
-                           sep: str = '\t') -> DataFrame:
+def combine_ibaq_tsv_files(
+    dir_path: str, pattern: str = "*", comment: str = "#", sep: str = "\t"
+) -> DataFrame:
     """
     Combine multiple TSV files from a directory into a single pandas DataFrame.
 
@@ -181,7 +179,9 @@ def combine_ibaq_tsv_files(dir_path: str,
     file_paths = glob.glob(f"{dir_path}/{pattern}")
 
     if not file_paths:
-        raise FileNotFoundError(f"No files found in the directory '{dir_path}' matching the pattern '{pattern}'.")
+        raise FileNotFoundError(
+            f"No files found in the directory '{dir_path}' matching the pattern '{pattern}'."
+        )
 
     dataframes = []
 
@@ -196,12 +196,13 @@ def combine_ibaq_tsv_files(dir_path: str,
     return combined_df
 
 
-
-def pivot_wider(df: pd.DataFrame,
-                row_name: str,
-                col_name: str,
-                values: str,
-                fillna: Union[int, float, bool] = False) -> pd.DataFrame:
+def pivot_wider(
+    df: pd.DataFrame,
+    row_name: str,
+    col_name: str,
+    values: str,
+    fillna: Union[int, float, bool] = False,
+) -> pd.DataFrame:
     """
     Create a matrix from a DataFrame given the row, column, and value columns.
 
@@ -238,7 +239,7 @@ def pivot_wider(df: pd.DataFrame,
         )
 
     # Use pivot_table to create the matrix
-    matrix = df.pivot_table(index=row_name, columns=col_name, values=values, aggfunc='first')
+    matrix = df.pivot_table(index=row_name, columns=col_name, values=values, aggfunc="first")
 
     # Simplified NaN handling
     if fillna is True:  # Fill with 0 if True
@@ -249,11 +250,7 @@ def pivot_wider(df: pd.DataFrame,
     return matrix
 
 
-
-def pivot_longer(df: pd.DataFrame,
-                 row_name: str,
-                 col_name: str,
-                 values: str) -> pd.DataFrame:
+def pivot_longer(df: pd.DataFrame, row_name: str, col_name: str, values: str) -> pd.DataFrame:
     # Validate input DataFrame
     if not isinstance(df, pd.DataFrame):
         raise ValueError("Input must be a pandas DataFrame")

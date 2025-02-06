@@ -21,7 +21,7 @@ def test_feature_assembly():
         "save_parquet": True,
     }
     print(args)
-    out = Path(args['output'])
+    out = Path(args["output"])
     if out.exists():
         out.unlink()
     peptide_normalization(**args)

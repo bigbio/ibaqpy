@@ -122,6 +122,7 @@ class ConcentrationWeightByProteomicRuler:
     weight. It also calculates the concentration in nM using the total weight and a
     provided concentration per cell (cpc).
     """
+
     organism: OrganismDescription
     ploidy: int
     concentration_per_cell: float
@@ -132,17 +133,12 @@ class ConcentrationWeightByProteomicRuler:
         self.ploidy = ploidy
         self.concentration_per_cell = concentration_per_cell
 
-        self.dna_mass = (
-            self.ploidy * self.organism.genome_size * AVERAGE_BASE_PAIR_MASS / AVAGADRO
-        )
+        self.dna_mass = self.ploidy * self.organism.genome_size * AVERAGE_BASE_PAIR_MASS / AVAGADRO
 
     def total_histone_intensities(self, protein_intensities: pd.DataFrame) -> float:
         histones = set(self.organism.histone_entries)
         is_histone_mask = protein_intensities[PROTEIN_NAME].isin(histones)
-        histone_intensities = max(
-            protein_intensities[is_histone_mask][NORM_INTENSITY].sum(),
-            1.0
-        )
+        histone_intensities = max(protein_intensities[is_histone_mask][NORM_INTENSITY].sum(), 1.0)
         return histone_intensities
 
     def apply_ruler(self, protein_intensities: pd.DataFrame) -> pd.DataFrame:
@@ -157,7 +153,9 @@ class ConcentrationWeightByProteomicRuler:
         )
 
         protein_intensities[MOLES_NMOL] = protein_intensities[COPYNUMBER] * (1e9 / AVAGADRO)
-        protein_intensities[WEIGHT_NG] = protein_intensities[MOLES_NMOL] * protein_intensities[MOLECULARWEIGHT]
+        protein_intensities[WEIGHT_NG] = (
+            protein_intensities[MOLES_NMOL] * protein_intensities[MOLECULARWEIGHT]
+        )
 
         volume = protein_intensities[WEIGHT_NG].sum() / 1e-9 / self.concentration_per_cell
         protein_intensities[CONCENTRATION_NM] = volume * protein_intensities[MOLES_NMOL]
@@ -223,11 +221,7 @@ class PeptideProteinMapper:
         average_peptides_per_protein = self.peptide_protein_ratio(pdrow.name[0])
 
         if average_peptides_per_protein > 0:
-            return (
-                pdrow.NormIntensity
-                / self.map_size[pdrow.name]
-                / average_peptides_per_protein
-            )
+            return pdrow.NormIntensity / self.map_size[pdrow.name] / average_peptides_per_protein
 
         # If there is no protein in the group, return np nan
         return np.nan  # type: ignore
@@ -431,7 +425,7 @@ def peptides_to_protein(
                 title="{} Distribution".format(CONCENTRATION_NM),
                 violin=False,
             )
-            pdf.savefig(density4, bbox_inches='tight')
+            pdf.savefig(density4, bbox_inches="tight")
             pdf.savefig(box4, bbox_inches="tight")
         pdf.close()
 
