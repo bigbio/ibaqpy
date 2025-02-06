@@ -1,4 +1,5 @@
 import re
+from email.policy import default
 from typing import Union
 
 import click
@@ -158,6 +159,7 @@ def run_batch_correction(
     "--folder",
     help="Folder that contains all TSV files with raw iBAQ values",
     required=True,
+    default=None
 )
 @click.option(
     "-p",
@@ -196,7 +198,9 @@ def run_batch_correction(
 @click.option(
     "-ibaq", "--ibaq_column", help="iBAQ column name", required=False, default="Ibaq"
 )
+@click.pass_context
 def correct_batches(
+    ctx,
     folder: str,
     pattern: str,
     comment: str,
@@ -207,16 +211,12 @@ def correct_batches(
     ibaq_column: str,
 ):
     run_batch_correction(
-        folder,
-        pattern,
-        comment,
-        sep,
-        output,
-        sample_id_column,
-        protein_id_column,
-        ibaq_column,
+        folder=folder,
+        pattern=pattern,
+        comment=comment,
+        sep=sep,
+        output=output,
+        sample_id_column=sample_id_column,
+        protein_id_column=protein_id_column,
+        ibaq_column=ibaq_column
     )
-
-
-if __name__ == "__main__":
-    correct_batches()
