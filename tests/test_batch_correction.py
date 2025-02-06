@@ -12,7 +12,7 @@ TESTS_DIR = Path(__file__).parent
 def test_correct_batches():
     # Test valid case
     args = {
-        "folder": TESTS_DIR.parent / "data/ibaq-raw-hela",
+        "folder": TESTS_DIR / "ibaq-raw-hela",
         "pattern": "*ibaq.tsv",
         "comment": "#",
         "sep": "\t",
@@ -37,7 +37,7 @@ def test_correct_batches():
 
     # Test missing required columns
     with pytest.raises(KeyError):
-        args["folder"] = TESTS_DIR.parent / "data/ibaq-raw-hela"
+        args["folder"] = TESTS_DIR / "ibaq-raw-hela"
         args["sample_id_column"] = "NonexistentColumn"
         run_batch_correction(**args)
 

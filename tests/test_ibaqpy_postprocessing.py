@@ -56,7 +56,7 @@ def test_describe_expression_metrics():
 
 
 def test_combine_ibaq_tsv_files():
-    ibaq_dir = TESTS_DIR.parent / "data/ibaq-raw-hela"
+    ibaq_dir = TESTS_DIR / "ibaq-raw-hela"
     files_pattern = "*ibaq.tsv"
     df_ibaq = combine_ibaq_tsv_files(dir_path=str(ibaq_dir), pattern=files_pattern, sep="\t")
     logging.info(df_ibaq.head())

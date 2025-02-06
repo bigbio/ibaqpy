@@ -32,7 +32,7 @@ requirements:
     - duckdb>=0.10.1
     - qnorm
     - scipy>=1.10
-    - seaborn
+    - seaborn>=0.13.2
     - typing_extensions>=4.6.3
     - inmoose
 test:
