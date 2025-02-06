@@ -149,10 +149,25 @@ def combine_ibaq_tsv_files(
 
     dataframes = []
 
+    first_schema = None
     for file_path in file_paths:
-        # Read the TSV file, skipping lines that start with the comment character
-        df = pd.read_csv(file_path, sep=sep, comment=comment)
-        dataframes.append(df)
+        try:
+            # Read the TSV file, skipping lines that start with the comment character
+            df = pd.read_csv(file_path, sep=sep, comment=comment)
+            
+            # Validate schema consistency
+            if first_schema is None:
+                first_schema = set(df.columns)
+            elif set(df.columns) != first_schema:
+                raise ValueError(
+                    f"Schema mismatch in file '{file_path}'. "
+                    f"Expected columns: {sorted(first_schema)}, "
+                    f"got: {sorted(df.columns)}"
+                )
+            
+            dataframes.append(df)
+        except Exception as e:
+            raise ValueError(f"Error reading file '{file_path}': {str(e)}")
 
     # Concatenate all DataFrames
     combined_df = pd.concat(dataframes, ignore_index=True)
