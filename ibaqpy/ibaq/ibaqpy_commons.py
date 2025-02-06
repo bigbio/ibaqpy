@@ -22,7 +22,7 @@ INTENSITY = "Intensity"
 NORM_INTENSITY = "NormIntensity"
 REFERENCE = "Reference"
 SAMPLE_ID = "SampleID"
-SAMPLE_ID_REGEX = r"^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$"
+SAMPLE_ID_REGEX = r'^[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*$'
 SEARCH_ENGINE = "searchScore"
 SCAN = "Scan"
 MBR = "MatchBetweenRuns"
@@ -203,7 +203,7 @@ def load_feature(feature_path: str) -> pd.DataFrame:
 
 def is_parquet(path: str) -> bool:
     try:
-        with open(path, "rb") as fh:
+        with open(path, 'rb') as fh:
             header = fh.read(4)
         return header == b"PAR1"
     except IOError:
