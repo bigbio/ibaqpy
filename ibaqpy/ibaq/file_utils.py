@@ -17,32 +17,24 @@ def create_anndata(
     obs_metadata_cols: Optional[List[str]] = None,
     var_metadata_cols: Optional[List[str]] = None,
 ) -> an.AnnData:
- def create_anndata(
-     df: pd.DataFrame,
-     obs_col: str,
-     var_col: str,
-     value_col: str,
-     layer_cols: Optional[List[str]] = None,
-     obs_metadata_cols: Optional[List[str]] = None,
-     var_metadata_cols: Optional[List[str]] = None,
- ) -> an.AnnData:
-     """
-     Create an AnnData object from a long-format DataFrame.
+    """
+    Create an AnnData object from a long-format DataFrame.
 
-     Parameters:
-         df (pd.DataFrame): Input data in long format.
-         obs_col (str): Column name in df representing observation IDs.
-         var_col (str): Column name in df representing variable IDs.
-         value_col (str): Column name in df representing the main data values.
-         layer_cols (Optional[List[str]]): List of column names in df to add as additional layers.
-         obs_metadata_cols (Optional[List[str]]): List of column names in df to add as observation metadata.
-         var_metadata_cols (Optional[List[str]]): List of column names in df to add as variable metadata.
+    Parameters:
+        df (pd.DataFrame): Input data in long format.
+        obs_col (str): Column name in df representing observation IDs.
+        var_col (str): Column name in df representing variable IDs.
+        value_col (str): Column name in df representing the main data values.
+        layer_cols (Optional[List[str]]): List of column names in df to add as additional layers.
+        obs_metadata_cols (Optional[List[str]]): List of column names in df to add as observation metadata.
+        var_metadata_cols (Optional[List[str]]): List of column names in df to add as variable metadata.
 
-     Returns:
-         anndata.AnnData: The constructed AnnData object.
-     """
-     if df.empty:
-         raise ValueError("Cannot create AnnData object from empty DataFrame")
+    Returns:
+        anndata.AnnData: The constructed AnnData object.
+    """
+    if df.empty:
+        raise ValueError("Cannot create AnnData object from empty DataFrame")
+
     # Validate that the required columns exist in the DataFrame.
     required_cols = [obs_col, var_col, value_col]
     missing = [col for col in required_cols if col not in df.columns]
@@ -154,7 +146,7 @@ def combine_ibaq_tsv_files(
         try:
             # Read the TSV file, skipping lines that start with the comment character
             df = pd.read_csv(file_path, sep=sep, comment=comment)
-            
+
             # Validate schema consistency
             if first_schema is None:
                 first_schema = set(df.columns)
@@ -164,7 +156,7 @@ def combine_ibaq_tsv_files(
                     f"Expected columns: {sorted(first_schema)}, "
                     f"got: {sorted(df.columns)}"
                 )
-            
+
             dataframes.append(df)
         except Exception as e:
             raise ValueError(f"Error reading file '{file_path}': {str(e)}")
