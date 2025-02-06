@@ -181,8 +181,7 @@ def combine_ibaq_tsv_files(dir_path: str,
     file_paths = glob.glob(f"{dir_path}/{pattern}")
 
     if not file_paths:
-        logging.warning(f"No files found in the directory '{dir_path}' matching the pattern '{pattern}'.")
-        return None
+        raise FileNotFoundError(f"No files found in the directory '{dir_path}' matching the pattern '{pattern}'.")
 
     dataframes = []
 
