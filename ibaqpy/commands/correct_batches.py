@@ -1,5 +1,4 @@
 import re
-from email.policy import default
 from typing import Union
 
 import click
@@ -12,7 +11,6 @@ from ibaqpy.ibaq.ibaqpy_postprocessing import (
     pivot_longer,
 )
 from ibaqpy.ibaq.utils import apply_batch_correction
-
 
 def is_valid_sample_id(
     samples: Union[str, list, pd.Series], sample_id_pattern: str = SAMPLE_ID_REGEX
