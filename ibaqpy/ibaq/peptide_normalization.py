@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 import duckdb
 
-from ibaqpy.model.quantification_type import (QuantificationCategory, IsobaricLabel)
+from ibaqpy.model.quantification_type import QuantificationCategory, IsobaricLabel
 from ibaqpy.model.normalization import FeatureNormalizationMethod, PeptideNormalizationMethod
 from ibaqpy.ibaq.ibaqpy_commons import (
     BIOREPLICATE,
@@ -57,7 +57,9 @@ def get_canonical_peptide(peptide_sequence: str) -> str:
     return clean_peptide
 
 
-def analyse_sdrf(sdrf_path: str) -> tuple[int, QuantificationCategory, list[str], Optional[IsobaricLabel]]:
+def analyse_sdrf(
+    sdrf_path: str,
+) -> tuple[int, QuantificationCategory, list[str], Optional[IsobaricLabel]]:
     """
     This function is aimed to parse SDRF and return four objects:
     1. sdrf_df: A dataframe with channels and references annoted.
@@ -119,7 +121,9 @@ def remove_protein_by_ids(
     return dataset[~dataset[protein_field].str.contains(cregex, regex=True)]
 
 
-def reformat_quantms_feature_table_quant_labels(data_df: pd.DataFrame, label: QuantificationCategory, choice: Optional[IsobaricLabel]) -> pd.DataFrame:
+def reformat_quantms_feature_table_quant_labels(
+    data_df: pd.DataFrame, label: QuantificationCategory, choice: Optional[IsobaricLabel]
+) -> pd.DataFrame:
     """
     Reformat (a subset of) a ``quantms`` feature table for consistent processing.
 
@@ -143,9 +147,7 @@ def apply_initial_filtering(data_df: pd.DataFrame, min_aa: int) -> pd.DataFrame:
     # Remove 0 intensity signals from the data
     data_df = data_df[data_df[INTENSITY] > 0]
 
-    data_df = data_df[
-        (data_df["Condition"] != "Empty") | (data_df["Condition"].isnull())
-    ]
+    data_df = data_df[(data_df["Condition"] != "Empty") | (data_df["Condition"].isnull())]
 
     # Filter peptides with less amino acids than min_aa (default: 7)
     data_df.loc[:, "len"] = data_df[PEPTIDE_CANONICAL].apply(len)
@@ -278,10 +280,14 @@ class Feature:
             raise FileNotFoundError(f"the file {database_path} does not exist.")
 
     def standardize_df(self, df: pd.DataFrame) -> pd.DataFrame:
-        return df.rename({"protein_accessions": "pg_accessions", "charge": "precursor_charge"}, axis=1)
+        return df.rename(
+            {"protein_accessions": "pg_accessions", "charge": "precursor_charge"}, axis=1
+        )
 
     @property
-    def experimental_inference(self) -> tuple[int, QuantificationCategory, list[str], Optional[IsobaricLabel]]:
+    def experimental_inference(
+        self,
+    ) -> tuple[int, QuantificationCategory, list[str], Optional[IsobaricLabel]]:
         self.labels = self.get_unique_labels()
         self.label, self.choice = QuantificationCategory.classify(self.labels)
         self.technical_repetitions = self.get_unique_tec_reps()
@@ -333,12 +339,16 @@ class Feature:
         report = database.df()
         return self.standardize_df(report)
 
-    def iter_samples(self, sample_num: int = 20, columns: list = None) -> Iterator[tuple[list[str], pd.DataFrame]]:
+    def iter_samples(
+        self, sample_num: int = 20, columns: list = None
+    ) -> Iterator[tuple[list[str], pd.DataFrame]]:
         """
         :params sample_num: The number of samples being processed at the same time (default 20)
         :yield: _description_
         """
-        ref_list = [self.samples[i : i + sample_num] for i in range(0, len(self.samples), sample_num)]
+        ref_list = [
+            self.samples[i : i + sample_num] for i in range(0, len(self.samples), sample_num)
+        ]
         for refs in ref_list:
             batch_df = self.get_report_from_database(refs, columns)
             yield refs, batch_df
@@ -363,13 +373,15 @@ class Feature:
         """
         unique = self.parquet_db.sql("SELECT DISTINCT run FROM parquet_db").df()
         try:
-            if unique["run"].str.contains('_').all():
+            if unique["run"].str.contains("_").all():
                 unique["run"] = unique["run"].str.split("_").str.get(1)
                 unique["run"] = unique["run"].astype("int")
             else:
                 unique["run"] = unique["run"].astype("int")
         except ValueError as e:
-            raise ValueError(f"Some errors occurred when getting technical repetitions: {e}") from e
+            raise ValueError(
+                f"Some errors occurred when getting technical repetitions: {e}"
+            ) from e
 
         return unique["run"].tolist()
 
@@ -397,7 +409,9 @@ class Feature:
         report = database.df()
         return self.standardize_df(report)
 
-    def iter_conditions(self, conditions: int = 10, columns: list = None) -> Iterator[tuple[list[str], pd.DataFrame]]:
+    def iter_conditions(
+        self, conditions: int = 10, columns: list = None
+    ) -> Iterator[tuple[list[str], pd.DataFrame]]:
         condition_list = self.get_unique_conditions()
         ref_list = [
             condition_list[i : i + conditions] for i in range(0, len(condition_list), conditions)
@@ -483,7 +497,10 @@ def peptide_normalization(
     med_map = {}
     if not skip_normalization and peptide_normalization == PeptideNormalizationMethod.GlobalMedian:
         med_map = feature.get_median_map()
-    elif not skip_normalization and peptide_normalization == PeptideNormalizationMethod.ConditionMedian:
+    elif (
+        not skip_normalization
+        and peptide_normalization == PeptideNormalizationMethod.ConditionMedian
+    ):
         med_map = feature.get_median_map_to_condition()
 
     # Incremental CSV writing
@@ -529,7 +546,11 @@ def peptide_normalization(
             dataset_df.rename(columns={INTENSITY: NORM_INTENSITY}, inplace=True)
 
             # Step7: Normalize at feature level between ms runs (technical repetitions)
-            if not skip_normalization and nmethod not in ("none", None) and technical_repetitions > 1:
+            if (
+                not skip_normalization
+                and nmethod not in ("none", None)
+                and technical_repetitions > 1
+            ):
                 print(f"{str(sample).upper()}: Normalize intensities of features.. ")
                 dataset_df = feature_normalization(dataset_df, technical_repetitions)
                 # dataset_df = normalize_runs(dataset_df, technical_repetitions, nmethod)
@@ -550,12 +571,7 @@ def peptide_normalization(
                 )
             # Step9: Normalize the data.
             if not skip_normalization:
-                dataset_df = peptide_normalization(
-                    dataset_df,
-                    sample,
-                    med_map
-                )
-
+                dataset_df = peptide_normalization(dataset_df, sample, med_map)
 
             # Step10: Remove peptides with low frequency.
             if remove_low_frequency_peptides and len(sample_names) > 1:

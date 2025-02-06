@@ -8,6 +8,7 @@ import ibaqpy.__init__ as __init__
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
+
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.version_option(
     version=__init__.__version__,
@@ -19,10 +20,12 @@ def cli():
     Main entry point for the CLI
     """
 
+
 cli.add_command(features2parquet)
 cli.add_command(peptides2protein)
 cli.add_command(tsne_visualization)
 cli.add_command(correct_batches)
+
 
 def main():
     """
