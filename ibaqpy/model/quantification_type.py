@@ -77,7 +77,7 @@ class IsobaricLabel(Enum):
                 return v
         raise KeyError(name)
 
-    def channels(self) -> 'IsobaricLabelSpec':
+    def channels(self) -> "IsobaricLabelSpec":
         return IsobaricLabelSpec.registry[self.name]
 
 
