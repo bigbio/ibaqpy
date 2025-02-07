@@ -32,10 +32,18 @@ from .write_queue import WriteParquetTask, WriteCSVTask
 
 def parse_uniprot_accession(uniprot_id: str) -> str:
     """
-    Parse the uniprot accession from the uniprot id in the form of
-    tr|CONTAMINANT_Q3SX28|CONTAMINANT_TPM2_BOVIN and convert to CONTAMINANT_Q3SX28
-    :param uniprot_id: uniprot id
-    :return: uniprot accession
+    Parse a UniProt accession string to extract and return the core accession numbers.
+
+    This function takes a UniProt ID string, which may contain multiple accessions
+    separated by semicolons. Each accession may have a format with two pipe ('|')
+    characters, in which case the core accession number is extracted. The function
+    returns a semicolon-separated string of the core accession numbers.
+
+    Parameters:
+        uniprot_id (str): A string containing one or more UniProt accessions.
+
+    Returns:
+        str: A semicolon-separated string of core accession numbers.
     """
     uniprot_list = uniprot_id.split(";")
     result_uniprot_list = []
@@ -48,9 +56,17 @@ def parse_uniprot_accession(uniprot_id: str) -> str:
 
 def get_canonical_peptide(peptide_sequence: str) -> str:
     """
-    This function returns a peptide sequence without the modification information
-    :param peptide_sequence: peptide sequence with mods
-    :return: peptide sequence
+    Remove modifications and special characters from a peptide sequence.
+
+    This function takes a peptide sequence string and removes any modifications
+    enclosed in parentheses or brackets, as well as any periods or hyphens,
+    returning the cleaned canonical peptide sequence.
+
+    Parameters:
+        peptide_sequence (str): The peptide sequence to be cleaned.
+
+    Returns:
+        str: The cleaned canonical peptide sequence.
     """
     clean_peptide = re.sub(r"[\(\[].*?[\)\]]", "", peptide_sequence)
     clean_peptide = clean_peptide.replace(".", "").replace("-", "")
@@ -61,14 +77,15 @@ def analyse_sdrf(
     sdrf_path: str,
 ) -> tuple[int, QuantificationCategory, list[str], Optional[IsobaricLabel]]:
     """
-    This function is aimed to parse SDRF and return four objects:
-    1. sdrf_df: A dataframe with channels and references annoted.
-    2. label: Label type of the experiment. LFQ, TMT or iTRAQ.
-    3. sample_names: A list contains all sample names.
-    4. choice: A dictionary caontains key-values between channel
-        names and numbers.
-    :param sdrf_path: File path of SDRF.
-    :return:
+    Analyzes an SDRF file to determine quantification details.
+
+    Parameters:
+        sdrf_path (str): The file path to the SDRF file.
+
+    Returns:
+        tuple[int, QuantificationCategory, list[str], Optional[IsobaricLabel]]:
+        A tuple containing the number of technical repetitions, the quantification category,
+        a list of unique sample names, and the isobaric label scheme if applicable.
     """
     sdrf_df = pd.read_csv(sdrf_path, sep="\t")
     sdrf_df.columns = [i.lower() for i in sdrf_df.columns]
@@ -92,11 +109,17 @@ def remove_contaminants_entrapments_decoys(
     dataset: pd.DataFrame, protein_field=PROTEIN_NAME
 ) -> pd.DataFrame:
     """
-    This method reads a file with a list of contaminants and high abudant proteins and
-    remove them from the dataset.
-    :param dataset: Peptide intensity DataFrame
-    :param protein_field: protein field
-    :return: dataset with the filtered proteins
+    Remove rows from the dataset that contain contaminants, entrapments, or decoys.
+
+    This function filters out entries in the specified protein field that match
+    any of the terms "CONTAMINANT", "ENTRAP", or "DECOY".
+
+    Parameters:
+        dataset (pd.DataFrame): The input DataFrame containing protein data.
+        protein_field (str): The column name in the DataFrame to check for contaminants.
+
+    Returns:
+        pd.DataFrame: A DataFrame with the contaminants, entrapments, and decoys removed.
     """
     contaminants = ["CONTAMINANT", "ENTRAP", "DECOY"]
     cregex = "|".join(contaminants)
@@ -107,12 +130,19 @@ def remove_protein_by_ids(
     dataset: pd.DataFrame, protein_file: str, protein_field=PROTEIN_NAME
 ) -> pd.DataFrame:
     """
-    This method reads a file with a list of contaminants and high abudant proteins and
-    remove them from the dataset.
-    :param dataset: Peptide intensity DataFrame
-    :param protein_file: contaminants file
-    :param protein_field: protein field
-    :return: dataset with the filtered proteins
+    Remove proteins from a dataset based on a list of protein IDs.
+
+    This function reads a file containing protein IDs and removes any rows
+    from the dataset where the specified protein field matches any of the IDs.
+
+    Parameters:
+        dataset (pd.DataFrame): The dataset containing protein information.
+        protein_file (str): Path to the file containing protein IDs to be removed.
+        protein_field (str): The field in the dataset to check for protein IDs.
+                             Defaults to PROTEIN_NAME.
+
+    Returns:
+        pd.DataFrame: A DataFrame with the specified proteins removed.
     """
     contaminants_reader = open(protein_file, "r")
     contaminants = contaminants_reader.read().split("\n")
@@ -125,14 +155,20 @@ def reformat_quantms_feature_table_quant_labels(
     data_df: pd.DataFrame, label: QuantificationCategory, choice: Optional[IsobaricLabel]
 ) -> pd.DataFrame:
     """
-    Reformat (a subset of) a ``quantms`` feature table for consistent processing.
+    Reformats a DataFrame containing quantification labels for QuantMS features.
 
-    :param data_df: Feature data in dataframe.
-    :param label: Label type of the experiment.
-    :param choice: Choice dict for a label type.
-    :return: Processed data.
+    This function renames columns in the input DataFrame according to a predefined mapping
+    and processes the protein names and channel information based on the quantification
+    category and isobaric label choice.
+
+    Parameters:
+        data_df (pd.DataFrame): The input DataFrame containing quantification data.
+        label (QuantificationCategory): The quantification category (e.g., LFQ, TMT, ITRAQ).
+        choice (Optional[IsobaricLabel]): The isobaric label scheme, if applicable.
+
+    Returns:
+        pd.DataFrame: The reformatted DataFrame with updated column names and channel information.
     """
-
     data_df = data_df.rename(columns=parquet_map)
     data_df[PROTEIN_NAME] = data_df[PROTEIN_NAME].str.join(";")
     if label == QuantificationCategory.LFQ:
@@ -144,6 +180,25 @@ def reformat_quantms_feature_table_quant_labels(
 
 
 def apply_initial_filtering(data_df: pd.DataFrame, min_aa: int) -> pd.DataFrame:
+    """
+    Apply initial filtering to a DataFrame containing peptide data.
+
+    This function filters out rows with zero intensity, removes entries with
+    'Empty' conditions unless they are null, and excludes peptides with fewer
+    amino acids than the specified minimum. It also processes protein names
+    to extract core accession numbers and ensures the presence of a 'Fraction'
+    column. Additionally, it extracts technical replicate information from the
+    'Run' column if applicable, and retains only relevant columns for further
+    analysis.
+
+    Parameters:
+        data_df (pd.DataFrame): The input DataFrame containing peptide data.
+        min_aa (int): The minimum number of amino acids required for peptides.
+
+    Returns:
+        pd.DataFrame: The filtered DataFrame with relevant columns.
+    """
+
     # Remove 0 intensity signals from the data
     data_df = data_df[data_df[INTENSITY] > 0]
 
@@ -186,9 +241,18 @@ def apply_initial_filtering(data_df: pd.DataFrame, min_aa: int) -> pd.DataFrame:
 
 def merge_fractions(dataset: pd.DataFrame) -> pd.DataFrame:
     """
-    Merge features across fractions.
-    :param dataset: dataset including all properties
-    :return:
+    Merge fractions in the dataset by grouping and aggregating normalized intensity.
+
+    This function removes rows with missing normalized intensity values and groups
+    the dataset by protein name, peptide sequence, canonical peptide, peptide charge,
+    condition, biological replicate, technical replicate, and sample ID. It then
+    aggregates the normalized intensity by taking the maximum value for each group.
+
+    Parameters:
+        dataset (pd.DataFrame): The input DataFrame containing peptide data.
+
+    Returns:
+        pd.DataFrame: A DataFrame with merged fractions and maximum normalized intensity.
     """
     dataset.dropna(subset=[NORM_INTENSITY], inplace=True)
     dataset = dataset.groupby(
@@ -212,11 +276,18 @@ def get_peptidoform_normalize_intensities(
     dataset: pd.DataFrame, higher_intensity: bool = True
 ) -> pd.DataFrame:
     """
-    Select the best peptidoform for the same sample and the same replicates. A peptidoform is the combination of
-    a (PeptideSequence + Modifications) + Charge state.
-    :param dataset: dataset including all properties
-    :param higher_intensity: select based on normalize intensity, if false based on best scored peptide
-    :return:
+    Normalize peptide intensities in a dataset by selecting the highest intensity
+    for each unique combination of peptide sequence, charge, sample ID, condition,
+    and biological replicate.
+
+    Parameters:
+        dataset (pd.DataFrame): The input DataFrame containing peptide data.
+        higher_intensity (bool): If True, selects the row with the highest normalized
+                                 intensity for each group. Defaults to True.
+
+    Returns:
+        pd.DataFrame: A DataFrame with normalized intensities, filtered to retain
+                      only the highest intensity entries per group.
     """
     dataset.dropna(subset=[NORM_INTENSITY], inplace=True)
     if higher_intensity:
@@ -239,9 +310,21 @@ def get_peptidoform_normalize_intensities(
 
 def sum_peptidoform_intensities(dataset: pd.DataFrame) -> pd.DataFrame:
     """
-    Sum the peptidoform intensities for all peptidofrom across replicates of the same sample.
-    :param dataset: Dataframe to be analyzed
-    :return: dataframe with the intensities
+    Aggregate normalized intensities for each unique peptidoform.
+
+    This function processes a dataset by summing the normalized intensities
+    for each unique combination of protein name, peptidoform, sample ID,
+    biological replicate, and condition. It removes any rows with missing
+    normalized intensity values, performs the aggregation, and returns a
+    DataFrame with unique entries.
+
+    Parameters:
+        dataset (pd.DataFrame): The input DataFrame containing peptidoform
+        data with normalized intensities.
+
+    Returns:
+        pd.DataFrame: A DataFrame with summed normalized intensities for each
+        unique peptidoform entry.
     """
     dataset.dropna(subset=[NORM_INTENSITY], inplace=True)
     dataset = dataset[
@@ -264,6 +347,34 @@ def sum_peptidoform_intensities(dataset: pd.DataFrame) -> pd.DataFrame:
 
 
 class Feature:
+    """
+    Represents a feature in a proteomics dataset, providing methods for data manipulation
+    and analysis using a DuckDB database connection to a Parquet file.
+
+    Attributes:
+        labels (Optional[list[str]]): A list of unique labels from the dataset.
+        label (Optional[QuantificationCategory]): The quantification category inferred from labels.
+        choice (Optional[IsobaricLabel]): The isobaric label scheme inferred from labels.
+        technical_repetitions (Optional[int]): The number of unique technical repetitions.
+
+    Methods:
+        __init__(database_path: str): Initializes the Feature object and connects to the database.
+        standardize_df(df: pd.DataFrame) -> pd.DataFrame: Standardizes column names in a DataFrame.
+        experimental_inference() -> tuple: Infers experimental details from the dataset.
+        low_frequency_peptides(percentage=0.2) -> tuple: Identifies low-frequency peptides.
+        csv2parquet(csv): Converts a CSV file to a Parquet file.
+        get_report_from_database(samples: list, columns: list = None) -> pd.DataFrame: Retrieves a report from the database.
+        iter_samples(sample_num: int = 20, columns: list = None) -> Iterator: Iterates over samples in batches.
+        get_unique_samples() -> list[str]: Retrieves unique sample accessions.
+        get_unique_labels() -> list[str]: Retrieves unique channel labels.
+        get_unique_tec_reps() -> list[int]: Retrieves unique technical repetition identifiers.
+        get_median_map() -> dict[str, float]: Computes a median intensity map for samples.
+        get_report_condition_from_database(cons: list, columns: list = None) -> pd.DataFrame: Retrieves a report based on conditions.
+        iter_conditions(conditions: int = 10, columns: list = None) -> Iterator: Iterates over conditions in batches.
+        get_unique_conditions() -> list[str]: Retrieves unique experimental conditions.
+        get_median_map_to_condition() -> dict[str, dict[str, float]]: Computes a median intensity map for conditions.
+    """
+
     labels: Optional[list[str]]
     label: Optional[QuantificationCategory]
     choice: Optional[IsobaricLabel]
@@ -282,9 +393,13 @@ class Feature:
     @staticmethod
     def standardize_df(df: pd.DataFrame) -> pd.DataFrame:
         """
-        Standardize the dataframe
-        :param df: Dataframe
-        :return:
+        Standardizes column names in the given DataFrame.
+
+        Parameters:
+            df (pd.DataFrame): The DataFrame with columns to be standardized.
+
+        Returns:
+            pd.DataFrame: A DataFrame with standardized column names.
         """
         return df.rename(
             {"protein_accessions": "pg_accessions", "charge": "precursor_charge"}, axis=1
@@ -294,6 +409,16 @@ class Feature:
     def experimental_inference(
         self,
     ) -> tuple[int, QuantificationCategory, list[str], Optional[IsobaricLabel]]:
+        """
+        Infers experimental details from the dataset, including the number of unique
+        technical repetitions, the quantification category, the list of samples, and
+        the isobaric label scheme.
+
+        Returns:
+            tuple[int, QuantificationCategory, list[str], Optional[IsobaricLabel]]:
+            A tuple containing the number of unique technical repetitions, the inferred
+            quantification category, the list of samples, and the isobaric label scheme.
+        """
         self.labels = self.get_unique_labels()
         self.label, self.choice = QuantificationCategory.classify(self.labels)
         self.technical_repetitions = self.get_unique_tec_reps()
@@ -301,7 +426,17 @@ class Feature:
 
     @property
     def low_frequency_peptides(self, percentage=0.2) -> tuple:
-        """Return peptides with low frequency"""
+        """
+        Identifies peptides that occur with low frequency across samples.
+
+        Parameters:
+            percentage (float): The threshold percentage of samples a peptide must appear in
+                                to be considered low frequency. Defaults to 0.2.
+
+        Returns:
+            tuple: A tuple of tuples, each containing a protein group accession and a peptide sequence
+                   that are identified as low frequency.
+        """
         f_table = self.parquet_db.sql(
             """
             SELECT "sequence", "pg_accessions", COUNT(DISTINCT sample_accession) as "count" from parquet_db
@@ -326,15 +461,29 @@ class Feature:
 
     @staticmethod
     def csv2parquet(csv):
+        """
+        Converts a CSV file to a Parquet file using DuckDB.
+
+        Parameters:
+            csv (str): The file path of the CSV file to be converted.
+
+        The converted Parquet file will be saved in the same directory
+        with the same name as the CSV file, but with a .parquet extension.
+        """
         parquet_path = os.path.splitext(csv)[0] + ".parquet"
         duckdb.read_csv(csv).to_parquet(parquet_path)
 
     def get_report_from_database(self, samples: list, columns: list = None):
         """
-        This function loads the report from the duckdb database for a group of ms_runs.
-        :param columns: A list of columns
-        :param samples: A list of samples
-        :return: The report
+        Retrieves a standardized report from the database for specified samples.
+
+        Parameters:
+            samples (list): A list of sample accessions to filter the report.
+            columns (list, optional): A list of column names to include in the report.
+                                      If None, all columns are included.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the report with standardized column names.
         """
         cols = ",".join(columns) if columns is not None else "*"
         database = self.parquet_db.sql(
@@ -349,8 +498,16 @@ class Feature:
         self, sample_num: int = 20, columns: list = None
     ) -> Iterator[tuple[list[str], pd.DataFrame]]:
         """
-        :params sample_num: The number of samples being processed at the same time (default 20)
-        :yield: _description_
+        Iterates over samples in batches, yielding each batch along with its corresponding
+        report DataFrame.
+
+        Parameters:
+            sample_num (int, optional): The number of samples to include in each batch. Defaults to 20.
+            columns (list, optional): A list of column names to include in the report. If None, all columns are included.
+
+        Yields:
+            Iterator[tuple[list[str], pd.DataFrame]]: An iterator over tuples, each containing a list of sample accessions
+                                                      and a DataFrame with the report for those samples.
         """
         ref_list = [
             self.samples[i : i + sample_num] for i in range(0, len(self.samples), sample_num)
@@ -361,21 +518,33 @@ class Feature:
 
     def get_unique_samples(self) -> list[str]:
         """
-        return: A list of samples.
+        Retrieves a list of unique sample accessions from the Parquet database.
+
+        Returns:
+            list[str]: A list of unique sample accession identifiers.
         """
         unique = self.parquet_db.sql("SELECT DISTINCT sample_accession FROM parquet_db").df()
         return unique["sample_accession"].tolist()
 
     def get_unique_labels(self) -> list[str]:
         """
-        return: A list of labels.
+        Retrieves a list of unique channel labels from the Parquet database.
+
+        Returns:
+            list[str]: A list of unique channel labels.
         """
         unique = self.parquet_db.sql("SELECT DISTINCT channel FROM parquet_db").df()
         return unique["channel"].tolist()
 
     def get_unique_tec_reps(self) -> list[int]:
         """
-        return: A list of labels.
+        Retrieves a list of unique technical repetition identifiers from the Parquet database.
+
+        Returns:
+            list[int]: A list of unique technical repetition identifiers as integers.
+
+        Raises:
+            ValueError: If there is an error converting the 'run' identifiers to integers.
         """
         unique = self.parquet_db.sql("SELECT DISTINCT run FROM parquet_db").df()
         try:
@@ -392,6 +561,14 @@ class Feature:
         return unique["run"].tolist()
 
     def get_median_map(self) -> dict[str, float]:
+        """
+        Computes a median intensity map for samples, normalizing each sample's median
+        intensity by the global median intensity across all samples.
+
+        Returns:
+            dict[str, float]: A dictionary mapping each sample accession to its normalized
+                              median intensity value.
+        """
         med_map: dict[str, float] = {}
         for _, batch_df in self.iter_samples(1000, ["sample_accession", "intensity"]):
             meds = batch_df.groupby(["sample_accession"])["intensity"].median()
@@ -403,10 +580,15 @@ class Feature:
 
     def get_report_condition_from_database(self, cons: list, columns: list = None) -> pd.DataFrame:
         """
-        This function loads the report from the duckdb database for a group of ms_runs.
-        :param columns: A list of columns
-        :param cons: A list of conditions in
-        :return: The report
+        Retrieves a standardized report from the database for specified conditions.
+
+        Parameters:
+            cons (list): A list of conditions to filter the report.
+            columns (list, optional): A list of column names to include in the report.
+                                      If None, all columns are included.
+
+        Returns:
+            pd.DataFrame: A DataFrame containing the report with standardized column names.
         """
         cols = ",".join(columns) if columns is not None else "*"
         database = self.parquet_db.sql(
@@ -418,6 +600,18 @@ class Feature:
     def iter_conditions(
         self, conditions: int = 10, columns: list = None
     ) -> Iterator[tuple[list[str], pd.DataFrame]]:
+        """
+        Iterates over experimental conditions in batches, yielding each batch along with its
+        corresponding report DataFrame.
+
+        Parameters:
+            conditions (int, optional): The number of conditions to include in each batch. Defaults to 10.
+            columns (list, optional): A list of column names to include in the report. If None, all columns are included.
+
+        Yields:
+            Iterator[tuple[list[str], pd.DataFrame]]: An iterator over tuples, each containing a list of condition names
+                                                      and a DataFrame with the report for those conditions.
+        """
         condition_list = self.get_unique_conditions()
         ref_list = [
             condition_list[i : i + conditions] for i in range(0, len(condition_list), conditions)
@@ -428,12 +622,25 @@ class Feature:
 
     def get_unique_conditions(self) -> list[str]:
         """
-        return: A list of conditions.
+        Retrieves a list of unique experimental conditions from the Parquet database.
+
+        Returns:
+            list[str]: A list of unique condition identifiers.
         """
         unique = self.parquet_db.sql("SELECT DISTINCT condition FROM parquet_db").df()
         return unique["condition"].tolist()
 
     def get_median_map_to_condition(self) -> dict[str, dict[str, float]]:
+        """
+        Computes a median intensity map for each experimental condition, normalizing
+        the median intensity of each sample within a condition by the mean median
+        intensity across all samples in that condition.
+
+        Returns:
+            dict[str, dict[str, float]]: A dictionary mapping each condition to another
+                                         dictionary, which maps each sample accession
+                                         to its normalized median intensity value.
+        """
         med_map = {}
         for cons, batch_df in self.iter_conditions(
             1000, ["condition", "sample_accession", "intensity"]
@@ -465,21 +672,33 @@ def peptide_normalization(
     save_parquet: bool,
 ) -> None:
     """
+    Perform peptide normalization on a proteomics dataset.
 
-    :param parquet: Parquet file with features
-    :param sdrf: SDRF file
-    :param min_aa: Min amino acids
-    :param min_unique: Min of unique peptides
-    :param remove_ids: Remove features for the given proteins
-    :param remove_decoy_contaminants: Remove contaminants and entrapment
-    :param remove_low_frequency_peptides: Remove low frecuency peptides
-    :param output: Output file
-    :param skip_normalization: Skip normalization
-    :param nmethod: normalization method for features
-    :param pnmethod: peptide normalization method
-    :param log2: log intensities for features before normalizing
-    :param save_parquet: Save to parque file.
+    This function processes a dataset stored in a Parquet file, applying various
+    normalization and filtering steps to prepare peptide data for analysis. It
+    supports removing contaminants, low-frequency peptides, and user-specified
+    proteins, as well as normalizing intensities across technical repetitions and
+    conditions. The results can be saved incrementally to CSV and Parquet files.
+
+    Parameters:
+        parquet (str): Path to the Parquet file containing the dataset.
+        sdrf (str): Path to the SDRF file for quantification details.
+        min_aa (int): Minimum number of amino acids required for peptides.
+        min_unique (int): Minimum number of unique peptides per protein.
+        remove_ids (str): Path to a file with protein IDs to remove.
+        remove_decoy_contaminants (bool): Whether to remove decoys and contaminants.
+        remove_low_frequency_peptides (bool): Whether to remove low-frequency peptides.
+        output (str): Path to the output file for saving results.
+        skip_normalization (bool): Whether to skip normalization steps.
+        nmethod (str): Method for feature-level normalization.
+        pnmethod (str): Method for peptide-level normalization.
+        log2 (bool): Whether to apply log2 transformation to intensities.
+        save_parquet (bool): Whether to save results in Parquet format.
+
+    Returns:
+        None
     """
+
     if os.path.exists(output):
         raise FileExistsError("The output file already exists.")
 

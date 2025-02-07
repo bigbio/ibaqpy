@@ -203,6 +203,18 @@ def load_feature(feature_path: str) -> pd.DataFrame:
 
 
 def is_parquet(path: str) -> bool:
+    """
+    Check if a file is in Parquet format.
+
+    This function attempts to open the specified file and read its header
+    to determine if it matches the Parquet file signature.
+
+    Parameters:
+        path (str): The file path to check.
+
+    Returns:
+        bool: True if the file is a Parquet file, False otherwise.
+    """
     try:
         with open(path, "rb") as fh:
             header = fh.read(4)

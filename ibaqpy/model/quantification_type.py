@@ -65,7 +65,6 @@ class QuantificationCategory(Enum):
             ValueError: If the labels do not correspond to a known quantification category.
         """
         label_scheme = None
-        label_category = None
 
         if len(labels) == 1 and any("label free" in s.lower() for s in labels):
             label_category = cls.LFQ

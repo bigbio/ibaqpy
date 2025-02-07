@@ -17,21 +17,17 @@ from ibaqpy.ibaq.ibaqpy_commons import (
 
 def remove_samples_low_protein_number(ibaq_df: pd.DataFrame, min_protein_num: int) -> pd.DataFrame:
     """
-    This functions takes an ibaq Dataframe with the following columns:
-    - ProteinName
-    - SampleID
-    - Condition
-    - iBAQ
-    ...
-    ...
-    ...
-    - iBAQLog
+    Remove samples with a low number of unique proteins from the DataFrame.
 
-    and removes samples with low protein number. The minimum number of proteins in a sample is defined by the min_protein_num parameter.
+    This function filters out samples from the given DataFrame that have fewer
+    unique proteins than the specified minimum threshold.
 
-    :param ibaq_df: pd.DataFrame
-    :param min_protein_num: int
-    :return: pd.DataFrame
+    Parameters:
+        ibaq_df (pd.DataFrame): The input DataFrame containing iBAQ data.
+        min_protein_num (int): The minimum number of unique proteins required to keep a sample.
+
+    Returns:
+        pd.DataFrame: A filtered DataFrame containing only samples with at least the specified number of unique proteins.
     """
 
     protein_num = ibaq_df.groupby(SAMPLE_ID)[PROTEIN_NAME].nunique()
@@ -57,23 +53,21 @@ def remove_missing_values(
     expression_column: str = IBAQ,
 ) -> pd.DataFrame:
     """
-    This functions takes an ibaq Dataframe with the following columns:
-    - ProteinName
-    - SampleID
-    - Condition
-    - iBAQ
-    ...
-    ...
-    ...
-    - iBAQLog
+    Remove samples from the DataFrame based on missing values in the expression column.
 
-    and removes the samples that for all the proteins has missing values for a given expression column
-    and remove the samples that have a percentage of missing values higher than missingness_percentage.
+    This function filters out samples from the input DataFrame where the percentage
+    of missing values in the specified expression column exceeds the given threshold.
 
-    :param ibaq_df: pd.DataFrame
-    :param missingness_percentage: float
-    :param expression_column: str The expression column to consider missigness percentage
-    :return: pd.DataFrame
+    Parameters:
+        ibaq_df (pd.DataFrame): The input DataFrame containing iBAQ data.
+        missingness_percentage (float): The threshold percentage of missing values allowed per sample.
+        expression_column (str): The column name in the DataFrame representing expression values.
+
+    Returns:
+        pd.DataFrame: A DataFrame with samples filtered based on the missingness criteria.
+
+    Raises:
+        ValueError: If the input is not a DataFrame or if the expression column is not present.
     """
 
     # Ensure the input is a DataFrame
@@ -114,27 +108,17 @@ def remove_missing_values(
 
 def describe_expression_metrics(ibaq_df: pd.DataFrame) -> pd.DataFrame:
     """
-    This function takes an ibaq Dataframe with the following columns:
-    - ProteinName
-    - SampleID
-    - Condition
-    - iBAQ
-    ...
-    ...
-    ...
-    - iBAQLog
+    Generate descriptive statistics for expression metrics in an iBAQ DataFrame.
 
-    and return a dataframe for each expression column with the following metrics:
-    - standard deviation across samples
-    - mean across samples
-    - minimum across samples
-    - 25th percentile across samples
-    - median across samples
-    - 75th percentile across samples
-    - maximum across samples
+    This function calculates descriptive statistics for specific expression
+    metrics within the provided iBAQ DataFrame, grouped by sample ID.
 
-    :param ibaq_df: pd.DataFrame
-    :return: pd.DataFrame
+    Parameters:
+        ibaq_df (pd.DataFrame): The DataFrame containing iBAQ expression data.
+
+    Returns:
+        pd.DataFrame: A DataFrame with descriptive statistics for the expression
+        metrics, grouped by sample ID.
     """
 
     possible_expression_values = [
@@ -209,6 +193,23 @@ def pivot_wider(
 
 
 def pivot_longer(df: pd.DataFrame, row_name: str, col_name: str, values: str) -> pd.DataFrame:
+    """
+    Transforms a wide-format DataFrame into a long-format DataFrame.
+
+    This function takes a DataFrame and pivots it from a wide format to a long format
+    using the specified row name, column name, and values. It validates the input
+    DataFrame and checks for the existence of the specified row name. The function
+    also logs a warning if any missing values are found in the resulting DataFrame.
+
+    Parameters:
+        df (pd.DataFrame): The input DataFrame to be transformed.
+        row_name (str): The name of the column to use as the identifier variable.
+        col_name (str): The name for the new column that will contain the former column names.
+        values (str): The name for the new column that will contain the values.
+
+    Returns:
+        pd.DataFrame: A long-format DataFrame with specified column names.
+    """
     # Validate input DataFrame
     if not isinstance(df, pd.DataFrame):
         raise ValueError("Input must be a pandas DataFrame")
