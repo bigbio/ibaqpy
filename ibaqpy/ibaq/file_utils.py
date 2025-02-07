@@ -46,6 +46,10 @@ def create_anndata(
     df_matrix = pivot_wider(
         df, row_name=obs_col, col_name=var_col, values=value_col, fillna=True
     )
+    if df_matrix.empty:
+        raise ValueError("Pivot operation resulted in an empty DataFrame")
+    if df_matrix.shape[0] == 0 or df_matrix.shape[1] == 0:
+        raise ValueError("Pivot operation resulted in a DataFrame with zero dimensions")
 
     # Create the AnnData object with the main data matrix.
     adata = an.AnnData(
