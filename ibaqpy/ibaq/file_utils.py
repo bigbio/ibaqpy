@@ -1,4 +1,5 @@
 import glob
+import logging
 import warnings
 from typing import List, Optional
 
@@ -99,6 +100,8 @@ def create_anndata(
                 df, row_name=obs_col, col_name=var_col, values=layer_col, fillna=True
             )
             adata.layers[layer_col] = df_layer.to_numpy()
+
+    logging.info(f"Created AnnData object:\n {adata}")
 
     return adata
 

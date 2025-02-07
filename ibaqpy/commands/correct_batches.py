@@ -1,3 +1,4 @@
+import logging
 import re
 from pathlib import Path
 from typing import Union
@@ -120,6 +121,10 @@ def run_batch_correction(
         ValueError: If input files cannot be loaded, sample IDs are invalid, or output file cannot be saved.
         FileNotFoundError: If the output file does not exist when exporting to AnnData.
     """
+
+    # Load the data
+    logging.info(f"Loading iBAQ data from TSV files in folder '{folder}'")
+
     try:
         df_ibaq = combine_ibaq_tsv_files(folder, pattern=pattern, comment=comment, sep=sep)
     except Exception as e:
@@ -142,6 +147,7 @@ def run_batch_correction(
     batch_ids = get_batch_id_from_sample_names(df_wide.columns)
 
     # Run batch correction
+    logging.info("Applying batch correction to iBAQ values")
     df_corrected = apply_batch_correction(df_wide, list(batch_ids), kwargs={})
 
     # Convert the data back to long format
@@ -168,6 +174,7 @@ def run_batch_correction(
 
     # Export the raw and corrected iBAQ values to an AnnData object
     if export_anndata:
+        logging.info("Exporting raw and corrected iBAQ values to an AnnData object")
         output_path = Path(output)
         if not output_path.exists():
             raise FileNotFoundError(f"Output file {output} does not exist!")
@@ -184,10 +191,12 @@ def run_batch_correction(
         except Exception as e:
             raise ValueError(f"Failed to write AnnData object: {e}")
 
+    logging.info("Batch correction completed...")
+
     return df_ibaq
 
 
-@click.command()
+@click.command("correct-batches", short_help="Batch effect correction for iBAQ values.")
 @click.option(
     "-f",
     "--folder",
