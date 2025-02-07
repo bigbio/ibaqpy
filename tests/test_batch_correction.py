@@ -12,7 +12,17 @@ TESTS_DIR = Path(__file__).parent
 
 
 def test_correct_batches():
-    # Test valid case
+    """
+    Test the `run_batch_correction` function to ensure it correctly processes iBAQ values
+    from TSV files, generates the expected output files, and handles various error cases.
+
+    This test verifies:
+    - The creation and non-emptiness of the corrected output TSV file.
+    - The creation and correct shape of the AnnData object.
+    - Handling of invalid sample IDs by raising a ValueError.
+    - Handling of missing required columns by raising a ValueError.
+    - Handling of invalid file patterns by raising a ValueError.
+    """
     args = {
         "folder": TESTS_DIR / "ibaq-raw-hela",
         "pattern": "*ibaq.tsv",

@@ -5,7 +5,7 @@ from typing import Union
 import click
 import pandas as pd
 
-from ibaqpy.ibaq.file_utils import (create_anndata, combine_ibaq_tsv_files)
+from ibaqpy.ibaq.file_utils import create_anndata, combine_ibaq_tsv_files
 from ibaqpy.ibaq.ibaqpy_commons import SAMPLE_ID_REGEX, SAMPLE_ID, PROTEIN_NAME, IBAQ, IBAQ_BEC
 from ibaqpy.ibaq.ibaqpy_postprocessing import (
     pivot_wider,
@@ -18,19 +18,20 @@ def is_valid_sample_id(
     samples: Union[str, list, pd.Series], sample_id_pattern: str = SAMPLE_ID_REGEX
 ) -> bool:
     """
-    Validates that all sample IDs in the provided input are composed only of alphanumeric
-    characters and hyphen-separated alphanumeric parts.
+    Validate sample IDs against a specified pattern.
 
-    Also prints out any sample IDs that fail to match the pattern.
+    This function checks whether the provided sample IDs match a given regex pattern.
+    It accepts a single sample ID, a list of sample IDs, or a pandas Series of sample IDs.
+    If any sample ID does not match the pattern, it prints the invalid IDs and returns False.
+    Otherwise, it returns True.
 
-    Args:
-        samples (Union[list, str, pd.Series]): A list, single sample ID, or pandas Series containing the sample IDs to validate.
-        sample_id_pattern (str): The regex pattern to validate the sample IDs against.
+    Parameters:
+        samples (Union[str, list, pd.Series]): The sample ID(s) to validate.
+        sample_id_pattern (str): The regex pattern to validate the sample IDs against. Defaults to SAMPLE_ID_REGEX.
 
     Returns:
-        bool: True if all sample IDs are valid according to the pattern, False otherwise.
+        bool: True if all sample IDs are valid, False otherwise.
     """
-    # Compile the regex pattern for a valid sample name.
     sample_pattern = re.compile(sample_id_pattern)
 
     # Ensure samples is a list for uniform processing
@@ -52,16 +53,21 @@ def is_valid_sample_id(
 
 def get_batch_id_from_sample_names(samples: list) -> list:
     """
-    Extract batch IDs from sample names, assuming batch ID is the first part before the hyphen.
+    Extracts batch IDs from a list of sample names.
 
-    Args:
-        samples (list): List of sample names in the format 'batch-id-suffix'.
+    Each sample name is expected to have a batch ID as a prefix, separated by a hyphen.
+    The function validates that the batch ID consists of alphanumeric characters only.
+    Returns a list of unique batch IDs as integer factors.
+
+    Parameters:
+        samples (list): A list of sample names, each containing a batch ID prefix.
 
     Returns:
-        list: List of numeric batch IDs mapped from the extracted batch identifiers.
+        list: A list of integer factors representing unique batch IDs.
 
     Raises:
-        ValueError: If sample name format is invalid or batch ID is empty.
+        ValueError: If a sample name does not contain a valid batch ID prefix or if the
+                    batch ID contains non-alphanumeric characters.
     """
     batch_ids = []
     for sample in samples:
@@ -87,24 +93,33 @@ def run_batch_correction(
     protein_id_column: str = PROTEIN_NAME,
     ibaq_raw_column: str = IBAQ,
     ibaq_corrected_column: str = IBAQ_BEC,
-    export_anndata = False,
+    export_anndata: bool = False,
 ) -> pd.DataFrame:
     """
-    Runs the batch correction on iBAQ values from TSV files.
+    Run batch correction on iBAQ data from TSV files in a specified directory.
 
-    Args:
-        folder (str): Folder that contains all TSV files with raw iBAQ values.
-        pattern (str): Pattern for the TSV files with raw iBAQ values.
-        comment (str): Comment character for the TSV files. Lines starting with this character will be ignored.
-        sep (str): Separator for the TSV files.
-        output (str): Output file name for the combined iBAQ corrected values.
-        sample_id_column (str): Sample ID column name.
-        protein_id_column (str): Protein ID column name.
-        ibaq_raw_column (str): iBAQ raw column name.
-        ibaq_corrected_column (str): Name for the corrected iBAQ column.
-        export_anndata (bool): Export the raw and corrected iBAQ values to an AnnData object.
+    This function combines multiple TSV files, reshapes the data, validates sample IDs,
+    applies batch correction, and optionally exports the results to an AnnData object.
+
+    Parameters:
+        folder (str): Directory containing the TSV files.
+        pattern (str): Pattern to match files in the directory.
+        comment (str): Character indicating the start of a comment line in the TSV files.
+        sep (str): Delimiter for reading the TSV files.
+        output (str): File path to save the corrected iBAQ values.
+        sample_id_column (str): Column name for sample IDs. Defaults to SAMPLE_ID.
+        protein_id_column (str): Column name for protein IDs. Defaults to PROTEIN_NAME.
+        ibaq_raw_column (str): Column name for raw iBAQ values. Defaults to IBAQ.
+        ibaq_corrected_column (str): Column name for corrected iBAQ values. Defaults to IBAQ_BEC.
+        export_anndata (bool): Whether to export the data to an AnnData object. Defaults to False.
+
+    Returns:
+        pd.DataFrame: DataFrame containing the original and corrected iBAQ values.
+
+    Raises:
+        ValueError: If input files cannot be loaded, sample IDs are invalid, or output file cannot be saved.
+        FileNotFoundError: If the output file does not exist when exporting to AnnData.
     """
-    # Load the data
     try:
         df_ibaq = combine_ibaq_tsv_files(folder, pattern=pattern, comment=comment, sep=sep)
     except Exception as e:
@@ -163,7 +178,7 @@ def run_batch_correction(
             value_col=ibaq_raw_column,
             layer_cols=[ibaq_corrected_column],
         )
-        adata_filename = output_path.with_suffix('.h5ad')
+        adata_filename = output_path.with_suffix(".h5ad")
         try:
             adata.write(adata_filename)
         except Exception as e:
@@ -214,12 +229,9 @@ def run_batch_correction(
     required=False,
     default=PROTEIN_NAME,
 )
-@click.option("-ibaq",
-              "--ibaq_raw_column",
-              help="Name of the raw iBAQ column",
-              required=False,
-              default=IBAQ
-        )
+@click.option(
+    "-ibaq", "--ibaq_raw_column", help="Name of the raw iBAQ column", required=False, default=IBAQ
+)
 @click.option(
     "--ibaq_corrected_column",
     help="Name for the corrected iBAQ column",
@@ -245,6 +257,26 @@ def correct_batches(
     ibaq_corrected_column: str,
     export_anndata: bool,
 ):
+    """
+    Command-line interface for correcting batch effects in iBAQ data.
+
+    This command processes TSV files containing raw iBAQ values, applies batch correction,
+    and outputs the corrected values. It supports various options for specifying file patterns,
+    column names, and output formats, including exporting to an AnnData object.
+
+    Parameters:
+        ctx: Click context object.
+        folder (str): Directory containing TSV files with raw iBAQ values.
+        pattern (str): Pattern to match TSV files.
+        comment (str): Comment character for TSV files; lines starting with this character are ignored.
+        sep (str): Separator for TSV files.
+        output (str): Output file name for corrected iBAQ values.
+        sample_id_column (str): Column name for sample IDs.
+        protein_id_column (str): Column name for protein IDs.
+        ibaq_raw_column (str): Column name for raw iBAQ values.
+        ibaq_corrected_column (str): Column name for corrected iBAQ values.
+        export_anndata (bool): Flag to export data to an AnnData object.
+    """
     run_batch_correction(
         folder=folder,
         pattern=pattern,

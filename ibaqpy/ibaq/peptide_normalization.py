@@ -279,7 +279,13 @@ class Feature:
         else:
             raise FileNotFoundError(f"the file {database_path} does not exist.")
 
-    def standardize_df(self, df: pd.DataFrame) -> pd.DataFrame:
+    @staticmethod
+    def standardize_df(df: pd.DataFrame) -> pd.DataFrame:
+        """
+        Standardize the dataframe
+        :param df: Dataframe
+        :return:
+        """
         return df.rename(
             {"protein_accessions": "pg_accessions", "charge": "precursor_charge"}, axis=1
         )
@@ -337,7 +343,7 @@ class Feature:
             )
         )
         report = database.df()
-        return self.standardize_df(report)
+        return Feature.standardize_df(report)
 
     def iter_samples(
         self, sample_num: int = 20, columns: list = None
@@ -407,7 +413,7 @@ class Feature:
             f"""SELECT {cols} FROM parquet_db WHERE condition IN {tuple(cons)}"""
         )
         report = database.df()
-        return self.standardize_df(report)
+        return Feature.standardize_df(report)
 
     def iter_conditions(
         self, conditions: int = 10, columns: list = None
@@ -481,7 +487,7 @@ def peptide_normalization(
         raise FileNotFoundError("The file does not exist.")
 
     feature_normalization = FeatureNormalizationMethod.from_str(nmethod)
-    peptide_normalization = PeptideNormalizationMethod.from_str(pnmethod)
+    peptide_normalized = PeptideNormalizationMethod.from_str(pnmethod)
 
     print("Loading data..")
     feature = Feature(parquet)
@@ -495,11 +501,10 @@ def peptide_normalization(
         low_frequency_peptides = feature.low_frequency_peptides
 
     med_map = {}
-    if not skip_normalization and peptide_normalization == PeptideNormalizationMethod.GlobalMedian:
+    if not skip_normalization and peptide_normalized == PeptideNormalizationMethod.GlobalMedian:
         med_map = feature.get_median_map()
     elif (
-        not skip_normalization
-        and peptide_normalization == PeptideNormalizationMethod.ConditionMedian
+        not skip_normalization and peptide_normalized == PeptideNormalizationMethod.ConditionMedian
     ):
         med_map = feature.get_median_map_to_condition()
 
@@ -571,7 +576,7 @@ def peptide_normalization(
                 )
             # Step9: Normalize the data.
             if not skip_normalization:
-                dataset_df = peptide_normalization(dataset_df, sample, med_map)
+                dataset_df = peptide_normalized(dataset_df, sample, med_map)
 
             # Step10: Remove peptides with low frequency.
             if remove_low_frequency_peptides and len(sample_names) > 1:

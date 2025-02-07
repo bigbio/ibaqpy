@@ -16,16 +16,32 @@ TESTS_DIR = Path(__file__).parent
 
 
 def test_combine_ibaq_tsv_files():
+    """
+    Test functions for combining iBAQ TSV files and creating AnnData objects.
+
+    Functions:
+    - test_combine_ibaq_tsv_files: Tests the combination of multiple iBAQ TSV files
+      into a single DataFrame and verifies the shape of the resulting DataFrame.
+    - test_create_anndata: Tests the creation of an AnnData object from a DataFrame
+      with specified observation and variable columns, additional layers, and metadata.
+    """
     ibaq_dir = TESTS_DIR / "ibaq-raw-hela"
     files_pattern = "*ibaq.tsv"
-    df_ibaq = combine_ibaq_tsv_files(
-        dir_path=str(ibaq_dir), pattern=files_pattern, sep="\t"
-    )
+    df_ibaq = combine_ibaq_tsv_files(dir_path=str(ibaq_dir), pattern=files_pattern, sep="\t")
     logging.info(df_ibaq.head())
     assert df_ibaq.shape == (83725, 14)
 
 
 def test_create_anndata():
+    """
+    Test functions for combining iBAQ TSV files and creating AnnData objects.
+
+    Functions:
+    - test_combine_ibaq_tsv_files: Tests the combination of multiple iBAQ TSV files
+      into a single DataFrame and verifies the shape of the resulting DataFrame.
+    - test_create_anndata: Tests the creation of an AnnData object from a DataFrame
+      with specified observation and variable columns, additional layers, and metadata.
+    """
     df = pd.read_csv(TESTS_DIR / "ibaq-raw-hela/PXD000396.ibaq.tsv", sep="\t")
     obs_col = SAMPLE_ID
     var_col = PROTEIN_NAME
@@ -45,4 +61,3 @@ def test_create_anndata():
     assert adata.layers[IBAQ_NORMALIZED].shape == (12, 3096)
     assert adata.layers[IBAQ_LOG].shape == (12, 3096)
     assert "HeLa" in adata.obs["Condition"].values
-

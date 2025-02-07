@@ -43,9 +43,7 @@ def create_anndata(
         )
 
     # Pivot the long dataframe to create a wide-format matrix for the main values.
-    df_matrix = pivot_wider(
-        df, row_name=obs_col, col_name=var_col, values=value_col, fillna=True
-    )
+    df_matrix = pivot_wider(df, row_name=obs_col, col_name=var_col, values=value_col, fillna=True)
     if df_matrix.empty:
         raise ValueError("Pivot operation resulted in an empty DataFrame")
     if df_matrix.shape[0] == 0 or df_matrix.shape[1] == 0:
@@ -58,9 +56,7 @@ def create_anndata(
         var=df_matrix.columns.to_frame(),
     )
 
-    def add_metadata(
-        metadata_df: pd.DataFrame, key: str, cols: List[str]
-    ) -> pd.DataFrame:
+    def add_metadata(metadata_df: pd.DataFrame, key: str, cols: List[str]) -> pd.DataFrame:
         """
         Add metadata columns to a DataFrame by mapping values from the original long dataframe.
 
@@ -113,8 +109,7 @@ def combine_ibaq_tsv_files(
     """
     Combine multiple TSV files from a directory into a single pandas DataFrame.
 
-    Parameters
-    ----------
+    Parameters:
     dir_path : str
         Directory path containing the TSV files.
     pattern : str, optional
@@ -125,8 +120,7 @@ def combine_ibaq_tsv_files(
     sep : str, optional
         Delimiter to use for reading the TSV files (default is '\t').
 
-    Returns
-    -------
+    Returns:
     Optional[pd.DataFrame]
         Combined DataFrame containing data from all TSV files, or None if no files match the pattern.
 

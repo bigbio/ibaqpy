@@ -6,6 +6,17 @@ TESTS_DIR = Path(__file__).parent
 
 
 def test_ibaq_compute():
+    """
+    Test the computation of IBAQ values using the peptides_to_protein function.
+
+    This test sets up the necessary arguments, including paths to input files,
+    enzyme type, normalization options, and output paths, and then calls the
+    peptides_to_protein function to perform the computation. It prints the
+    arguments for verification before execution.
+
+    The test uses example data files located in the 'example' directory and
+    outputs results to the 'out' directory.
+    """
     args = {
         "fasta": str(
             TESTS_DIR / "example/Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta"
