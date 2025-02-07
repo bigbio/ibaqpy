@@ -134,15 +134,13 @@ def split_df_by_column(df: pd.DataFrame, cov_index_col: str) -> List[pd.DataFram
     """
     Split a DataFrame by unique values of a specified column.
 
-    Parameters
-    ----------
+    Parameters:
     df : pd.DataFrame
         A pandas DataFrame to be split.
     cov_index_col : str
         The name of the column to split the DataFrame by.
 
-    Returns
-    -------
+    Returns:
     List[pd.DataFrame]
         A list of pandas DataFrames, each containing rows with the same value in the specified column.
     """
@@ -179,15 +177,13 @@ def compute_pca(df, n_components=5) -> pd.DataFrame:
     """
     Compute principal components for a given dataframe.
 
-    Parameters
-    ----------
+    Parameters:
     df : pd.DataFrame
     A dataframe with samples as rows and features as columns.
     n_components : int
     Number of principal components to be computed.
 
-    Returns
-    -------
+    Returns:
     df_pca : pd.DataFrame
     A dataframe with the principal components.
     """
@@ -226,15 +222,13 @@ def remove_single_sample_batches(df: pd.DataFrame, batch: list) -> pd.DataFrame:
     """
     Remove batches with only one sample.
 
-    Parameters
-    ----------
+    Parameters:
     df : pd.DataFrame
     A dataframe with samples in columns and protein IDs in rows.
     batch : list
     A list of batch indices.
 
-    Returns
-    -------
+    Returns:
     df_filtered : pd.DataFrame
     A filtered dataframe.
     """
@@ -312,8 +306,7 @@ def apply_batch_correction(
     Get a dataframe and a list of batch indices as input and
     return a batch corrected dataframe with pycombat.
 
-    Parameters
-    ----------
+    Parameters:
     df : pd.DataFrame
     A dataframe with the data to apply batch correction. Expected to have samples as columns and features as rows.
     batch : list
@@ -327,8 +320,7 @@ def apply_batch_correction(
     -------
     Every batch should have at least 2 samples.
 
-    Returns
-    -------
+    Returns:
     df_corrected : pd.DataFrame
     A batch-corrected dataframe.
 
@@ -361,8 +353,7 @@ def find_clusters(df, min_cluster_size, min_samples) -> pd.DataFrame:
     """
     Compute clusters for a given dataframe.
 
-    Parameters
-    ----------
+    Parameters:
     df : pd.DataFrame
     A dataframe with the data to be batched corrected.
     min_cluster_size : int
@@ -370,8 +361,7 @@ def find_clusters(df, min_cluster_size, min_samples) -> pd.DataFrame:
     min_samples : int
     The minimum number of samples in a neighborhood for a point to be considered as a core point.
 
-    Returns
-    -------
+    Returns:
     df_clusters : pd.DataFrame
     A dataframe with the cluster assignments.
     """
@@ -409,8 +399,7 @@ def iterative_outlier_removal(
     Get a dataframe and a list of batch indices as input and
     return a batch corrected dataframe with pycombat.
 
-    Parameters
-    ----------
+    Parameters:
     df : pd.DataFrame
     A dataframe with the data to be batch corrected.
     batch : list
@@ -426,8 +415,7 @@ def iterative_outlier_removal(
     verbose : bool
     Whether to print and plot the number of outliers for each iteration.
 
-    Returns
-    -------
+    Returns:
     df_filtered : pd.DataFrame
     A filtered dataframe.
     """

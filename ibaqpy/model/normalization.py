@@ -21,17 +21,14 @@ class FeatureNormalizationMethod(Enum):
     @classmethod
     def from_str(cls, name: str) -> "FeatureNormalizationMethod":
         """
-        Convert a string representation of a normalization method to its corresponding
-        FeatureNormalizationMethod enum member.
+        Get the normalization method from a string.
+        Parameters
+        ----------
+        name: str The name of the normalization method.
 
-        Parameters:
-            name (str): The string representation of the normalization method.
-
-        Returns:
-            FeatureNormalizationMethod: The corresponding enum member.
-
-        Raises:
-            KeyError: If the provided name does not match any enum member.
+        Returns
+        -------
+        FeatureNormalizationMethod: The normalization method.
         """
         if name is None:
             return cls.NONE
@@ -86,6 +83,19 @@ class FeatureNormalizationMethod(Enum):
         return map_, sample_average_metric
 
     def normalize_runs(self, df: pd.DataFrame, technical_replicates: int):
+        """
+        Normalize the intensities of runs in the given DataFrame using a registered
+
+        Parameters
+        ----------
+        df: pd.DataFrame The DataFrame containing replicate intensity data.
+        technical_replicates: int The number of technical replicates for each sample.
+
+        Returns
+        -------
+        pd.DataFrame: The DataFrame with normalized replicate intensities.
+
+        """
         if technical_replicates > 1:
             samples = df[SAMPLE_ID].unique()
             for sample in samples:
@@ -123,37 +133,111 @@ class FeatureNormalizationMethod(Enum):
 
 @FeatureNormalizationMethod.NONE.register_replicate_fn
 def no_normalization(df, *args, **kwargs):
+    """
+    No normalization is performed on the data.
+    Parameters:
+    df: pd.DataFrame The DataFrame containing replicate intensity data.
+    args: Additional positional arguments
+    kwargs: Additional keyword arguments
+
+    Returns:
+    pd.DataFrame: The DataFrame containing the replicate intensity data.
+
+    """
     return df
 
 
 @FeatureNormalizationMethod.Mean.register_replicate_fn
 def mean_normalize(df, *args, **kwargs):
+    """
+    Mean normalization of the data.
+
+    Parameters:
+    df: pd.DataFrame The DataFrame containing replicate intensity data.
+    args: Additional positional arguments
+    kwargs: Additional keyword arguments
+
+    Returns:
+    pd.DataFrame: The DataFrame containing the normalized replicate intensity data.
+
+    """
     return df / df.mean()
 
 
 @FeatureNormalizationMethod.Median.register_replicate_fn
 def median_normalize(df, *args, **kwargs):
+    """
+    Median normalization of the data.
+    Parameters:
+    df: pd.DataFrame The DataFrame containing replicate intensity data.
+    args: Additional positional arguments
+    kwargs: Additional keyword arguments
+
+    Returns:
+    pd.DataFrame: The DataFrame containing the normalized replicate intensity data.
+
+    """
     return df / df.median()
 
 
 @FeatureNormalizationMethod.Max.register_replicate_fn
 def max_normalize(df, *args, **kwargs):
+    """
+    Max normalization of the data.
+    Parameters:
+    df: pd.DataFrame The DataFrame containing replicate intensity data.
+    args: Additional positional arguments
+    kwargs: Additional keyword arguments
+
+    Returns:
+    pd.DataFrame: The DataFrame containing the normalized replicate intensity data.
+    """
     return df / df.max()
 
 
 @FeatureNormalizationMethod.Global.register_replicate_fn
 def global_normalize(df, *args, **kwargs):
+    """
+    Global normalization of the data.
+    Parameters:
+    df: pd.DataFrame The DataFrame containing replicate intensity data.
+    args: Additional positional arguments
+    kwargs: Additional keyword arguments
+
+    Returns:
+    pd.DataFrame: The DataFrame containing the normalized replicate intensity data.
+    """
     return df / df.sum()
 
 
 @FeatureNormalizationMethod.Max_Min.register_replicate_fn
 def max_min_normalize(df, *args, **kwargs):
+    """
+    Max-Min normalization of the data
+    Parameters:
+    df: pd.DataFrame The DataFrame containing replicate intensity data.
+    args: Additional positional arguments
+    kwargs: Additional keyword arguments
+
+    Returns:
+    pd.DataFrame: The DataFrame containing the normalized replicate intensity data.
+    """
     min_ = df.min()
     return (df - min_) / (df.max() - min_)
 
 
 @FeatureNormalizationMethod.IQR.register_replicate_fn
 def iqr_normalization(df, *args, **kwargs):
+    """
+    IQR normalization of the data.
+    Parameters:
+    df: pd.DataFrame The DataFrame containing replicate intensity data.
+    args: Additional positional arguments
+    kwargs: Additional keyword arguments
+
+    Returns:
+    pd.DataFrame: The DataFrame containing the normalized replicate intensity data.
+    """
     return df.quantile([0.75, 0.25], interpolation="linear").mean()
 
 
@@ -161,6 +245,23 @@ _peptide_method_registry = {}
 
 
 class PeptideNormalizationMethod(Enum):
+    """
+    Enum class for peptide normalization methods, providing functionality to register
+    and apply normalization functions to peptide data.
+
+    Attributes:
+        NONE: No normalization.
+        GlobalMedian: Normalization using global median.
+        ConditionMedian: Normalization using condition-specific median.
+
+    Methods:
+        from_str(name): Converts a string to a PeptideNormalizationMethod.
+        register_replicate_fn(fn): Registers a function for a specific normalization method.
+        normalize_sample(dataset_df, sample, med_map): Applies the registered normalization
+            function to a sample.
+        __call__(dataset_df, sample, med_map): Invokes normalize_sample method.
+    """
+
     NONE = auto()
 
     GlobalMedian = auto()
@@ -168,6 +269,16 @@ class PeptideNormalizationMethod(Enum):
 
     @classmethod
     def from_str(cls, name: str) -> "PeptideNormalizationMethod":
+        """
+        Converts a string to a PeptideNormalizationMethod.
+        Parameters
+        ----------
+        name: str The name of the normalization method.
+
+        Returns
+        -------
+        PeptideNormalizationMethod: The normalization method.
+        """
         name_ = name.lower()
         for k, v in cls._member_map_.items():
             if k.lower() == name_:
@@ -177,29 +288,93 @@ class PeptideNormalizationMethod(Enum):
     def register_replicate_fn(
         self, fn: Callable[[pd.DataFrame, str, dict], pd.DataFrame]
     ) -> Callable[[pd.DataFrame, str, dict], pd.DataFrame]:
+        """
+        Registers a function for a specific normalization method.
+        Parameters
+        ----------
+        fn: Callable[[pd.DataFrame, str, dict], pd.DataFrame] The normalization function.
+
+        Returns
+        -------
+        Callable[[pd.DataFrame, str, dict], pd.DataFrame]: The normalization function.
+        """
         _peptide_method_registry[self] = fn
         return fn
 
     def normalize_sample(self, dataset_df: pd.DataFrame, sample: str, med_map: dict):
+        """
+        Applies the registered normalization function to a sample.
+        Parameters
+        ----------
+        dataset_df: pd.DataFrame The DataFrame containing peptide intensity data.
+        sample: str The sample identifier.
+        med_map: dict The median map.
+
+        Returns
+        -------
+        pd.DataFrame: The DataFrame containing the normalized peptide intensity data.
+        """
         fn = _peptide_method_registry[self]
         return fn(dataset_df, sample, med_map)
 
     def __call__(self, dataset_df: pd.DataFrame, sample: str, med_map: dict):
+        """
+        Invokes the normalize_sample method.
+        Parameters
+        ----------
+        dataset_df: pd.DataFrame The DataFrame containing peptide intensity data.
+        sample: str The sample identifier.
+        med_map: dict The median map.
+
+        Returns
+        -------
+        pd.DataFrame: The DataFrame containing the normalized peptide intensity data.
+        """
         return self.normalize_sample(dataset_df, sample, med_map)
 
 
 @PeptideNormalizationMethod.GlobalMedian.register_replicate_fn
 def global_median(dataset_df, sample: str, med_map: dict):
+    """
+    Global median normalization of the data.
+    Parameters:
+    dataset_df: pd.DataFrame The DataFrame containing peptide intensity data.
+    sample: str The sample identifier.
+    med_map: dict The median map.
+
+    Returns:
+    pd.DataFrame: The DataFrame containing the normalized peptide intensity data.
+    """
     dataset_df.loc[:, NORM_INTENSITY] = dataset_df[NORM_INTENSITY] / med_map[sample]
     return dataset_df
 
 
 @PeptideNormalizationMethod.ConditionMedian.register_replicate_fn
 def condition_median(dataset_df, sample: str, med_map: dict):
+    """
+    Condition median normalization of the data.
+    Parameters:
+    dataset_df: pd.DataFrame The DataFrame containing peptide intensity data.
+    sample: str The sample identifier.
+    med_map: dict The median map.
+
+    Returns:
+    pd.DataFrame: The DataFrame containing the normalized peptide intensity data.
+    """
     con = dataset_df[CONDITION].unique()[0]
     dataset_df.loc[:, NORM_INTENSITY] = dataset_df[NORM_INTENSITY] / med_map[con][sample]
 
 
 @PeptideNormalizationMethod.NONE.register_replicate_fn
 def peptide_no_normalization(dataset_df, sample, med_map):
+    """
+    No normalization is performed on the data.
+    Parameters:
+    dataset_df: pd.DataFrame The DataFrame containing peptide intensity data.
+    sample: str The sample identifier.
+    med_map: dict The median map.
+
+    Returns:
+    pd.DataFrame: The DataFrame containing the peptide intensity data.
+    """
     return dataset_df

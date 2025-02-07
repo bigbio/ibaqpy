@@ -109,8 +109,7 @@ def combine_ibaq_tsv_files(
     """
     Combine multiple TSV files from a directory into a single pandas DataFrame.
 
-    Parameters
-    ----------
+    Parameters:
     dir_path : str
         Directory path containing the TSV files.
     pattern : str, optional
@@ -121,8 +120,7 @@ def combine_ibaq_tsv_files(
     sep : str, optional
         Delimiter to use for reading the TSV files (default is '\t').
 
-    Returns
-    -------
+    Returns:
     Optional[pd.DataFrame]
         Combined DataFrame containing data from all TSV files, or None if no files match the pattern.
 

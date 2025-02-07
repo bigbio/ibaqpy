@@ -78,24 +78,28 @@ def peptides2protein(
     qc_report: str,
 ) -> None:
     """
-    This command computes the IBAQ/TPA values for a file output of peptides with the format described in
-    peptide_contaminants_file_generation.py.
-    :param click_context: Click context
-    :param min_aa: Minimum number of amino acids to consider a peptide.
-    :param max_aa: Maximum number of amino acids to consider a peptide.
-    :param fasta: Fasta file used to perform the peptide identification.
-    :param peptides: Peptide intensity file.
-    :param enzyme: Enzyme used to digest the protein sample.
-    :param normalize: use some basic normalization steps.
-    :param tpa: Whether calculate TPA.
-    :param ruler: Whether to compute protein copies, weight and concentration.
-    :param organism: Organism source of the data.
-    :param ploidy: Ploidy number.
-    :param cpc: Cellular protein concentration(g/L).
-    :param output: output format containing the ibaq values.
-    :param verbose: Print addition information.
-    :param qc_report: PDF file to store multiple QC images.
-    :return:
+    CLI command to compute IBAQ values for proteins from peptide intensity data.
+
+    This command processes peptide identifications and computes IBAQ values,
+    optionally normalizing the data and calculating protein metrics using a
+    proteomic ruler approach. It supports generating a QC report with distribution
+    plots if verbose mode is enabled.
+
+    Parameters:
+        fasta (str): Path to the protein database file.
+        peptides (str): Path to the peptide intensity file.
+        enzyme (str): Enzyme used for protein digestion (default: Trypsin).
+        normalize (bool): Flag to normalize IBAQ values.
+        min_aa (int): Minimum amino acids to consider a peptide (default: 7).
+        max_aa (int): Maximum amino acids to consider a peptide (default: 30).
+        tpa (bool): Flag to calculate TPA values.
+        ruler (bool): Flag to use the ProteomicRuler approach.
+        organism (str): Source organism of the data (default: human).
+        ploidy (int): Ploidy number (default: 2).
+        cpc (float): Cellular protein concentration in g/L (default: 200).
+        output (str): Path to the output file for IBAQ values.
+        verbose (bool): Flag to print additional information.
+        qc_report (str): Path to the PDF file for QC images (default: QCprofile.pdf).
     """
     peptides_to_protein(
         fasta=fasta,

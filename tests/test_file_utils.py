@@ -16,6 +16,15 @@ TESTS_DIR = Path(__file__).parent
 
 
 def test_combine_ibaq_tsv_files():
+    """
+    Test functions for combining iBAQ TSV files and creating AnnData objects.
+
+    Functions:
+    - test_combine_ibaq_tsv_files: Tests the combination of multiple iBAQ TSV files
+      into a single DataFrame and verifies the shape of the resulting DataFrame.
+    - test_create_anndata: Tests the creation of an AnnData object from a DataFrame
+      with specified observation and variable columns, additional layers, and metadata.
+    """
     ibaq_dir = TESTS_DIR / "ibaq-raw-hela"
     files_pattern = "*ibaq.tsv"
     df_ibaq = combine_ibaq_tsv_files(dir_path=str(ibaq_dir), pattern=files_pattern, sep="\t")
@@ -24,6 +33,15 @@ def test_combine_ibaq_tsv_files():
 
 
 def test_create_anndata():
+    """
+    Test functions for combining iBAQ TSV files and creating AnnData objects.
+
+    Functions:
+    - test_combine_ibaq_tsv_files: Tests the combination of multiple iBAQ TSV files
+      into a single DataFrame and verifies the shape of the resulting DataFrame.
+    - test_create_anndata: Tests the creation of an AnnData object from a DataFrame
+      with specified observation and variable columns, additional layers, and metadata.
+    """
     df = pd.read_csv(TESTS_DIR / "ibaq-raw-hela/PXD000396.ibaq.tsv", sep="\t")
     obs_col = SAMPLE_ID
     var_col = PROTEIN_NAME
