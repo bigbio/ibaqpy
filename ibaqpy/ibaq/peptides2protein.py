@@ -80,6 +80,24 @@ def handle_nonstandard_aa(aa_seq: str):
 
 
 def extract_fasta(fasta: str, enzyme: str, proteins: List, min_aa: int, max_aa: int, tpa: bool):
+    """
+    Extracts protein information from a FASTA file using a specified enzyme for digestion.
+
+    This function processes a FASTA file to find specified proteins, digests them using a given enzyme,
+    and calculates unique peptide counts and molecular weights for each found protein. It handles
+    nonstandard amino acids by removing them and raises an error if none of the specified proteins
+    are found in the FASTA file.
+
+    :param fasta: Path to the FASTA file containing protein sequences.
+    :param enzyme: Name of the enzyme used for protein digestion.
+    :param proteins: List of protein accessions to search for in the FASTA file.
+    :param min_aa: Minimum number of amino acids for peptides to be considered.
+    :param max_aa: Maximum number of amino acids for peptides to be considered.
+    :param tpa: Boolean indicating whether to calculate theoretical protein abundance.
+    :return: A tuple containing a dictionary of unique peptide counts, a dictionary of molecular weights,
+             and a set of found protein accessions.
+    :raises ValueError: If none of the specified proteins are found in the FASTA file.
+    """
     mw_dict = dict()
     fasta_proteins = list()
     FASTAFile().load(fasta, fasta_proteins)
@@ -230,7 +248,7 @@ class PeptideProteinMapper:
         """
         Calculate the molecular weight of a protein group.
 
-        :param group: Protein group.
+        :param protein_group: Protein group to calculate the molecular weight.
         :return: Molecular weight of the protein group.
         """
         mw_list = [self.protein_mass_map[i] for i in protein_group.split(";")]
@@ -261,6 +279,11 @@ def peptides_to_protein(
     weight and concentration using a proteomic ruler approach. It also
     generates a QC report with distribution plots if verbose mode is enabled.
 
+    :param organism: Organism name.
+    :param cpc: Concentration per cell.
+    :param ploidy: Ploidy of the organism.
+    :param ruler: Calculate protein weight(ng) and concentration(nM) using a proteomic ruler approach.
+    :param tpa: Calculate TPA values.
     :param min_aa: Minimum number of amino acids to consider a peptide.
     :param max_aa: Maximum number of amino acids to consider a peptide.
     :param fasta: Fasta file used to perform the peptide identification.

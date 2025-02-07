@@ -18,9 +18,7 @@ TESTS_DIR = Path(__file__).parent
 def test_combine_ibaq_tsv_files():
     ibaq_dir = TESTS_DIR / "ibaq-raw-hela"
     files_pattern = "*ibaq.tsv"
-    df_ibaq = combine_ibaq_tsv_files(
-        dir_path=str(ibaq_dir), pattern=files_pattern, sep="\t"
-    )
+    df_ibaq = combine_ibaq_tsv_files(dir_path=str(ibaq_dir), pattern=files_pattern, sep="\t")
     logging.info(df_ibaq.head())
     assert df_ibaq.shape == (83725, 14)
 
@@ -45,4 +43,3 @@ def test_create_anndata():
     assert adata.layers[IBAQ_NORMALIZED].shape == (12, 3096)
     assert adata.layers[IBAQ_LOG].shape == (12, 3096)
     assert "HeLa" in adata.obs["Condition"].values
-

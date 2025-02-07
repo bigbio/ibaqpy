@@ -5,7 +5,7 @@ from typing import Union
 import click
 import pandas as pd
 
-from ibaqpy.ibaq.file_utils import (create_anndata, combine_ibaq_tsv_files)
+from ibaqpy.ibaq.file_utils import create_anndata, combine_ibaq_tsv_files
 from ibaqpy.ibaq.ibaqpy_commons import SAMPLE_ID_REGEX, SAMPLE_ID, PROTEIN_NAME, IBAQ, IBAQ_BEC
 from ibaqpy.ibaq.ibaqpy_postprocessing import (
     pivot_wider,
@@ -87,7 +87,7 @@ def run_batch_correction(
     protein_id_column: str = PROTEIN_NAME,
     ibaq_raw_column: str = IBAQ,
     ibaq_corrected_column: str = IBAQ_BEC,
-    export_anndata = False,
+    export_anndata: bool = False,
 ) -> pd.DataFrame:
     """
     Runs the batch correction on iBAQ values from TSV files.
@@ -163,7 +163,7 @@ def run_batch_correction(
             value_col=ibaq_raw_column,
             layer_cols=[ibaq_corrected_column],
         )
-        adata_filename = output_path.with_suffix('.h5ad')
+        adata_filename = output_path.with_suffix(".h5ad")
         try:
             adata.write(adata_filename)
         except Exception as e:
@@ -214,12 +214,9 @@ def run_batch_correction(
     required=False,
     default=PROTEIN_NAME,
 )
-@click.option("-ibaq",
-              "--ibaq_raw_column",
-              help="Name of the raw iBAQ column",
-              required=False,
-              default=IBAQ
-        )
+@click.option(
+    "-ibaq", "--ibaq_raw_column", help="Name of the raw iBAQ column", required=False, default=IBAQ
+)
 @click.option(
     "--ibaq_corrected_column",
     help="Name for the corrected iBAQ column",

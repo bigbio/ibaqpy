@@ -15,9 +15,7 @@ from ibaqpy.ibaq.ibaqpy_commons import (
 )
 
 
-def remove_samples_low_protein_number(
-    ibaq_df: pd.DataFrame, min_protein_num: int
-) -> pd.DataFrame:
+def remove_samples_low_protein_number(ibaq_df: pd.DataFrame, min_protein_num: int) -> pd.DataFrame:
     """
     This functions takes an ibaq Dataframe with the following columns:
     - ProteinName
@@ -83,18 +81,14 @@ def remove_missing_values(
         raise ValueError("The input ibaq_df must be a pandas DataFrame.")
 
     if expression_column not in ibaq_df.columns:
-        raise ValueError(
-            f"The expression column '{expression_column}' is not in the DataFrame."
-        )
+        raise ValueError(f"The expression column '{expression_column}' is not in the DataFrame.")
 
     # Initial number of samples
     initial_sample_count = ibaq_df["SampleID"].nunique()
     logging.info(f"Initial number of samples: {initial_sample_count}")
 
     # Create a pivot table to organize data by ProteinName and SampleID
-    pivot_df = ibaq_df.pivot_table(
-        index=PROTEIN_NAME, columns=SAMPLE_ID, values=expression_column
-    )
+    pivot_df = ibaq_df.pivot_table(index=PROTEIN_NAME, columns=SAMPLE_ID, values=expression_column)
 
     # Remove samples where all proteins have missing values
     non_missing_samples = pivot_df.columns[pivot_df.notna().any(axis=0)]
@@ -153,9 +147,7 @@ def describe_expression_metrics(ibaq_df: pd.DataFrame) -> pd.DataFrame:
     ]
 
     # Define the expression columns
-    expression_columns = [
-        col for col in ibaq_df.columns if col in possible_expression_values
-    ]
+    expression_columns = [col for col in ibaq_df.columns if col in possible_expression_values]
 
     # Get the metrics
     metrics = ibaq_df.groupby(SAMPLE_ID)[expression_columns].describe()
@@ -205,9 +197,7 @@ def pivot_wider(
         )
 
     # Use pivot_table to create the matrix
-    matrix = df.pivot_table(
-        index=row_name, columns=col_name, values=values, aggfunc="first"
-    )
+    matrix = df.pivot_table(index=row_name, columns=col_name, values=values, aggfunc="first")
 
     # Simplified NaN handling
     if fillna is True:  # Fill with 0 if True
@@ -218,9 +208,7 @@ def pivot_wider(
     return matrix
 
 
-def pivot_longer(
-    df: pd.DataFrame, row_name: str, col_name: str, values: str
-) -> pd.DataFrame:
+def pivot_longer(df: pd.DataFrame, row_name: str, col_name: str, values: str) -> pd.DataFrame:
     # Validate input DataFrame
     if not isinstance(df, pd.DataFrame):
         raise ValueError("Input must be a pandas DataFrame")
@@ -233,14 +221,10 @@ def pivot_longer(
     matrix_reset = df.reset_index()
 
     # Use pd.melt to convert the wide-format DataFrame to long-format
-    long_df = pd.melt(
-        matrix_reset, id_vars=[row_name], var_name=col_name, value_name=values
-    )
+    long_df = pd.melt(matrix_reset, id_vars=[row_name], var_name=col_name, value_name=values)
 
     # Remove rows with missing values if any
     if long_df[values].isna().any():
-        logging.warning(
-            f"Found {long_df[values].isna().sum()} missing values in the result"
-        )
+        logging.warning(f"Found {long_df[values].isna().sum()} missing values in the result")
 
     return long_df

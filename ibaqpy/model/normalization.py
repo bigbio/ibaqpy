@@ -20,6 +20,19 @@ class FeatureNormalizationMethod(Enum):
 
     @classmethod
     def from_str(cls, name: str) -> "FeatureNormalizationMethod":
+        """
+        Convert a string representation of a normalization method to its corresponding
+        FeatureNormalizationMethod enum member.
+
+        Parameters:
+            name (str): The string representation of the normalization method.
+
+        Returns:
+            FeatureNormalizationMethod: The corresponding enum member.
+
+        Raises:
+            KeyError: If the provided name does not match any enum member.
+        """
         if name is None:
             return cls.NONE
         name_ = name.lower()
@@ -35,10 +48,33 @@ class FeatureNormalizationMethod(Enum):
         return fn
 
     def normalize_replicates(self, df: pd.DataFrame, *args, **kwargs):
+        """
+        Normalize the replicate intensities in the given DataFrame using a registered
+        normalization function.
+
+        Parameters:
+            df (pd.DataFrame): The DataFrame containing replicate intensity data.
+            *args: Additional positional arguments for the normalization function.
+            **kwargs: Additional keyword arguments for the normalization function.
+
+        Returns:
+            pd.Series: The normalized replicate intensities.
+        """
         fn = _method_registry[self]
         return fn(df, *args, **kwargs)
 
     def normalize_sample(self, df, runs: list[str]) -> tuple[dict[str, pd.Series], float]:
+        """
+        Normalize replicate intensities for a given sample across multiple runs.
+
+        Parameters:
+            df (pd.DataFrame): The DataFrame containing replicate intensity data.
+            runs (list[str]): A list of run identifiers for the sample.
+
+        Returns:
+            tuple[dict[str, pd.Series], float]: A dictionary mapping each run to its
+            normalized replicate intensities and the average metric across all runs.
+        """
         map_ = {}
         total = 0
         for run in runs:
