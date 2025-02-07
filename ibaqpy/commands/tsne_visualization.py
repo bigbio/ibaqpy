@@ -16,17 +16,14 @@ def compute_pca(df, n_components=5) -> pd.DataFrame:
     """
     Compute principal components for a given dataframe.
 
-    Parameters
-    ----------
+    Parameters:
     df : pd.DataFrame
-    A dataframe with samples as rows and features as columns.
-    n_components : int
-    Number of principal components to be computed.
-
-    Returns
-    -------
-    df_pca : pd.DataFrame
-    A dataframe with the principal components.
+        Input dataframe with samples as rows and features as columns.
+    n_components : int, optional
+        The number of principal components to compute (default is 5).
+    Returns:
+        df_pca : pd.DataFrame
+        A dataframe with the principal components.
     """
 
     pca = PCA(n_components=n_components)
@@ -70,8 +67,7 @@ def compute_tsne(df_pca, n_components=2, perplexity=30, learning_rate=200, n_ite
     which is expected to contain PCA components with samples as rows. The output is another DataFrame
     that contains t-SNE components, also with samples as rows.
 
-    Parameters
-    ----------
+    Parameters:
     df_pca : pandas DataFrame
         Input DataFrame containing PCA components. Rows are samples and columns are PCA components.
     n_components : int, optional
@@ -84,8 +80,7 @@ def compute_tsne(df_pca, n_components=2, perplexity=30, learning_rate=200, n_ite
     n_iter : int, optional
         The number of iterations for t-SNE optimization (default is 2000).
 
-    Returns
-    -------
+    Returns:
     df_tsne : pandas DataFrame
         Output DataFrame containing t-SNE components. Rows are samples and columns are t-SNE components.
 
@@ -111,6 +106,21 @@ def compute_tsne(df_pca, n_components=2, perplexity=30, learning_rate=200, n_ite
 
 
 def plot_tsne(df, x_col, y_col, hue_col, file_name):
+    """
+    Generate and save a t-SNE scatter plot from a DataFrame.
+
+    This function creates a scatter plot using seaborn's scatterplot function,
+    with the specified columns for the x-axis, y-axis, and hue. The plot is
+    customized with labels, a title, and a legend positioned inside the plot.
+    The resulting plot is saved to the specified file.
+
+    Parameters:
+        df (pd.DataFrame): The DataFrame containing the data to plot.
+        x_col (str): The column name for the x-axis values.
+        y_col (str): The column name for the y-axis values.
+        hue_col (str): The column name for the hue (color) values.
+        file_name (str): The file path where the plot image will be saved.
+    """
     fig, ax = plt.subplots(1, 1, figsize=(20, 10))
     sns.scatterplot(x=x_col, y=y_col, hue=hue_col, data=df, ax=ax, markers=["o", "+", "x"])
     ax.set_xlabel(x_col)
@@ -134,9 +144,15 @@ def plot_tsne(df, x_col, y_col, hue_col, file_name):
 )
 def tsne_visualization(folder: str, pattern: str):
     """
-    Generate t-SNE plots from protein files in a folder.
-    :param folder: Folder that contains all the protein files
-    :param pattern: Protein file pattern
+    Generate a t-SNE visualization for protein data from specified files.
+
+    This command-line tool reads protein data files from a specified folder,
+    applies PCA and t-SNE for dimensionality reduction, and generates a scatter
+    plot of the t-SNE components. The plot is saved as a PDF file.
+
+    Parameters:
+        folder (str): The folder containing protein data files.
+        pattern (str): The file pattern to match protein files. Defaults to 'proteins.tsv'.
     """
     # get all the files in the folder
     files = glob.glob(f"{folder}/*{pattern}")

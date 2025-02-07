@@ -6,12 +6,41 @@ from typing import ClassVar, Iterator, Union, Optional
 
 
 class QuantificationCategory(Enum):
+    """
+    An enumeration representing different quantification categories used in proteomics.
+
+    Attributes:
+        TMT: Represents Tandem Mass Tag quantification.
+        ITRAQ: Represents Isobaric Tags for Relative and Absolute Quantitation.
+        LFQ: Represents Label-Free Quantification.
+
+    Methods:
+        from_str(name: str) -> QuantificationCategory:
+            Converts a string to a QuantificationCategory enum member.
+
+        classify(labels: Union[list[str], set[str]]) -> tuple[Optional[QuantificationCategory], Optional[IsobaricLabel]]:
+            Classifies a set of labels into a quantification category and determines the isobaric label scheme.
+    """
+
     TMT = auto()
     ITRAQ = auto()
     LFQ = auto()
 
     @classmethod
     def from_str(cls, name: str) -> "QuantificationCategory":
+        """
+        Converts a string representation of a quantification category to its corresponding
+        QuantificationCategory enum member.
+
+        Parameters:
+            name (str): The name of the quantification category.
+
+        Returns:
+            QuantificationCategory: The corresponding enum member.
+
+        Raises:
+            KeyError: If the provided name does not match any quantification category.
+        """
         name_ = name.lower()
         for k, v in cls._member_map_.items():
             if k.lower() == name_:
@@ -22,6 +51,19 @@ class QuantificationCategory(Enum):
     def classify(
         cls, labels: Union[list[str], set[str]]
     ) -> tuple["Optional[QuantificationCategory]", "Optional[IsobaricLabel]"]:
+        """
+        Classifies a set of labels into a quantification category and determines the isobaric label scheme.
+
+        Parameters:
+            labels (Union[list[str], set[str]]): A collection of label strings to classify.
+
+        Returns:
+            tuple[Optional[QuantificationCategory], Optional[IsobaricLabel]]:
+            A tuple containing the quantification category and the isobaric label scheme, if applicable.
+
+        Raises:
+            ValueError: If the labels do not correspond to a known quantification category.
+        """
         label_scheme = None
         label_category = None
 
@@ -61,6 +103,24 @@ class QuantificationCategory(Enum):
 
 
 class IsobaricLabel(Enum):
+    """
+    An enumeration for different isobaric labeling schemes used in proteomics.
+
+    Attributes:
+        TMT6plex: Represents the TMT 6-plex labeling scheme.
+        TMT10plex: Represents the TMT 10-plex labeling scheme.
+        TMT11plex: Represents the TMT 11-plex labeling scheme.
+        TMT16plex: Represents the TMT 16-plex labeling scheme.
+        ITRAQ4plex: Represents the ITRAQ 4-plex labeling scheme.
+        ITRAQ8plex: Represents the ITRAQ 8-plex labeling scheme.
+
+    Methods:
+        from_str(name: str) -> IsobaricLabel:
+            Converts a string to an IsobaricLabel enum member.
+        channels() -> IsobaricLabelSpec:
+            Retrieves the channel specifications for the isobaric label.
+    """
+
     TMT6plex = auto()
     TMT10plex = auto()
     TMT11plex = auto()
@@ -71,6 +131,19 @@ class IsobaricLabel(Enum):
 
     @classmethod
     def from_str(cls, name: str) -> "IsobaricLabel":
+        """
+        Converts a string representation of a quantification category to its corresponding
+        QuantificationCategory enum member.
+
+        Parameters:
+            name (str): The name of the quantification category.
+
+        Returns:
+            QuantificationCategory: The corresponding enum member.
+
+        Raises:
+            KeyError: If the provided name does not match any quantification category.
+        """
         name_ = name.lower()
         for k, v in cls._member_map_.items():
             if k.lower() == name_:
@@ -78,11 +151,37 @@ class IsobaricLabel(Enum):
         raise KeyError(name)
 
     def channels(self) -> "IsobaricLabelSpec":
+        """
+        Retrieves the channel specifications associated with the isobaric label.
+
+        Returns:
+            IsobaricLabelSpec: The channel specifications for the current isobaric label.
+        """
         return IsobaricLabelSpec.registry[self.name]
 
 
 @dataclass
 class IsobaricLabelSpec(Mapping[str, int]):
+    """
+    A data class representing the specifications of isobaric labels, including their
+    name and channel mappings. This class supports dictionary-like access to channel
+    information and maintains a registry of all instances.
+
+    Attributes:
+        registry (ClassVar[dict[str, IsobaricLabelSpec]]): A class-level registry of all
+            isobaric label specifications.
+        name (str): The name of the isobaric label.
+        channels (dict[str, int]): A mapping of channel names to their respective indices.
+
+    Methods:
+        __post_init__(): Registers the instance in the class-level registry.
+        id: Retrieves the corresponding IsobaricLabel enum member for the label name.
+        __getitem__(key: str) -> int: Returns the index of the specified channel.
+        __iter__() -> Iterator[str]: Iterates over the channel names.
+        __len__() -> int: Returns the number of channels.
+        __contains__(key) -> bool: Checks if a channel name exists in the channels.
+    """
+
     registry: ClassVar[dict[str, "IsobaricLabelSpec"]] = {}
 
     name: str

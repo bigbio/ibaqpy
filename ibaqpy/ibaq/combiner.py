@@ -28,13 +28,25 @@ logger = logging.getLogger(__name__)
 class Combiner:
     def __init__(self, data_folder: os.PathLike, covariate: str = None, organism: str = "HUMAN"):
         """
-        Initialize the Combiner class to process and combine SDRF and IbaqNorm data.
+        Initialize a Combiner instance to process and combine SDRF and iBAQ data.
 
-        @:param data_folder: os.PathLike Path to the folder containing SDRF and IbaqNorm files.
-        @:param covariate : Covariate to be used in data processing, by default None.
-        @:param organism : Organism filter for protein names, by default "HUMAN".
+        Parameters:
+        data_folder : os.PathLike
+            Path to the folder containing SDRF and iBAQ files.
+        covariate : str, optional
+            Covariate to be used in data processing, default is None.
+        organism : str, optional
+            Organism filter for protein names, default is "HUMAN".
 
-        FileNotFoundError: If the specified data folder does not exist or is not a directory.
+        Raises:
+        FileNotFoundError
+            If the specified data folder does not exist or is not a directory.
+
+        Notes
+        -----
+        This method initializes various attributes for data processing, retrieves
+        SDRF and iBAQ files from the specified folder, and filters protein data
+        by the specified organism.
         """
         self.df_pca = compute_pca(self.df_corrected.T, n_components=5)
         self.df_corrected = None
@@ -70,14 +82,21 @@ class Combiner:
         """
         Reads and processes iBAQ and metadata files, filtering protein data by organism.
 
-        @:param meta (str): Path to the metadata CSV file.
-        @:param ibaq (str): Path to the iBAQ CSV file.
-        @:param organism (str, optional): Organism filter for protein names, default is "HUMAN".
-        @:param covariate (str, optional): Covariate to be used in data processing, default is None.
+        Parameters:
+        meta : str
+            Path to the metadata CSV file.
+        ibaq : str
+            Path to the iBAQ CSV file.
+        organism : str, optional
+            Organism filter for protein names, default is "HUMAN".
+        covariate : str, optional
+            Covariate to be used in data processing, default is None.
 
-        The method updates the instance's dataframe and metadata attributes by reading
-        the specified files, filtering the protein data to include only those ending
-        with the specified organism, and joining the metadata.
+        Notes
+        -----
+        The method updates the instance's dataframe and metadata attributes by
+        reading the specified files, filtering proteins by the given organism,
+        and joining metadata to the iBAQ data.
         """
 
         self.covariate = covariate
@@ -89,6 +108,29 @@ class Combiner:
         self.df = self.df.join(self.metadata, how="left")
 
     def imputer(self, covariate_to_keep: list = None):
+        """
+        Impute missing values in the combined iBAQ results DataFrame.
+
+        This method processes the DataFrame by filtering, filling, and imputing
+        missing values based on specified covariates. It ensures that only columns
+        with a sufficient percentage of non-missing values are retained and performs
+        imputation using KNN or other specified methods.
+
+        Parameters:
+        covariate_to_keep : list, optional
+            A list of covariate values to retain in the DataFrame. Only rows with
+            these covariate values will be kept.
+
+        Raises:
+        SystemExit
+            If the specified covariate contains fewer than two unique values.
+
+        Notes
+        -----
+        - The method modifies the instance's DataFrame by imputing missing values
+          and potentially altering its structure.
+        - The imputation process requires samples as columns and proteins as rows.
+        """
         logger.info("Imputing merged ibaq results ...")
         # Keep only columns 'sample_id' and covariate from df_metadata
         if self.covariate:
@@ -132,6 +174,28 @@ class Combiner:
         min_samples_num: int = None,
         n_iter: int = None,
     ):
+        """
+        Remove outliers from the imputed data using an iterative approach and plot the PCA results.
+
+        This method applies iterative outlier removal on the imputed data, updates the filtered
+        DataFrame, and generates a PCA plot of the corrected data with outliers removed.
+
+        Parameters:
+        n_components : int, optional
+            Number of principal components to compute. Defaults to a third of the unique batch indices.
+        min_cluster_size : int, optional
+            Minimum size of clusters for outlier detection. Defaults to the median number of samples per batch.
+        min_samples_num : int, optional
+            Minimum number of samples in a neighborhood for a point to be considered a core point.
+            Defaults to the median number of samples per batch.
+        n_iter : int, optional
+            Number of iterations for outlier removal. Defaults to 5.
+
+        Notes
+        -----
+        - The method modifies the instance's DataFrame by removing outliers.
+        - A PCA plot is saved as 'pca_corrected_outliers_removed.png'.
+        """
         logger.info("Removing outliers from imputed data ...")
         # Apply iterative outlier removal on imputed data
         # get batch indices from the columns names
@@ -170,6 +234,24 @@ class Combiner:
         )
 
     def batch_correction(self, n_components: int = None, tissue_parts_to_keep: int = None):
+        """
+        Apply batch effect correction to the data and plot PCA results.
+
+        This method performs batch correction on the data using specified covariates
+        and plots PCA before and after correction. It filters out batches with only
+        one sample and optionally retains specific tissue parts.
+
+        Parameters:
+        n_components : int, optional
+            Number of principal components to compute. Defaults to a third of the unique batch indices.
+        tissue_parts_to_keep : int, optional
+            Number of tissue parts to retain in the data.
+
+        Notes
+        -----
+        - The method modifies the instance's DataFrame by applying batch correction.
+        - PCA plots are saved as 'pca_uncorrected.png' and 'pca_corrected.png'.
+        """
         logger.info("Applying batch effect correction ...")
         # Plot PCA of uncorrected imputed data
         # transpose the dataframe to get samples as rows and features as columns

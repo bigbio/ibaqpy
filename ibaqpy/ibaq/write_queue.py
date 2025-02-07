@@ -11,6 +11,27 @@ from pyarrow import parquet as pq
 
 
 class WriteCSVTask(Thread):
+    """
+    A thread-based task for writing pandas DataFrames to a CSV file.
+
+    This class extends the Thread class to asynchronously write DataFrames
+    to a specified CSV file path. It manages a queue to handle incoming
+    DataFrames and writes them to the file in the order they are received.
+    The CSV file is created with an optional header, and additional write
+    options can be specified.
+
+    Attributes:
+        path (str): The file path where the CSV will be written.
+        write_options (dict[str, Any]): Options for writing the CSV file.
+        _queue (Queue): A queue to manage DataFrames to be written.
+        _wrote_header (bool): Indicates if the CSV header has been written.
+
+    Methods:
+        write(table: pd.DataFrame): Adds a DataFrame to the queue for writing.
+        close(): Signals the thread to finish processing and close.
+        run(): Continuously processes the queue to write DataFrames to the CSV.
+    """
+
     path: str
 
     write_options: dict[str, Any]
@@ -19,6 +40,24 @@ class WriteCSVTask(Thread):
     _wrote_header: bool
 
     def __init__(self, path: str, daemon: bool = True, write_options: dict = None, **kwargs):
+        """
+        Initializes a WriteCSVTask instance.
+
+        Parameters:
+            path (str): The file path where the CSV will be written. The extension
+                will be automatically set to '.csv'.
+            daemon (bool, optional): Whether the thread should be a daemon thread.
+                Defaults to True.
+            write_options (dict, optional): Additional options for writing the CSV
+                file. Defaults to None.
+            **kwargs: Additional keyword arguments to be merged with write_options.
+
+        Attributes:
+            path (str): The file path for the CSV file.
+            write_options (dict): Options for writing the CSV file.
+            _wrote_header (bool): Indicates if the CSV header has been written.
+            _queue (Queue): A queue to manage DataFrames to be written.
+        """
         super().__init__(daemon=daemon)
         if write_options is None:
             write_options = {}
@@ -32,6 +71,12 @@ class WriteCSVTask(Thread):
         self._queue = Queue()
 
     def write(self, table: pd.DataFrame):
+        """
+        Adds a DataFrame to the queue for writing to the CSV file.
+
+        Parameters:
+            table (pd.DataFrame): The DataFrame to be added to the queue.
+        """
         self._queue.put(table)
 
     def close(self):
@@ -39,6 +84,16 @@ class WriteCSVTask(Thread):
         self.join()
 
     def _write(self, table: pd.DataFrame):
+        """
+        Writes a DataFrame to the CSV file specified by the path attribute.
+
+        This method appends the DataFrame to the CSV file if the header has
+        already been written; otherwise, it writes the DataFrame with the header.
+        The writing options are specified by the write_options attribute.
+
+        Parameters:
+            table (pd.DataFrame): The DataFrame to be written to the CSV file.
+        """
         table.to_csv(
             self.path,
             header=not self._wrote_header,
@@ -52,6 +107,14 @@ class WriteCSVTask(Thread):
         pass
 
     def run(self):
+        """
+        Continuously processes the queue to write DataFrames to the CSV file.
+
+        This method runs in a loop, retrieving DataFrames from the queue and
+        writing them to the CSV file using the _write method. The loop exits
+        when a None value is encountered in the queue, signaling the end of
+        the writing process.
+        """
         while True:
             try:
                 table: pd.DataFrame = self._queue.get(True)
@@ -65,6 +128,26 @@ class WriteCSVTask(Thread):
 
 
 class WriteParquetTask(Thread):
+    """
+    A thread-based task for writing pandas DataFrames to a Parquet file.
+
+    This class extends the Thread class to asynchronously write DataFrames
+    to a Parquet file using a queue. It manages the ParquetWriter and schema
+    internally, ensuring that data is written efficiently and safely.
+
+    Attributes:
+        path (str): The file path where the Parquet file will be written.
+        metadata (dict[str, Any]): Metadata to be added to the Parquet file.
+        _queue (Queue): A queue to hold DataFrames to be written.
+        _schema (pa.Schema): The schema of the Parquet file.
+        _writer (pq.ParquetWriter): The writer object for the Parquet file.
+
+    Methods:
+        write(table: pd.DataFrame): Adds a DataFrame to the queue for writing.
+        close(): Signals the thread to finish writing and close the file.
+        run(): The main loop of the thread, processing the queue.
+    """
+
     path: str
     metadata: dict[str, Any]
 

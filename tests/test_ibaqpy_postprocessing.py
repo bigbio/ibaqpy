@@ -14,8 +14,15 @@ TESTS_DIR = Path(__file__).parent
 
 def test_remove_samples_low_protein_number():
     """
-    Test the function remove_samples_low_protein_number
-    :return:
+    Test functions for post-processing iBAQ data.
+
+    These tests validate the functionality of the following operations:
+    - Removing samples with a low number of proteins.
+    - Removing samples with a high percentage of missing values.
+    - Describing expression metrics across samples.
+
+    Each test reads a sample iBAQ dataset, applies the respective function,
+    and logs the number of samples before and after processing.
     """
     ibaq_test = TESTS_DIR / "example/PXD017834-example-ibaq.tsv"
     ibaq_df = pd.read_csv(ibaq_test, sep="\t")
@@ -33,6 +40,17 @@ def test_remove_samples_low_protein_number():
 
 
 def test_remove_missing_values():
+    """
+    Test functions for post-processing iBAQ data.
+
+    These tests validate the functionality of the following operations:
+    - Removing samples with a low number of proteins.
+    - Removing samples with a high percentage of missing values.
+    - Describing expression metrics across samples.
+
+    Each test reads a sample iBAQ dataset, applies the respective function,
+    and logs the number of samples before and after processing.
+    """
     ibaq_test = TESTS_DIR / "example/PXD017834-example-ibaq.tsv"
     ibaq_df = pd.read_csv(ibaq_test, sep="\t")
     number_samples = len(ibaq_df[SAMPLE_ID].unique())
@@ -47,6 +65,17 @@ def test_remove_missing_values():
 
 
 def test_describe_expression_metrics():
+    """
+    Test functions for post-processing iBAQ data.
+
+    These tests validate the functionality of the following operations:
+    - Removing samples with a low number of proteins.
+    - Removing samples with a high percentage of missing values.
+    - Describing expression metrics across samples.
+
+    Each test reads a sample iBAQ dataset, applies the respective function,
+    and logs the number of samples before and after processing.
+    """
     ibaq_test = TESTS_DIR / "example/PXD017834-example-ibaq.tsv"
     ibaq_df = pd.read_csv(ibaq_test, sep="\t")
 

@@ -19,8 +19,7 @@ def impute_missing_values(
     """
     Impute missing values in a DataFrame or a list of DataFrames using KNN, mean, median, most frequent, or a specific value.
 
-    Parameters
-    ----------
+    Parameters:
     data : Optional[Union[pd.DataFrame, List[pd.DataFrame]]]
         A pandas DataFrame or a list of pandas DataFrames containing missing values to be imputed.
         The DataFrame(s) must adhere to the following format:
@@ -50,8 +49,7 @@ def impute_missing_values(
     keep_empty_features : bool, optional
         Whether to keep features that are entirely empty (i.e., all values are NaN). Default is True.
 
-    Returns
-    -------
+    Returns:
     Union[pd.DataFrame, List[pd.DataFrame]]
         A pandas DataFrame or a list of pandas DataFrames with imputed missing values.
         If the input is None, the function will return None.
