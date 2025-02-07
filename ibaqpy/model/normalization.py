@@ -9,6 +9,17 @@ _method_registry: dict["FeatureNormalizationMethod", Callable[[pd.Series], pd.Se
 
 
 class FeatureNormalizationMethod(Enum):
+    """
+    FeatureNormalizationMethod is an enumeration of various methods for normalizing
+    replicate intensities in a DataFrame. It provides functionality to register
+    custom normalization functions and apply them to replicate data. The class
+    supports normalization across multiple runs and samples, adjusting replicate
+    intensities based on a sample-level average metric. Methods include NONE, Mean,
+    Median, Max, Global, Max_Min, and IQR. The class also includes utility methods
+    to convert from string representations and to normalize data using registered
+    functions.
+    """
+
     NONE = auto()
 
     Mean = auto()
@@ -39,6 +50,16 @@ class FeatureNormalizationMethod(Enum):
     def register_replicate_fn(
         self, fn: Callable[[pd.Series], pd.Series]
     ) -> Callable[[pd.Series], pd.Series]:
+        """
+        Registers a custom normalization function for replicate intensities.
+
+        Parameters:
+            fn (Callable[[pd.Series], pd.Series]): A function that takes a pandas Series
+            and returns a normalized pandas Series.
+
+        Returns:
+            Callable[[pd.Series], pd.Series]: The registered normalization function.
+        """
         _method_registry[self] = fn
         return fn
 

@@ -98,7 +98,7 @@ def extract_fasta(fasta: str, enzyme: str, proteins: List, min_aa: int, max_aa: 
              and a set of found protein accessions.
     :raises ValueError: If none of the specified proteins are found in the FASTA file.
     """
-    mw_dict = dict()
+
     fasta_proteins = list()
     FASTAFile().load(fasta, fasta_proteins)
     found_proteins = set()
