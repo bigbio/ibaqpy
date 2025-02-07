@@ -38,13 +38,11 @@ class OrganismDescription:
         """
         Retrieve an organism description from the registry using the given key.
 
-        Parameters
-        ----------
+        Parameters:
             key (str): The name of the organism to retrieve, case-insensitive.
             default (Optional[OrganismDescription]): The value to return if the organism is not found.
 
-        Returns
-        -------
+        Returns:
             Optional[OrganismDescription]: The organism description if found, otherwise the default value.
         """
         return cls.registry.get(key.upper(), default)
@@ -54,8 +52,7 @@ class OrganismDescription:
         """
         Return a list of all registered organism names.
 
-        Returns
-        -------
+        Returns:
             dict_keys: A view of the registry's keys representing organism names.
         """
         return cls.registry.keys()

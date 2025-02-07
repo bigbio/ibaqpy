@@ -22,12 +22,10 @@ class FeatureNormalizationMethod(Enum):
     def from_str(cls, name: str) -> "FeatureNormalizationMethod":
         """
         Get the normalization method from a string.
-        Parameters
-        ----------
+        Parameters:
         name: str The name of the normalization method.
 
-        Returns
-        -------
+        Returns:
         FeatureNormalizationMethod: The normalization method.
         """
         if name is None:
@@ -86,13 +84,11 @@ class FeatureNormalizationMethod(Enum):
         """
         Normalize the intensities of runs in the given DataFrame using a registered
 
-        Parameters
-        ----------
+        Parameters:
         df: pd.DataFrame The DataFrame containing replicate intensity data.
         technical_replicates: int The number of technical replicates for each sample.
 
-        Returns
-        -------
+        Returns:
         pd.DataFrame: The DataFrame with normalized replicate intensities.
 
         """
@@ -271,12 +267,10 @@ class PeptideNormalizationMethod(Enum):
     def from_str(cls, name: str) -> "PeptideNormalizationMethod":
         """
         Converts a string to a PeptideNormalizationMethod.
-        Parameters
-        ----------
+        Parameters:
         name: str The name of the normalization method.
 
-        Returns
-        -------
+        Returns:
         PeptideNormalizationMethod: The normalization method.
         """
         name_ = name.lower()
@@ -290,12 +284,10 @@ class PeptideNormalizationMethod(Enum):
     ) -> Callable[[pd.DataFrame, str, dict], pd.DataFrame]:
         """
         Registers a function for a specific normalization method.
-        Parameters
-        ----------
+        Parameters:
         fn: Callable[[pd.DataFrame, str, dict], pd.DataFrame] The normalization function.
 
-        Returns
-        -------
+        Returns:
         Callable[[pd.DataFrame, str, dict], pd.DataFrame]: The normalization function.
         """
         _peptide_method_registry[self] = fn
@@ -304,14 +296,12 @@ class PeptideNormalizationMethod(Enum):
     def normalize_sample(self, dataset_df: pd.DataFrame, sample: str, med_map: dict):
         """
         Applies the registered normalization function to a sample.
-        Parameters
-        ----------
+        Parameters:
         dataset_df: pd.DataFrame The DataFrame containing peptide intensity data.
         sample: str The sample identifier.
         med_map: dict The median map.
 
-        Returns
-        -------
+        Returns:
         pd.DataFrame: The DataFrame containing the normalized peptide intensity data.
         """
         fn = _peptide_method_registry[self]
@@ -320,14 +310,12 @@ class PeptideNormalizationMethod(Enum):
     def __call__(self, dataset_df: pd.DataFrame, sample: str, med_map: dict):
         """
         Invokes the normalize_sample method.
-        Parameters
-        ----------
+        Parameters:
         dataset_df: pd.DataFrame The DataFrame containing peptide intensity data.
         sample: str The sample identifier.
         med_map: dict The median map.
 
-        Returns
-        -------
+        Returns:
         pd.DataFrame: The DataFrame containing the normalized peptide intensity data.
         """
         return self.normalize_sample(dataset_df, sample, med_map)

@@ -32,16 +32,13 @@ class QuantificationCategory(Enum):
         Converts a string representation of a quantification category to its corresponding
         QuantificationCategory enum member.
 
-        Parameters
-        ----------
+        Parameters:
             name (str): The name of the quantification category.
 
-        Returns
-        -------
+        Returns:
             QuantificationCategory: The corresponding enum member.
 
-        Raises
-        ------
+        Raises:
             KeyError: If the provided name does not match any quantification category.
         """
         name_ = name.lower()
@@ -57,17 +54,14 @@ class QuantificationCategory(Enum):
         """
         Classifies a set of labels into a quantification category and determines the isobaric label scheme.
 
-        Parameters
-        ----------
+        Parameters:
             labels (Union[list[str], set[str]]): A collection of label strings to classify.
 
-        Returns
-        -------
+        Returns:
             tuple[Optional[QuantificationCategory], Optional[IsobaricLabel]]:
             A tuple containing the quantification category and the isobaric label scheme, if applicable.
 
-        Raises
-        ------
+        Raises:
             ValueError: If the labels do not correspond to a known quantification category.
         """
         label_scheme = None
@@ -112,8 +106,7 @@ class IsobaricLabel(Enum):
     """
     An enumeration for different isobaric labeling schemes used in proteomics.
 
-    Attributes
-    ----------
+    Attributes:
         TMT6plex: Represents the TMT 6-plex labeling scheme.
         TMT10plex: Represents the TMT 10-plex labeling scheme.
         TMT11plex: Represents the TMT 11-plex labeling scheme.
@@ -121,8 +114,7 @@ class IsobaricLabel(Enum):
         ITRAQ4plex: Represents the ITRAQ 4-plex labeling scheme.
         ITRAQ8plex: Represents the ITRAQ 8-plex labeling scheme.
 
-    Methods
-    -------
+    Methods:
         from_str(name: str) -> IsobaricLabel:
             Converts a string to an IsobaricLabel enum member.
         channels() -> IsobaricLabelSpec:
@@ -143,16 +135,13 @@ class IsobaricLabel(Enum):
         Converts a string representation of a quantification category to its corresponding
         QuantificationCategory enum member.
 
-        Parameters
-        ----------
+        Parameters:
             name (str): The name of the quantification category.
 
-        Returns
-        -------
+        Returns:
             QuantificationCategory: The corresponding enum member.
 
-        Raises
-        ------
+        Raises:
             KeyError: If the provided name does not match any quantification category.
         """
         name_ = name.lower()

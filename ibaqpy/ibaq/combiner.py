@@ -30,8 +30,7 @@ class Combiner:
         """
         Initialize a Combiner instance to process and combine SDRF and iBAQ data.
 
-        Parameters
-        ----------
+        Parameters:
         data_folder : os.PathLike
             Path to the folder containing SDRF and iBAQ files.
         covariate : str, optional
@@ -39,8 +38,7 @@ class Combiner:
         organism : str, optional
             Organism filter for protein names, default is "HUMAN".
 
-        Raises
-        ------
+        Raises:
         FileNotFoundError
             If the specified data folder does not exist or is not a directory.
 
@@ -84,8 +82,7 @@ class Combiner:
         """
         Reads and processes iBAQ and metadata files, filtering protein data by organism.
 
-        Parameters
-        ----------
+        Parameters:
         meta : str
             Path to the metadata CSV file.
         ibaq : str
@@ -119,14 +116,12 @@ class Combiner:
         with a sufficient percentage of non-missing values are retained and performs
         imputation using KNN or other specified methods.
 
-        Parameters
-        ----------
+        Parameters:
         covariate_to_keep : list, optional
             A list of covariate values to retain in the DataFrame. Only rows with
             these covariate values will be kept.
 
-        Raises
-        ------
+        Raises:
         SystemExit
             If the specified covariate contains fewer than two unique values.
 
@@ -185,8 +180,7 @@ class Combiner:
         This method applies iterative outlier removal on the imputed data, updates the filtered
         DataFrame, and generates a PCA plot of the corrected data with outliers removed.
 
-        Parameters
-        ----------
+        Parameters:
         n_components : int, optional
             Number of principal components to compute. Defaults to a third of the unique batch indices.
         min_cluster_size : int, optional
@@ -247,8 +241,7 @@ class Combiner:
         and plots PCA before and after correction. It filters out batches with only
         one sample and optionally retains specific tissue parts.
 
-        Parameters
-        ----------
+        Parameters:
         n_components : int, optional
             Number of principal components to compute. Defaults to a third of the unique batch indices.
         tissue_parts_to_keep : int, optional
