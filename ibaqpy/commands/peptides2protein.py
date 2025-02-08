@@ -78,28 +78,12 @@ def peptides2protein(
     qc_report: str,
 ) -> None:
     """
-    CLI command to compute IBAQ values for proteins from peptide intensity data.
+    Compute IBAQ values for proteins from peptide intensity data.
 
     This command processes peptide identifications and computes IBAQ values,
     optionally normalizing the data and calculating protein metrics using a
     proteomic ruler approach. It supports generating a QC report with distribution
     plots if verbose mode is enabled.
-
-    Parameters:
-        fasta (str): Path to the protein database file.
-        peptides (str): Path to the peptide intensity file.
-        enzyme (str): Enzyme used for protein digestion (default: Trypsin).
-        normalize (bool): Flag to normalize IBAQ values.
-        min_aa (int): Minimum amino acids to consider a peptide (default: 7).
-        max_aa (int): Maximum amino acids to consider a peptide (default: 30).
-        tpa (bool): Flag to calculate TPA values.
-        ruler (bool): Flag to use the ProteomicRuler approach.
-        organism (str): Source organism of the data (default: human).
-        ploidy (int): Ploidy number (default: 2).
-        cpc (float): Cellular protein concentration in g/L (default: 200).
-        output (str): Path to the output file for IBAQ values.
-        verbose (bool): Flag to print additional information.
-        qc_report (str): Path to the PDF file for QC images (default: QCprofile.pdf).
     """
     peptides_to_protein(
         fasta=fasta,

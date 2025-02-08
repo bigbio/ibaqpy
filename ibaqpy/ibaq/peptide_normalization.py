@@ -1,5 +1,6 @@
 import os
 import re
+import logging
 
 from typing import Iterator, Optional
 
@@ -28,6 +29,10 @@ from ibaqpy.ibaq.ibaqpy_commons import (
 )
 
 from .write_queue import WriteParquetTask, WriteCSVTask
+
+
+logger = logging.getLogger("ibaqpy.peptide_normalization")
+logger.addHandler(logging.NullHandler())
 
 
 def parse_uniprot_accession(uniprot_id: str) -> str:
@@ -449,8 +454,7 @@ class Feature:
         except IndexError:
             f_table["pg_accessions"] = f_table["pg_accessions"].apply(lambda x: x[0])
         except Exception as e:
-            print(e)
-            exit("Some errors occurred when parsing pg_accessions column in feature parquet!")
+            raise ValueError("Some errors occurred when parsing pg_accessions column in feature parquet!") from e
         f_table.set_index(["sequence", "pg_accessions"], inplace=True)
         f_table.drop(
             f_table[f_table["count"] >= (percentage * len(self.samples))].index,
@@ -680,23 +684,34 @@ def peptide_normalization(
     proteins, as well as normalizing intensities across technical repetitions and
     conditions. The results can be saved incrementally to CSV and Parquet files.
 
-    Parameters:
-        parquet (str): Path to the Parquet file containing the dataset.
-        sdrf (str): Path to the SDRF file for quantification details.
-        min_aa (int): Minimum number of amino acids required for peptides.
-        min_unique (int): Minimum number of unique peptides per protein.
-        remove_ids (str): Path to a file with protein IDs to remove.
-        remove_decoy_contaminants (bool): Whether to remove decoys and contaminants.
-        remove_low_frequency_peptides (bool): Whether to remove low-frequency peptides.
-        output (str): Path to the output file for saving results.
-        skip_normalization (bool): Whether to skip normalization steps.
-        nmethod (str): Method for feature-level normalization.
-        pnmethod (str): Method for peptide-level normalization.
-        log2 (bool): Whether to apply log2 transformation to intensities.
-        save_parquet (bool): Whether to save results in Parquet format.
-
-    Returns:
-        None
+    Parameters
+    ----------
+    parquet : str
+        Path to the Parquet file containing the dataset.
+    sdrf : str
+        Path to the SDRF file for quantification details.
+    min_aa : int
+        Minimum number of amino acids required for peptides.
+    min_unique : int
+        Minimum number of unique peptides per protein.
+    remove_ids : str
+        Path to a file with protein IDs to remove.
+    remove_decoy_contaminants : bool
+        Whether to remove decoys and contaminants.
+    remove_low_frequency_peptides : bool
+        Whether to remove low-frequency peptides.
+    output : str
+        Path to the output file for saving results.
+    skip_normalization : bool
+        Whether to skip normalization steps.
+    nmethod : str
+        Method for feature-level normalization.
+    pnmethod : str
+        Method for peptide-level normalization.
+    log2 : bool
+        Whether to apply log2 transformation to intensities.
+    save_parquet : bool
+        Whether to save results in Parquet format.
     """
 
     if os.path.exists(output):
@@ -708,7 +723,7 @@ def peptide_normalization(
     feature_normalization = FeatureNormalizationMethod.from_str(nmethod)
     peptide_normalized = PeptideNormalizationMethod.from_str(pnmethod)
 
-    print("Loading data..")
+    logger.info("Loading data...")
     feature = Feature(parquet)
 
     if sdrf:
@@ -742,7 +757,7 @@ def peptide_normalization(
         df.dropna(subset=["pg_accessions"], inplace=True)
         for sample in samples:
             # Perform data preprocessing on every sample
-            print(f"{str(sample).upper()}: Data preprocessing...")
+            logger.info(f"{str(sample).upper()}: Data preprocessing...")
             dataset_df = df[df["sample_accession"] == sample].copy()
 
             # Step1: Parse the identifier of proteins and retain only unique peptides.
@@ -775,22 +790,22 @@ def peptide_normalization(
                 and nmethod not in ("none", None)
                 and technical_repetitions > 1
             ):
-                print(f"{str(sample).upper()}: Normalize intensities of features.. ")
+                logger.info(f"{str(sample).upper()}: Normalize intensities of features.. ")
                 dataset_df = feature_normalization(dataset_df, technical_repetitions)
                 # dataset_df = normalize_runs(dataset_df, technical_repetitions, nmethod)
-                print(
+                logger.info(
                     f"{str(sample).upper()}: Number of features after normalization: {len(dataset_df.index)}"
                 )
             # Step8: Merge peptidoforms across fractions and technical repetitions
             dataset_df = get_peptidoform_normalize_intensities(dataset_df)
-            print(
+            logger.info(
                 f"{str(sample).upper()}: Number of peptides after peptidofrom selection: {len(dataset_df.index)}"
             )
 
             if len(dataset_df[FRACTION].unique().tolist()) > 1:
-                print(f"{str(sample).upper()}: Merge features across fractions.. ")
+                logger.info(f"{str(sample).upper()}: Merge features across fractions.. ")
                 dataset_df = merge_fractions(dataset_df)
-                print(
+                logger.info(
                     f"{str(sample).upper()}: Number of features after merging fractions: {len(dataset_df.index)}"
                 )
             # Step9: Normalize the data.
@@ -803,21 +818,21 @@ def peptide_normalization(
                 dataset_df = dataset_df[
                     ~dataset_df.index.isin(low_frequency_peptides)
                 ].reset_index()
-                print(
+                logger.info(
                     f"{str(sample).upper()}: Peptides after remove low frequency peptides: {len(dataset_df.index)}"
                 )
 
             # Step11: Assembly peptidoforms to peptides.
-            print(f"{str(sample).upper()}: Sum all peptidoforms per Sample...")
+            logger.info(f"{str(sample).upper()}: Sum all peptidoforms per sample...")
             dataset_df = sum_peptidoform_intensities(dataset_df)
-            print(
+            logger.info(
                 f"{str(sample).upper()}: Number of peptides after selection: {len(dataset_df.index)}"
             )
             # Step12: Intensity transformation to log.
             if log2:
                 dataset_df[NORM_INTENSITY] = np.log2(dataset_df[NORM_INTENSITY])
 
-            print(f"{str(sample).upper()}: Save the normalized peptide intensities...")
+            logger.info(f"{str(sample).upper()}: Save the normalized peptide intensities...")
 
             if save_parquet:
                 writer_parquet_task.write(dataset_df)
