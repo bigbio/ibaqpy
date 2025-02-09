@@ -1,4 +1,5 @@
 import glob
+import logging
 
 import click
 import matplotlib.pyplot as plt
@@ -10,6 +11,9 @@ from sklearn.manifold import TSNE
 
 from ibaqpy.ibaq.ibaqpy_commons import PROTEIN_NAME, SAMPLE_ID, IBAQ_LOG
 
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 # function to compute principal components
 def compute_pca(df, n_components=5) -> pd.DataFrame:
@@ -188,7 +192,7 @@ def tsne_visualization(folder: str, pattern: str):
     # plot the t-SNE components tSNE1 vs tSNE2 with batch information using seaborn
     plot_tsne(df_tsne, "tSNE1", "tSNE2", "batch", "5.tsne_plot_with_batch_information.pdf")
 
-    print(total_proteins.shape)
+    logger.info(total_proteins.shape)
 
 
 if __name__ == "__main__":

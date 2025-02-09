@@ -1,3 +1,4 @@
+import logging
 import math
 
 from typing import List, Union, Optional
@@ -39,6 +40,8 @@ from ibaqpy.ibaq.ibaqpy_commons import (
 AVAGADRO: float = 6.02214129e23
 AVERAGE_BASE_PAIR_MASS: float = 617.96  # 615.8771
 
+logger = logging.getLogger("ibaqpy.peptides2protein")
+logger.addHandler(logging.NullHandler())
 
 def normalize(group):
     """
@@ -122,7 +125,7 @@ def extract_fasta(fasta: str, enzyme: str, proteins: List, min_aa: int, max_aa: 
                     error_aa, seq = handle_nonstandard_aa(entry.sequence)
                     mw = AASequence().fromString(seq).getMonoWeight()
                     mw_dict[accession] = mw
-                    print(f"Nonstandard amino acids found in {accession}: {error_aa}, ignored!")
+                    logger.error(f"Nonstandard amino acids found in {accession}: {error_aa}, ignored!")
     if not found_proteins:
         raise ValueError(f"None of the {len(proteins)} proteins were found in the FASTA file")
     return uniquepepcounts, mw_dict, found_proteins
@@ -331,7 +334,7 @@ def peptides_to_protein(
     data = data[data[PROTEIN_NAME].isin(found_proteins)]
 
     # data processing
-    print(data.head())
+    logger.info(data.head())
     map_size = data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION]).size().to_dict()
     res = pd.DataFrame(data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION])[NORM_INTENSITY].sum())
 

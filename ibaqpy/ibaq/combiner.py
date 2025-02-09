@@ -76,7 +76,7 @@ class Combiner:
         self.df = self.df[self.df["ProteinName"].str.endswith(organism)]
         self.df.index = self.df["SampleID"]
         self.df = self.df.join(self.metadata, how="left")
-        print(self.metadata, self.df.head)
+        logger.info(self.metadata, self.df.head)
 
     def read_data(self, meta: str, ibaq: str, organism="HUMAN", covariate=None):
         """
@@ -165,7 +165,7 @@ class Combiner:
             self.df = impute_missing_values(self.df)
 
         self.datasets = list(set([sample.split("-")[0] for sample in self.samples]))
-        print(self.df.head)
+        logger.info(f"DataFrame head after imputation:\n{self.df.head()}")
 
     def outlier_removal(
         self,
@@ -213,7 +213,7 @@ class Combiner:
             min_samples=min_samples_num if min_samples_num else min_samples,
             n_iter=n_iter if n_iter else 5,
         )
-        print(self.df_filtered_outliers)
+        logger.info(self.df_filtered_outliers)
         # plot PCA of corrected data with outliers removed
         # transpose the dataframe to get samples as rows and features as columns
         self.df_pca = compute_pca(
@@ -302,7 +302,7 @@ class Combiner:
         self.df_corrected = apply_batch_correction(
             self.df, self.batch_index, covs=covariates_index
         )
-        print(self.df_corrected)
+        logger.info(self.df_corrected)
 
         # plot PCA of corrected data
         # transpose the dataframe to get samples as rows and features as columns

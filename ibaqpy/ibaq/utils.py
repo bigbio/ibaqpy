@@ -1,7 +1,7 @@
 # import libraries
 import logging
 import os
-from typing import List, Optional, Union
+from typing import List, Optional
 
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -13,15 +13,22 @@ from sklearn.decomposition import PCA
 
 from ibaqpy.ibaq.ibaqpy_commons import IBAQ_NORMALIZED, SAMPLE_ID, PROTEIN_NAME
 
-logging.basicConfig(format="%(asctime)s [%(funcName)s] - %(message)s", level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 def folder_retrieval(folder: str) -> dict:
     """
     Retrieve SDRF and ibaq results from a folder.
-    :param folder: Folder to retrieve SDRF and ibaq results.
-    :return:
+
+    Parameters
+    ----------
+    folder : str
+        The folder to retrieve SDRF and ibaq results.
+
+    Returns
+    -------
+    dict
     """
 
     folder = folder + os.sep if not folder.endswith(os.sep) else folder
@@ -63,15 +70,21 @@ def folder_retrieval(folder: str) -> dict:
 
 def generate_meta(sdrf_df: pd.DataFrame) -> pd.DataFrame:
     """
-    Generate ibaqpy metadata from SDRF. Each metadata contains four columns:
+    Generate ibaqpy metadata from SDRF. Each metadata record contains four columns:
 
     - sample_id: Sample ID from every dataset (source name).
     - batch: PXD of every dataset (source name).
     - tissue: Tissue name of tissue-based dataset (characteristics[organism part]).
     - tissue_part: Tissue part of tissue-based dataset (characteristics[organism part]).
 
-    param sdrf_df: _description_
-    return: pd.DataFrame
+    Parameters
+    ----------
+    sdrf_df : pd.DataFrame
+        The parsed SDRF metadata table to be transformed
+
+    Returns
+    -------
+    pd.DataFrame
     """
     sdrf_df.columns = [col.lower() for col in sdrf_df.columns]
     pxd = sdrf_df["source name"].values[0].split("-")[0]
@@ -79,13 +92,12 @@ def generate_meta(sdrf_df: pd.DataFrame) -> pd.DataFrame:
         col for col in sdrf_df.columns if col.startswith("characteristics[organism part]")
     ]
     if len(organism_part) > 2:
-        print(
+        raise ValueError(
             f"{pxd} Please provide a maximum of 2 characteristics[organism part], one for tissue name and the other for tissue part!"
         )
-        exit(1)
+
     elif len(organism_part) == 0:
-        print("Missing characteristics[organism part], please check your SDRF!")
-        exit(1)
+        raise ValueError("Missing characteristics[organism part], please check your SDRF!")
 
     meta_df = sdrf_df[["source name"] + organism_part]
     meta_df = meta_df.drop_duplicates()
@@ -119,9 +131,17 @@ def generate_meta(sdrf_df: pd.DataFrame) -> pd.DataFrame:
 def fill_samples(df, proteins):
     """
     Fill missing samples with 0 for all proteins.
-    :param df: dataframe with samples in columns and proteins in rows.
-    :param proteins: proteins to be used as index.
-    :return:
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+      dataframe with samples in columns and proteins in rows.
+    proteins :  list[str]
+        proteins to be used as index.
+
+    Returns
+    -------
+    pd.DataFrame
     """
     df = pd.pivot_table(df, index=PROTEIN_NAME, columns=SAMPLE_ID, values=[IBAQ_NORMALIZED])
     df = df.reindex(proteins)
@@ -134,13 +154,15 @@ def split_df_by_column(df: pd.DataFrame, cov_index_col: str) -> List[pd.DataFram
     """
     Split a DataFrame by unique values of a specified column.
 
-    Parameters:
+    Parameters
+    ----------
     df : pd.DataFrame
         A pandas DataFrame to be split.
     cov_index_col : str
         The name of the column to split the DataFrame by.
 
-    Returns:
+    Returns
+    -------
     List[pd.DataFrame]
         A list of pandas DataFrames, each containing rows with the same value in the specified column.
     """
@@ -159,13 +181,19 @@ def filter_missing_value_by_group(df_input, col, non_missing_percent_to_keep):
     Filters the dataframe by keeping columns with at least a specified percent of non-missing values
     in each group.
 
-    Parameters:
-    df_input (pandas.DataFrame): The input dataframe.
-    col (str): The name of the column to group by.
-    non_missing_percent_to_keep (float): The minimum percentage of non-missing values to keep a column.
+    Parameters
+    ----------
+    df_input : pandas.DataFrame
+        The input dataframe.
+    col : str
+        The name of the column to group by.
+    non_missing_percent_to_keep : float
+        The minimum percentage of non-missing values to keep a column.
 
-    Returns:
-    pandas.DataFrame: The filtered dataframe.
+    Returns
+    -------
+    pandas.DataFrame:
+        The filtered dataframe.
     """
     return df_input.groupby(col, as_index=False).filter(
         lambda x: len(x) < non_missing_percent_to_keep * len(df_input)
@@ -177,15 +205,17 @@ def compute_pca(df, n_components=5) -> pd.DataFrame:
     """
     Compute principal components for a given dataframe.
 
-    Parameters:
+    Parameters
+    ----------
     df : pd.DataFrame
-    A dataframe with samples as rows and features as columns.
+        A dataframe with samples as rows and features as columns.
     n_components : int
-    Number of principal components to be computed.
+        Number of principal components to be computed.
 
-    Returns:
+    Returns
+    -------
     df_pca : pd.DataFrame
-    A dataframe with the principal components.
+        A dataframe with the principal components.
     """
 
     pca = PCA(n_components=n_components)
@@ -205,8 +235,15 @@ def get_batch_info_from_sample_names(sample_list: List[str]) -> List[int]:
     Expected as input a list of sample names with SDRF-like format: {PRIDE_PROJECT_ID}-{SAMPLE_ID}
     and return a list of batch indices (a.k.a. factor levels)
 
-    :param sample_list: list of sample names
-    :return: list of batch indices
+    Parameters
+    ----------
+    sample_list : list
+        A list of sample names
+
+    Returns
+    -------
+    list
+        A list of batch indices
     """
     samples = [s.split("-")[0] for s in sample_list]
     batches = list(set(samples))
@@ -222,15 +259,17 @@ def remove_single_sample_batches(df: pd.DataFrame, batch: list) -> pd.DataFrame:
     """
     Remove batches with only one sample.
 
-    Parameters:
+    Parameters
+    ----------
     df : pd.DataFrame
-    A dataframe with samples in columns and protein IDs in rows.
+        A dataframe with samples in columns and protein IDs in rows.
     batch : list
-    A list of batch indices.
+        A list of batch indices.
 
-    Returns:
+    Returns
+    -------
     df_filtered : pd.DataFrame
-    A filtered dataframe.
+        A filtered dataframe.
     """
 
     # make dict with columns as key and batch as value
@@ -263,15 +302,24 @@ def plot_pca(
     """
     Plots a PCA scatter plot and saves it to a file.
 
-    Args:
-    df_pca (pd.DataFrame): DataFrame containing PCA data.
-    output_file (str): File name to save the plot as an image.
-    x_col (str, optional): Column name for x-axis. Defaults to "PC1".
-    y_col (str, optional): Column name for y-axis. Defaults to "PC2".
-    hue_col (str, optional): Column name for hue (grouping variable). Defaults to "batch".
-    palette (str, optional): Color palette for the plot. Defaults to "Set2".
-    title (str, optional): Title for the plot. Defaults to "PCA plot".
-    figsize (tuple, optional): Figure size as (width, height) in inches. Defaults to (5, 5).
+    Parameters
+    ----------
+    df_pca : pd.DataFrame
+        DataFrame containing PCA data.
+    output_file : str
+        File name to save the plot as an image.
+    x_col : str, optional
+        Column name for x-axis. Defaults to "PC1".
+    y_col : str, optional
+        Column name for y-axis. Defaults to "PC2".
+    hue_col : str, optional
+        Column name for hue (grouping variable). Defaults to "batch".
+    palette : str, optional
+        Color palette for the plot. Defaults to "Set2".
+    title : str, optional
+        Title for the plot. Defaults to "PCA plot".
+    figsize : tuple, optional
+        Figure size as (width, height) in inches. Defaults to (5, 5).
     """
 
     # Create a new figure with the specified size
@@ -295,6 +343,12 @@ def plot_pca(
     plt.savefig(output_file, bbox_inches="tight")
 
 
+class TooFewSamplesInBatch(ValueError):
+    def __init__(self, batches):
+        super().__init__(
+            f"Batches must contain at least two samples, the following batch factors did not: {batches}"
+        )
+
 # define a function for batch correction
 def apply_batch_correction(
     df: pd.DataFrame,
@@ -306,23 +360,28 @@ def apply_batch_correction(
     Get a dataframe and a list of batch indices as input and
     return a batch corrected dataframe with pycombat.
 
-    Parameters:
+    Parameters
+    ----------
     df : pd.DataFrame
-    A dataframe with the data to apply batch correction. Expected to have samples as columns and features as rows.
+        A dataframe with the data to apply batch correction. Expected to have samples as columns and features as rows.
     batch : list
-    A list of batch indices.
-    covs : list
-    A list of covariates to be used for batch correction.
-    kwargs : dict (optional)
-    Other keyword arguments to be passed to the batch correction function (combat-norm)
+        A list of batch indices.
+    covs: list
+        A list of covariates to be used for batch correction.
+    kwargs: dict (optional)
+        Other keyword arguments to be passed to the batch correction function (combat-norm)
 
-    Warning
+    Raises
+    --------
+    ValueError
+        If the number of batch or covariate labels do not match the number of samples
+    TooFewSamplesInBatch
+        If a batch has fewer than two samples
+
+    Returns
     -------
-    Every batch should have at least 2 samples.
-
-    Returns:
     df_corrected : pd.DataFrame
-    A batch-corrected dataframe.
+        A batch-corrected dataframe.
 
     """
 
@@ -331,16 +390,23 @@ def apply_batch_correction(
 
     # check if the number of samples match the number of batch indices
     if len(df.columns) != len(batch):
-        raise ValueError("The number of samples should match the number of batch indices.")
+        raise ValueError(
+            f"The number of samples should match the number of batch "
+            f"indices. There were {len(batch)} batch indices and {len(df.columns)} samples"
+        )
 
     # check if every batch factor has at least 2 samples
     if any([batch.count(i) < 2 for i in set(batch)]):
-        raise ValueError("Every batch factor should have at least 2 samples.")
+        short_batches = [i for i in set(batch) if batch.count(i) < 2]
+        raise TooFewSamplesInBatch(short_batches)
 
     # If not None, check if the number of covariates match the number of samples
     if covs:
         if len(df.columns) != len(covs):
-            raise ValueError("The number of samples should match the number of covariates.")
+            raise ValueError(
+                f"The number of samples should match the number of covariates. "
+                f"There were {len(covs)} batch indices and {len(df.columns)} samples"
+            )
 
     from inmoose.pycombat import pycombat_norm
 
@@ -353,17 +419,19 @@ def find_clusters(df, min_cluster_size, min_samples) -> pd.DataFrame:
     """
     Compute clusters for a given dataframe.
 
-    Parameters:
+    Parameters
+    ----------
     df : pd.DataFrame
-    A dataframe with the data to be batched corrected.
+        A dataframe with the data to be batched corrected.
     min_cluster_size : int
-    The minimum size of clusters.
+        The minimum size of clusters.
     min_samples : int
-    The minimum number of samples in a neighborhood for a point to be considered as a core point.
+        The minimum number of samples in a neighborhood for a point to be considered as a core point.
 
-    Returns:
+    Returns
+    -------
     df_clusters : pd.DataFrame
-    A dataframe with the cluster assignments.
+        A dataframe with the cluster assignments.
     """
 
     clusterer = hdbscan.HDBSCAN(
@@ -399,25 +467,27 @@ def iterative_outlier_removal(
     Get a dataframe and a list of batch indices as input and
     return a batch corrected dataframe with pycombat.
 
-    Parameters:
+    Parameters
+    ----------
     df : pd.DataFrame
-    A dataframe with the data to be batch corrected.
+        A dataframe with the data to be batch corrected.
     batch : list
-    A list of batch indices.
+        A list of batch indices.
     n_components : int
-    Number of principal components to be computed.
+        Number of principal components to be computed.
     min_cluster_size : int
-    The minimum size of clusters.
+        The minimum size of clusters.
     min_samples : int
-    The minimum number of samples in a neighborhood for a point to be considered as a core point.
+        The minimum number of samples in a neighborhood for a point to be considered as a core point.
     n_iter : int
-    Number of iterations to be performed.
+        Number of iterations to be performed.
     verbose : bool
-    Whether to print and plot the number of outliers for each iteration.
+        Whether to print and plot the number of outliers for each iteration.
 
-    Returns:
+    Returns
+    -------
     df_filtered : pd.DataFrame
-    A filtered dataframe.
+        A filtered dataframe.
     """
 
     # repeat steps 1-3 until no outliers are found
@@ -429,7 +499,7 @@ def iterative_outlier_removal(
     batch_dict = dict(zip(df.columns, batch))
 
     for i in range(n_iter):
-        print("Running iteration: ", i + 1)
+        logger.info("Running iteration: {}".format(i + 1))
 
         # compute principal components
         # transpose the dataframe to get samples as rows and features as columns
@@ -439,12 +509,12 @@ def iterative_outlier_removal(
         df_clusters = find_clusters(
             df_pca, min_cluster_size=min_cluster_size, min_samples=min_samples
         )
-        print(df_clusters)
+        logger.info(df_clusters)
         # remove outliers from original dataframe
         outliers = df_clusters[df_clusters["cluster"] == -1].index.tolist()
         df_filtered_outliers = df.drop(outliers, axis=1)
-        print(f"Number of outliers in iteration {i + 1}: {len(outliers)}")
-        print(f"Outliers in iteration {i + 1}: {str(outliers)}")
+        logger.info(f"Number of outliers in iteration {i + 1}: {len(outliers)}")
+        logger.info(f"Outliers in iteration {i + 1}: {str(outliers)}")
 
         # update batch_dict based on the filtered dataframe
         batch_dict = {col: batch_dict[col] for col in df_filtered_outliers.columns}

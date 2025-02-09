@@ -1,13 +1,18 @@
 import glob
 import logging
 import warnings
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
-import anndata as an
 import pandas as pd
 
 from ibaqpy.ibaq.ibaqpy_postprocessing import pivot_wider
 
+
+if TYPE_CHECKING:
+    import anndata as an
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 def create_anndata(
     df: pd.DataFrame,
@@ -17,7 +22,7 @@ def create_anndata(
     layer_cols: Optional[List[str]] = None,
     obs_metadata_cols: Optional[List[str]] = None,
     var_metadata_cols: Optional[List[str]] = None,
-) -> an.AnnData:
+) -> "an.AnnData":
     """
     Create an AnnData object from a long-format DataFrame.
 
@@ -33,6 +38,9 @@ def create_anndata(
     Returns:
         anndata.AnnData: The constructed AnnData object.
     """
+
+    import anndata as an
+
     if df.empty:
         raise ValueError("Cannot create AnnData object from empty DataFrame")
     # Validate that the required columns exist in the DataFrame.
@@ -101,7 +109,7 @@ def create_anndata(
             )
             adata.layers[layer_col] = df_layer.to_numpy()
 
-    logging.info(f"Created AnnData object:\n {adata}")
+    logger.info(f"Created AnnData object:\n {adata}")
 
     return adata
 

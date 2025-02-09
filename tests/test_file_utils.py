@@ -56,7 +56,7 @@ def test_create_anndata():
         obs_metadata_cols=["Condition"],
         var_metadata_cols=[],
     )
-    print(adata)
+    logging.info(adata)
     assert adata.shape == (12, 3096)
     assert adata.layers[IBAQ_NORMALIZED].shape == (12, 3096)
     assert adata.layers[IBAQ_LOG].shape == (12, 3096)

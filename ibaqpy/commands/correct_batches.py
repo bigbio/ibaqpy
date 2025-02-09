@@ -15,6 +15,10 @@ from ibaqpy.ibaq.ibaqpy_postprocessing import (
 from ibaqpy.ibaq.utils import apply_batch_correction
 
 
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
+
+
 def is_valid_sample_id(
     samples: Union[str, list, pd.Series], sample_id_pattern: str = SAMPLE_ID_REGEX
 ) -> bool:
@@ -26,12 +30,17 @@ def is_valid_sample_id(
     If any sample ID does not match the pattern, it prints the invalid IDs and returns False.
     Otherwise, it returns True.
 
-    Parameters:
-        samples (Union[str, list, pd.Series]): The sample ID(s) to validate.
-        sample_id_pattern (str): The regex pattern to validate the sample IDs against. Defaults to SAMPLE_ID_REGEX.
+    Parameters
+    ----------
+    samples : Union[str, list, pd.Series]
+        The sample ID(s) to validate.
+    sample_id_pattern : str, optional
+        The regex pattern to validate the sample IDs against. Defaults to 'SAMPLE_ID_REGEX'.
 
-    Returns:
-        bool: True if all sample IDs are valid, False otherwise.
+    Returns
+    -------
+    bool
+        True if all sample IDs are valid, False otherwise.
     """
     sample_pattern = re.compile(sample_id_pattern)
 
@@ -45,30 +54,36 @@ def is_valid_sample_id(
     invalid_samples = [sample for sample in samples if not sample_pattern.fullmatch(sample)]
 
     if invalid_samples:
-        print("The following sample IDs are invalid:")
+        logger.error("The following sample IDs are invalid:")
         for invalid_sample in invalid_samples:
-            print(f" - {invalid_sample}")
+            logger.error(f" - {invalid_sample}")
         return False
     return True
 
 
 def get_batch_id_from_sample_names(samples: list) -> list:
     """
-    Extracts batch IDs from a list of sample names.
+    Extract batch IDs from a list of sample names.
 
     Each sample name is expected to have a batch ID as a prefix, separated by a hyphen.
     The function validates that the batch ID consists of alphanumeric characters only.
     Returns a list of unique batch IDs as integer factors.
 
-    Parameters:
-        samples (list): A list of sample names, each containing a batch ID prefix.
+    Parameters
+    ----------
+    samples : list
+        A list of sample names, each containing a batch ID prefix.
 
-    Returns:
-        list: A list of integer factors representing unique batch IDs.
+    Returns
+    -------
+    list
+        A list of integer factors representing unique batch IDs.
 
-    Raises:
-        ValueError: If a sample name does not contain a valid batch ID prefix or if the
-                    batch ID contains non-alphanumeric characters.
+    Raises
+    ------
+    ValueError
+        If a sample name does not contain a valid batch ID prefix or if the
+        batch ID contains non-alphanumeric characters.
     """
     batch_ids = []
     for sample in samples:
@@ -102,28 +117,44 @@ def run_batch_correction(
     This function combines multiple TSV files, reshapes the data, validates sample IDs,
     applies batch correction, and optionally exports the results to an AnnData object.
 
-    Parameters:
-        folder (str): Directory containing the TSV files.
-        pattern (str): Pattern to match files in the directory.
-        comment (str): Character indicating the start of a comment line in the TSV files.
-        sep (str): Delimiter for reading the TSV files.
-        output (str): File path to save the corrected iBAQ values.
-        sample_id_column (str): Column name for sample IDs. Defaults to SAMPLE_ID.
-        protein_id_column (str): Column name for protein IDs. Defaults to PROTEIN_NAME.
-        ibaq_raw_column (str): Column name for raw iBAQ values. Defaults to IBAQ.
-        ibaq_corrected_column (str): Column name for corrected iBAQ values. Defaults to IBAQ_BEC.
-        export_anndata (bool): Whether to export the data to an AnnData object. Defaults to False.
+    Parameters
+    ----------
+    folder : str
+        Directory containing the TSV files.
+    pattern : str
+        Pattern to match files in the directory.
+    comment : str
+        Character indicating the start of a comment line in the TSV files.
+    sep : str
+        Delimiter for reading the TSV files.
+    output : str
+        File path to save the corrected iBAQ values.
+    sample_id_column : str, optional
+        Column name for sample IDs. Defaults to 'SAMPLE_ID'.
+    protein_id_column : str, optional
+        Column name for protein IDs. Defaults to 'PROTEIN_NAME'.
+    ibaq_raw_column : str, optional
+        Column name for raw iBAQ values. Defaults to 'IBAQ'.
+    ibaq_corrected_column : str, optional
+        Column name for corrected iBAQ values. Defaults to 'IBAQ_BEC'.
+    export_anndata : bool, optional
+        Whether to export the data to an AnnData object. Defaults to False.
 
-    Returns:
-        pd.DataFrame: DataFrame containing the original and corrected iBAQ values.
+    Returns
+    -------
+    pd.DataFrame
+        DataFrame containing the original and corrected iBAQ values.
 
-    Raises:
-        ValueError: If input files cannot be loaded, sample IDs are invalid, or output file cannot be saved.
-        FileNotFoundError: If the output file does not exist when exporting to AnnData.
+    Raises
+    ------
+    ValueError
+        If input files cannot be loaded, sample IDs are invalid, or output file cannot be saved.
+    FileNotFoundError
+        If the output file does not exist when exporting to AnnData.
     """
 
     # Load the data
-    logging.info(f"Loading iBAQ data from TSV files in folder '{folder}'")
+    logger.info(f"Loading iBAQ data from TSV files in folder '{folder}'")
 
     try:
         df_ibaq = combine_ibaq_tsv_files(folder, pattern=pattern, comment=comment, sep=sep)
@@ -147,7 +178,7 @@ def run_batch_correction(
     batch_ids = get_batch_id_from_sample_names(df_wide.columns)
 
     # Run batch correction
-    logging.info("Applying batch correction to iBAQ values")
+    logger.info("Applying batch correction to iBAQ values")
     df_corrected = apply_batch_correction(df_wide, list(batch_ids), kwargs={})
 
     # Convert the data back to long format
@@ -174,7 +205,7 @@ def run_batch_correction(
 
     # Export the raw and corrected iBAQ values to an AnnData object
     if export_anndata:
-        logging.info("Exporting raw and corrected iBAQ values to an AnnData object")
+        logger.info("Exporting raw and corrected iBAQ values to an AnnData object")
         output_path = Path(output)
         if not output_path.exists():
             raise FileNotFoundError(f"Output file {output} does not exist!")
@@ -191,7 +222,7 @@ def run_batch_correction(
         except Exception as e:
             raise ValueError(f"Failed to write AnnData object: {e}")
 
-    logging.info("Batch correction completed...")
+    logger.info("Batch correction completed...")
 
     return df_ibaq
 
@@ -267,24 +298,11 @@ def correct_batches(
     export_anndata: bool,
 ):
     """
-    Command-line interface for correcting batch effects in iBAQ data.
+    Correcting batch effects in iBAQ data.
 
     This command processes TSV files containing raw iBAQ values, applies batch correction,
     and outputs the corrected values. It supports various options for specifying file patterns,
-    column names, and output formats, including exporting to an AnnData object.
-
-    Parameters:
-        ctx: Click context object.
-        folder (str): Directory containing TSV files with raw iBAQ values.
-        pattern (str): Pattern to match TSV files.
-        comment (str): Comment character for TSV files; lines starting with this character are ignored.
-        sep (str): Separator for TSV files.
-        output (str): Output file name for corrected iBAQ values.
-        sample_id_column (str): Column name for sample IDs.
-        protein_id_column (str): Column name for protein IDs.
-        ibaq_raw_column (str): Column name for raw iBAQ values.
-        ibaq_corrected_column (str): Column name for corrected iBAQ values.
-        export_anndata (bool): Flag to export data to an AnnData object.
+    column names, and output formats, including exporting to an AnnData file.
     """
     run_batch_correction(
         folder=folder,

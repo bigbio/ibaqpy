@@ -3,7 +3,9 @@ import matplotlib
 import numpy as np
 import pandas as pd
 import seaborn as sns
+
 from matplotlib import pyplot as plt
+from matplotlib.figure import Figure
 
 
 PROTEIN_NAME = "ProteinName"
@@ -93,7 +95,7 @@ def plot_distributions(
     title: str = "",
     log2: bool = True,
     width: float = 10,
-) -> matplotlib.pyplot:
+) -> Figure:
     """
     Print the quantile plot for the dataset
     :param dataset: DataFrame
@@ -127,7 +129,7 @@ def plot_box_plot(
     rotation: int = 30,
     title: str = "",
     violin: bool = False,
-) -> matplotlib.pyplot:
+) -> Figure:
     """
     Plot a box plot of two values field and classes field
     :param violin: Also add violin on top of box plot
@@ -174,9 +176,16 @@ def plot_box_plot(
 # Functions needed by Combiner
 def load_sdrf(sdrf_path: str) -> pd.DataFrame:
     """
-    Load sdrf TSV as a dataframe.
-    :param sdrf_path: Path to SDRF TSV.
-    :return:
+    Load SDRF TSV as a dataframe.
+
+    Parameters
+    ----------
+    sdrf_path : str
+        Path to SDRF TSV.
+
+    Returns
+    -------
+    pd.DataFrame
     """
     if not os.path.exists(sdrf_path):
         raise FileNotFoundError(f"{sdrf_path} does not exist!")
@@ -188,8 +197,21 @@ def load_sdrf(sdrf_path: str) -> pd.DataFrame:
 def load_feature(feature_path: str) -> pd.DataFrame:
     """
     Load feature file as a dataframe.
-    :param feature_path: Path to feature file.
-    :return:
+
+    Parameters
+    ----------
+    feature_path : str
+        Path to feature file.
+
+    Returns
+    -------
+    pd.DataFrame
+
+    Raises
+    ------
+    ValueError
+        If the provided file's suffix is not supported, either "parquet" or "csv
+
     """
     suffix = os.path.splitext(feature_path)[1][1:]
     if suffix == "parquet":
@@ -197,7 +219,7 @@ def load_feature(feature_path: str) -> pd.DataFrame:
     elif suffix == "csv":
         return pd.read_csv(feature_path)
     else:
-        raise SystemExit(
+        raise ValueError(
             f"{suffix} is not allowed as input, please provide msstats_in or feature parquet."
         )
 
@@ -209,11 +231,15 @@ def is_parquet(path: str) -> bool:
     This function attempts to open the specified file and read its header
     to determine if it matches the Parquet file signature.
 
-    Parameters:
-        path (str): The file path to check.
+    Parameters
+    ----------
+    path : str
+        The file path to check.
 
-    Returns:
-        bool: True if the file is a Parquet file, False otherwise.
+    Returns
+    -------
+    bool
+        True if the file is a Parquet file, False otherwise.
     """
     try:
         with open(path, "rb") as fh:
