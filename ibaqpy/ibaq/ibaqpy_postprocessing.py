@@ -115,10 +115,10 @@ def remove_missing_values(
 
     # Final number of samples
     final_sample_count = filtered_df[SAMPLE_ID].nunique()
-    print(f"Final number of samples: {final_sample_count}")
+    logger.info(f"Final number of samples: {final_sample_count}")
 
     removed_sample_count = initial_sample_count - final_sample_count
-    print(f"Number of samples removed: {removed_sample_count}")
+    logger.info(f"Number of samples removed: {removed_sample_count}")
 
     return filtered_df
 
