@@ -1,8 +1,13 @@
+import logging
+
 from ibaqpy.ibaq.peptides2protein import peptides_to_protein
 
 from pathlib import Path
 
 TESTS_DIR = Path(__file__).parent
+
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 
 def test_ibaq_compute():
@@ -35,5 +40,5 @@ def test_ibaq_compute():
         "verbose": True,
         "qc_report": str(TESTS_DIR / "example/out/QCprofile.pdf"),
     }
-    print(args)
+    logger.info(args)
     peptides_to_protein(**args)

@@ -10,6 +10,8 @@ from ibaqpy.ibaq.ibaqpy_commons import SAMPLE_ID, PROTEIN_NAME, IBAQ, IBAQ_BEC
 
 TESTS_DIR = Path(__file__).parent
 
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 def test_correct_batches():
     """
@@ -50,7 +52,7 @@ def test_correct_batches():
 
     # Read the AnnData object and check shape and layers
     adata = anndata.read_h5ad(adata_path)
-    print(adata)
+    logger.info(adata)
     assert adata.shape == (46, 3476)
     assert adata.layers[IBAQ_BEC].shape == (46, 3476)
 

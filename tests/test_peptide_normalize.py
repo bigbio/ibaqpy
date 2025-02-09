@@ -1,8 +1,12 @@
+import logging
+
 from ibaqpy.ibaq.peptide_normalization import peptide_normalization
 from pathlib import Path
 
 TESTS_DIR = Path(__file__).parent
 
+logger = logging.getLogger(__name__)
+logger.addHandler(logging.NullHandler())
 
 def test_feature_assembly():
     """
@@ -44,7 +48,7 @@ def test_feature_assembly():
         "log2": True,
         "save_parquet": True,
     }
-    print(args)
+    logger.info(args)
     out = Path(args["output"])
     if out.exists():
         out.unlink()

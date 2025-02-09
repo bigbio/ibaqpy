@@ -54,9 +54,9 @@ def is_valid_sample_id(
     invalid_samples = [sample for sample in samples if not sample_pattern.fullmatch(sample)]
 
     if invalid_samples:
-        print("The following sample IDs are invalid:")
+        logger.error("The following sample IDs are invalid:")
         for invalid_sample in invalid_samples:
-            print(f" - {invalid_sample}")
+            logger.error(f" - {invalid_sample}")
         return False
     return True
 

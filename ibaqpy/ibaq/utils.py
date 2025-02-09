@@ -499,7 +499,7 @@ def iterative_outlier_removal(
     batch_dict = dict(zip(df.columns, batch))
 
     for i in range(n_iter):
-        print("Running iteration: ", i + 1)
+        logger.info("Running iteration: ", i + 1)
 
         # compute principal components
         # transpose the dataframe to get samples as rows and features as columns
@@ -509,12 +509,12 @@ def iterative_outlier_removal(
         df_clusters = find_clusters(
             df_pca, min_cluster_size=min_cluster_size, min_samples=min_samples
         )
-        print(df_clusters)
+        logger.info(df_clusters)
         # remove outliers from original dataframe
         outliers = df_clusters[df_clusters["cluster"] == -1].index.tolist()
         df_filtered_outliers = df.drop(outliers, axis=1)
-        print(f"Number of outliers in iteration {i + 1}: {len(outliers)}")
-        print(f"Outliers in iteration {i + 1}: {str(outliers)}")
+        logger.info(f"Number of outliers in iteration {i + 1}: {len(outliers)}")
+        logger.info(f"Outliers in iteration {i + 1}: {str(outliers)}")
 
         # update batch_dict based on the filtered dataframe
         batch_dict = {col: batch_dict[col] for col in df_filtered_outliers.columns}
