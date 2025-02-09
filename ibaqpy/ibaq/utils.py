@@ -345,10 +345,9 @@ def plot_pca(
 
 class TooFewSamplesInBatch(ValueError):
     def __init__(self, batches):
-        super.__init__(
-            (f"Batches must contain at least two samples, the following batch factors did not: {batches}", )
+        super().__init__(
+            f"Batches must contain at least two samples, the following batch factors did not: {batches}"
         )
-
 
 # define a function for batch correction
 def apply_batch_correction(
