@@ -165,7 +165,7 @@ class Combiner:
             self.df = impute_missing_values(self.df)
 
         self.datasets = list(set([sample.split("-")[0] for sample in self.samples]))
-        logger.info(self.df.head)
+        logger.info(f"DataFrame head after imputation:\n{self.df.head()}")
 
     def outlier_removal(
         self,
