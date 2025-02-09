@@ -35,7 +35,7 @@ def cli(log_level: str, log_file: Path):
     logging.basicConfig(
         format="%(asctime)s [%(funcName)s] - %(message)s", level=LOG_LEVELS_TO_LEVELS[log_level.lower()]
     )
-    logging.captureWarnings()
+    logging.captureWarnings(True)
 
     if log_file:
         if not log_file.exists():
