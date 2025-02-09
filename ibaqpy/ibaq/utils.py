@@ -499,7 +499,7 @@ def iterative_outlier_removal(
     batch_dict = dict(zip(df.columns, batch))
 
     for i in range(n_iter):
-        logger.info("Running iteration: ", i + 1)
+        logger.info("Running iteration: {}".format(i + 1))
 
         # compute principal components
         # transpose the dataframe to get samples as rows and features as columns
