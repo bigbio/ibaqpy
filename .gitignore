@@ -18,3 +18,10 @@ venv
 /dist/
 /**/__pycache__/
 .qodo
+/.vscode/
+/tests/example/ibaq_corrected_combined.h5ad
+/tests/example/ibaq_corrected_combined.tsv
+/tests/example/PXD017834-ibaq.tsv
+/tests/example/PXD017834-peptides-norm.csv
+/tests/example/PXD017834-peptides-norm.parquet
+/tests/example/QCprofile.pdf
