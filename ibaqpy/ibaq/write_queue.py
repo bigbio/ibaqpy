@@ -1,13 +1,17 @@
 import os
-
+import time
 from threading import Thread
 from queue import Queue, Empty
 from typing import Any
 
 import pandas as pd
 import pyarrow as pa
-
 from pyarrow import parquet as pq
+
+from .logger import get_logger
+
+# Get a logger for this module
+logger = get_logger("ibaqpy.write_queue")
 
 
 class WriteCSVTask(Thread):
@@ -77,9 +81,14 @@ class WriteCSVTask(Thread):
         Parameters:
             table (pd.DataFrame): The DataFrame to be added to the queue.
         """
+        logger.debug("Queuing %d rows for CSV writing to %s", len(table), self.path)
         self._queue.put(table)
 
     def close(self):
+        """
+        Signals the thread to finish processing and close the file.
+        """
+        logger.debug("Closing CSV writer queue for %s", self.path)
         self._queue.put(None)
         self.join()
 
@@ -94,17 +103,28 @@ class WriteCSVTask(Thread):
         Parameters:
             table (pd.DataFrame): The DataFrame to be written to the CSV file.
         """
-        table.to_csv(
-            self.path,
-            header=not self._wrote_header,
-            mode="a+" if self._wrote_header else "w",
-            index=False,
-            **self.write_options,
-        )
-        self._wrote_header = True
+        start_time = time.time()
+        rows = len(table)
+        
+        try:
+            table.to_csv(
+                self.path,
+                header=not self._wrote_header,
+                mode="a+" if self._wrote_header else "w",
+                index=False,
+                **self.write_options,
+            )
+            self._wrote_header = True
+            
+            elapsed = time.time() - start_time
+            logger.debug("Wrote %d rows to CSV file %s in %.2f seconds",
+                        rows, self.path, elapsed)
+        except Exception as e:
+            logger.error("Error writing to CSV file %s: %s", self.path, str(e))
+            raise
 
     def _close(self):
-        pass
+        logger.debug("Closing CSV writer for %s", self.path)
 
     def run(self):
         """
@@ -171,23 +191,47 @@ class WriteParquetTask(Thread):
         self._schema = None
 
     def write(self, table: pd.DataFrame):
+        """
+        Adds a DataFrame to the queue for writing to the Parquet file.
+        
+        Parameters:
+            table (pd.DataFrame): The DataFrame to be added to the queue.
+        """
+        logger.debug("Queuing %d rows for Parquet writing to %s", len(table), self.path)
         self._queue.put(table)
 
     def close(self):
+        """
+        Signals the thread to finish processing and close the file.
+        """
+        logger.debug("Closing Parquet writer queue for %s", self.path)
         self._queue.put(None)
         self.join()
 
     def _close(self):
+        logger.debug("Closing Parquet writer for %s", self.path)
         self._writer.add_key_value_metadata(self.metadata)
         self._writer.close()
 
     def _write(self, table: pd.DataFrame):
-        if self._schema is None:
-            self._schema = pa.Schema.from_pandas(table, preserve_index=False)
-            self._writer = pq.ParquetWriter(self.path, schema=self._schema)
+        start_time = time.time()
+        rows = len(table)
+        
+        try:
+            if self._schema is None:
+                self._schema = pa.Schema.from_pandas(table, preserve_index=False)
+                self._writer = pq.ParquetWriter(self.path, schema=self._schema)
+                logger.debug("Initialized Parquet writer for %s", self.path)
 
-        arrow_table = pa.Table.from_pandas(table, preserve_index=False)
-        self._writer.write_table(arrow_table)
+            arrow_table = pa.Table.from_pandas(table, preserve_index=False)
+            self._writer.write_table(arrow_table)
+            
+            elapsed = time.time() - start_time
+            logger.debug("Wrote %d rows to Parquet file %s in %.2f seconds",
+                        rows, self.path, elapsed)
+        except Exception as e:
+            logger.error("Error writing to Parquet file %s: %s", self.path, str(e))
+            raise
 
     def run(self):
         while True:

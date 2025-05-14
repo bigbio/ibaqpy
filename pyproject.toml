@@ -3,7 +3,7 @@ name = "ibaqpy"
 description = "Python package to compute intensity base absolute expression values"
 readme = "README.md"
 license = "MIT"
-version = "0.0.4"
+version = "0.0.5"
 authors = [
     "Yasset Perez-Riverol <ypriverol@gmail.com>",
     "Dai Chengxin <chengxin2024@126.com>",

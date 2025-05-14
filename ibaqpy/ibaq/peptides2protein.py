@@ -1,6 +1,4 @@
-import logging
 import math
-
 from typing import List, Union, Optional
 
 import pandas as pd
@@ -12,7 +10,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 from pyopenms import AASequence, ProteaseDigestion, FASTAFile
 
 from ibaqpy.model.organism_metadata import OrganismDescription
-
+import logging
 
 from ibaqpy.ibaq.ibaqpy_commons import (
     CONDITION,
@@ -34,15 +32,17 @@ from ibaqpy.ibaq.ibaqpy_commons import (
     plot_distributions,
     get_accession,
 )
+from .logger import get_logger, log_execution_time, log_function_call
 
 
 # Proteomic Ruler constants
 AVAGADRO: float = 6.02214129e23
 AVERAGE_BASE_PAIR_MASS: float = 617.96  # 615.8771
 
-logger = logging.getLogger("ibaqpy.peptides2protein")
-logger.addHandler(logging.NullHandler())
+# Get a logger for this module
+logger = get_logger("ibaqpy.peptides2protein")
 
+@log_function_call(logger, level=logging.DEBUG)
 def normalize(group):
     """
     Normalize the ibaq values using the total ibaq of the sample.
@@ -54,6 +54,7 @@ def normalize(group):
     return group
 
 
+@log_function_call(logger)
 def normalize_ibaq(res: DataFrame) -> DataFrame:
     """
     Normalize the ibaq values using the total ibaq of the sample. The resulted
@@ -70,6 +71,7 @@ def normalize_ibaq(res: DataFrame) -> DataFrame:
     return res
 
 
+@log_function_call(logger, level=logging.DEBUG)
 def handle_nonstandard_aa(aa_seq: str):
     """
     Any nonstandard amino acid will be removed.
@@ -82,6 +84,7 @@ def handle_nonstandard_aa(aa_seq: str):
     return nonstandard_aa_lst, considered_seq
 
 
+@log_function_call(logger)
 def extract_fasta(fasta: str, enzyme: str, proteins: List, min_aa: int, max_aa: int, tpa: bool):
     """
     Extracts protein information from a FASTA file using a specified enzyme for digestion.
@@ -125,7 +128,7 @@ def extract_fasta(fasta: str, enzyme: str, proteins: List, min_aa: int, max_aa: 
                     error_aa, seq = handle_nonstandard_aa(entry.sequence)
                     mw = AASequence().fromString(seq).getMonoWeight()
                     mw_dict[accession] = mw
-                    logger.error(f"Nonstandard amino acids found in {accession}: {error_aa}, ignored!")
+                    logger.error("Nonstandard amino acids found in %s: %s, ignored!", accession, error_aa)
     if not found_proteins:
         raise ValueError(f"None of the {len(proteins)} proteins were found in the FASTA file")
     return uniquepepcounts, mw_dict, found_proteins
@@ -258,6 +261,7 @@ class PeptideProteinMapper:
         return sum(mw_list)
 
 
+@log_execution_time(logger)
 def peptides_to_protein(
     fasta: str,
     peptides: str,
@@ -334,7 +338,8 @@ def peptides_to_protein(
     data = data[data[PROTEIN_NAME].isin(found_proteins)]
 
     # data processing
-    logger.info(data.head())
+    logger.info("Processing data with %d rows", len(data))
+    logger.debug("Data sample: \n%s", data.head().to_string())
     map_size = data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION]).size().to_dict()
     res = pd.DataFrame(data.groupby([PROTEIN_NAME, SAMPLE_ID, CONDITION])[NORM_INTENSITY].sum())
 

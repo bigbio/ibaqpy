@@ -1,11 +1,16 @@
 # import libraries
 import logging
 import os
+import warnings
 from typing import List, Optional
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+
+# Suppress numpy matrix deprecation warning
+warnings.filterwarnings("ignore", category=PendingDeprecationWarning,
+                       module="numpy.matrixlib.defmatrix")
 
 # from inmoose.pycombat import pycombat_norm
 from sklearn.cluster._hdbscan import hdbscan
