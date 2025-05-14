@@ -10,7 +10,7 @@ build:
   entry_points:
     - ibaqpyc=ibaqpy.ibaqpyc:main
   run_exports:
-    - { { pin_subpackage('ibaqpy', max_pin="x.x") } }
+    - {{ pin_subpackage('ibaqpy', max_pin="x.x") }}
   script: "{{ PYTHON }} -m pip install . --no-deps --no-build-isolation --no-cache-dir -vvv"
   number: 0
   noarch: python
