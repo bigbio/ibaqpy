@@ -1,11 +1,17 @@
 # import libraries
 import logging
 import os
+import warnings
 from typing import List, Optional
 
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
+
+# Suppress numpy matrix deprecation warning
+warnings.filterwarnings(
+    "ignore", category=PendingDeprecationWarning, module="numpy.matrixlib.defmatrix"
+)
 
 # from inmoose.pycombat import pycombat_norm
 from sklearn.cluster._hdbscan import hdbscan
@@ -348,6 +354,7 @@ class TooFewSamplesInBatch(ValueError):
         super().__init__(
             f"Batches must contain at least two samples, the following batch factors did not: {batches}"
         )
+
 
 # define a function for batch correction
 def apply_batch_correction(

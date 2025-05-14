@@ -28,17 +28,17 @@ As mentioned before, ibaq values are calculated by dividing the total precursor 
 
 > Note: If protein-group exists in the peptide intensity dataframe, the intensity of all proteins in the protein-group is summed based on the above steps, and then divided by the number of proteins in the protein-group.
 
-### Other values  
+### Other values
 
 - `Ibaq` - the iBAQ value is calculated as `Total precursor intensities / Number of observable peptides`
 
 - `IbaqNorm` - normalize the ibaq values using the total ibaq of the sample `ibaq / sum(ibaq)`, the sum is applied for proteins in the same _sample + condition_.
 
-- `IbaqLog`  - The ibaq log is calculated as `10 + log10(IbaqNorm)`. This normalized ibaq value was developed [by ProteomicsDB Team](https://academic.oup.com/nar/article/46/D1/D1271/4584631).
+- `IbaqLog` - The ibaq log is calculated as `10 + log10(IbaqNorm)`. This normalized ibaq value was developed [by ProteomicsDB Team](https://academic.oup.com/nar/article/46/D1/D1271/4584631).
 
 - `IbaqPpb` - The resulted IbaqNorm is multiplied by 100M `IbaqNorm * 100'000'000`. This method was developed originally [by PRIDE Team](https://www.nature.com/articles/s41597-021-00890-2).
 
-- `IbaqBec` - Ibaq after Batch effect correction using combat-norm algorithm in inmoose package. 
+- `IbaqBec` - Ibaq after Batch effect correction using combat-norm algorithm in inmoose package.
 
 - `TPA` - TPA value is calculated as `NormIntensity / MolecularWeight`
 
@@ -57,7 +57,7 @@ The output of quantms is converted into quantms.io feature file. quantms.io prov
 >$ quantmsioc convert-ibaq --feature_file res/PXD004452-6c224f5a-7c1f-46f9-9dae-1541baeef8fe.feature.parquet --sdrf_file PXD004452-Hella-trypsin.sdrf.tsv --output_folder ibaq --output_prefix_file PXD004452
 ```
 
-A feature in quantms.io is the combination of the following columns: 
+A feature in quantms.io is the combination of the following columns:
 
 - `ProteinName`: Protein name
 - `Peptidoform`: Peptide sequence including post-translation modifications `(e.g. .(Acetyl)ASPDWGYDDKN(Deamidated)GPEQWSK)`
@@ -72,14 +72,14 @@ A feature in quantms.io is the combination of the following columns:
 - `Reference`: reference file
 - `SampleID`: Sample ID `(e.g. PXD003947-Sample-3)`
 
-
-In summary, each feature is the unique combination of a peptide sequence including modifications (peptidoform), precursor charge state, condition, biological replicate, run, fraction, reference_file_name, sample_accession, and a given intensity. In order to go from these features into protein ibaq values, the package does the following: 
+In summary, each feature is the unique combination of a peptide sequence including modifications (peptidoform), precursor charge state, condition, biological replicate, run, fraction, reference_file_name, sample_accession, and a given intensity. In order to go from these features into protein ibaq values, the package does the following:
 
 #### Data preprocessing
 
-In this section`features2peptides`, ibaqpy will do: 
+In this section`features2peptides`, ibaqpy will do:
+
 - Parse the identifier of proteins and retain only unique peptides.
-- Remove lines where intensity or study condition is empty: This could happen in the following cases: 
+- Remove lines where intensity or study condition is empty: This could happen in the following cases:
   - The DIA pipeline sometimes for some features releases intensities with value 0.
   - The quantms.io do not contain feature information for some conditions. This extreme case could happen when not ID/Quant was found for a given condition during the analysis.
 - Filter peptides with less amino acids than min_aa.
@@ -95,7 +95,7 @@ In this section`features2peptides`, ibaqpy will do:
   - `conditionMedian`: All samples under the same conditions were adjusted to the median value under the current conditions.
 - Remove peptides with low frequency if `sample number > 1`: This parameter is applied always unless the user specifies the `--remove_low_frequency_peptides` parameter. The default value is 20% of the samples. If users want to change this threshold, they can use the `--remove_low_frequency_peptides` parameter.
 - Assembly peptidoforms to peptides:
-A peptidoform is a combination of a `PeptideSequence(Modifications) + Charge + BioReplicate + Fraction` (among other features), and a peptide is a combination of a `PeptideSequence(Canonical) + BioReplicate`. ibaqpy will do:
+  A peptidoform is a combination of a `PeptideSequence(Modifications) + Charge + BioReplicate + Fraction` (among other features), and a peptide is a combination of a `PeptideSequence(Canonical) + BioReplicate`. ibaqpy will do:
   - Select peptidoforms with the highest intensity across different modifications, fractions, and technical replicates
   - Merge peptidoforms across different charges and combined into peptides. In order to merge peptidoforms, the package will applied the `sum` of the intensity values of the peptidoforms.
 - Intensity transformation to log: The user can specify the `--log2` parameter to transform the peptide intensity values to log2 before normalization.
@@ -103,9 +103,10 @@ A peptidoform is a combination of a `PeptideSequence(Modifications) + Charge + B
 > Note: At the moment, ibaqpy computes the ibaq values only based on unique peptides. Shared peptides are discarded. However, if a group of proteins share the same unique peptides (e.g., Pep1 -> Prot1;Prot2 and Pep2 -> Prot1;Prot2), the intensity of the proteins is summed and divided by the number of proteins in the group.
 
 #### Calculate the IBAQ Value
+
 First, peptide intensity dataframe was grouped according to protein name, sample name and condition. The protein intensity of each group was summed up. Due to the experimental type, the same protein may exhibit missing peptides in different samples, resulting in variations in the number of peptides detected for the protein across different samples. To handle this difference, normalization within the same group can be achieved by using the formula `sum(peptides) / n`(n represents the number of detected peptide segments). Finally, the normalized intensity of the protein is divided by the number of theoretical peptides.See details in `peptides2proteins`.
- 
-> Note: In all scripts and result files, *uniprot accession* is used as the protein identifier.
+
+> Note: In all scripts and result files, _uniprot accession_ is used as the protein identifier.
 
 ### How to install ibaqpy
 
@@ -136,7 +137,7 @@ You can install the package from code:
 >$ python setup.py install
 ```
 
-### Collecting intensity files from quantms.org 
+### Collecting intensity files from quantms.org
 
 Absolute quantification files have been stored in the following url:
 
@@ -144,18 +145,18 @@ Absolute quantification files have been stored in the following url:
 https://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/quantms-data/
 ```
 
-Inside each project reanalysis folder, the folder proteomicslfq contains the msstats input file with the structure `{Name of the project}.{Random uuid}.feature.parquet	`. 
+Inside each project reanalysis folder, the folder proteomicslfq contains the msstats input file with the structure `{Name of the project}.{Random uuid}.feature.parquet	`.
 
 E.g. http://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute-expression/quantms-data/MSV000079033.1/MSV000079033.1-bd44c7e3-654c-444d-9e21-0f701d6dac94.feature.parquet
 
-### Major commands  
-
+### Major commands
 
 #### Features to peptides
 
 ```asciidoc
 ibaqpy features2peptides -p tests/PXD003947/PXD003947-feature.parquet -s tests/PXD003947/PXD003947.sdrf.tsv --remove_ids data/contaminants_ids.tsv --remove_decoy_contaminants --remove_low_frequency_peptides --output tests/PXD003947/PXD003947-peptides-norm.csv
 ```
+
 ```asciidoc
 Usage: features2peptides.py [OPTIONS]
 
@@ -188,12 +189,11 @@ Options:
   --help                          Show this message and exit.
 ```
 
-
-####  Compute IBAQ/TPA
+#### Compute IBAQ/TPA
 
 ```asciidoc
 ibaqpy peptides2protein -f Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta -p PXD017834-peptides.csv -e Trypsin -n -t -r --ploidy 2 --cpc 200 --organism human --output PXD003947.tsv --verbose
-``` 
+```
 
 ```asciidoc
 Usage: peptides2protein [OPTIONS]
@@ -229,11 +229,11 @@ Other relevant publications:
 
 > Wang H, Dai C, Pfeuffer J, Sachsenberg T, Sanchez A, Bai M, Perez-Riverol Y. Tissue-based absolute quantification using large-scale TMT and LFQ experiments. Proteomics. 2023 Oct;23(20):e2300188. doi: [10.1002/pmic.202300188](https://analyticalsciencejournals.onlinelibrary.wiley.com/doi/10.1002/pmic.202300188). Epub 2023 Jul 24. PMID: 37488995.
 
-### Credits 
+### Credits
 
 - [Julianus Pfeuffer](@jpfeuffer)
 - [Yasset Perez-Riverol](@ypriverol)
 - [Hong Wang](@WangHong007)
 - [Ping Zheng](@zprobot)
-- [Joshua Klein](@mobiusklein) 
+- [Joshua Klein](@mobiusklein)
 - [Enrique Audain](@enriquea)

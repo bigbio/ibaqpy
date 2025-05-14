@@ -14,6 +14,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+
 def create_anndata(
     df: pd.DataFrame,
     obs_col: str,

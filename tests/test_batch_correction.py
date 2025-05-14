@@ -13,6 +13,7 @@ TESTS_DIR = Path(__file__).parent
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+
 def test_correct_batches():
     """
     Test the `run_batch_correction` function to ensure it correctly processes iBAQ values
