@@ -453,7 +453,9 @@ class Feature:
         except IndexError:
             f_table["pg_accessions"] = f_table["pg_accessions"].apply(lambda x: x[0])
         except Exception as e:
-            raise ValueError("Some errors occurred when parsing pg_accessions column in feature parquet!") from e
+            raise ValueError(
+                "Some errors occurred when parsing pg_accessions column in feature parquet!"
+            ) from e
         f_table.set_index(["sequence", "pg_accessions"], inplace=True)
         f_table.drop(
             f_table[f_table["count"] >= (percentage * len(self.samples))].index,
@@ -791,20 +793,26 @@ def peptide_normalization(
                 and technical_repetitions > 1
             ):
                 start_time = time.time()
-                logger.info("%s: Normalizing intensities of features using method %s...",
-                           str(sample).upper(), nmethod)
+                logger.info(
+                    "%s: Normalizing intensities of features using method %s...",
+                    str(sample).upper(),
+                    nmethod,
+                )
                 dataset_df = feature_normalization(dataset_df, technical_repetitions)
                 # dataset_df = normalize_runs(dataset_df, technical_repetitions, nmethod)
                 elapsed = time.time() - start_time
                 logger.info(
                     "%s: Number of features after normalization: %d (completed in %.2f seconds)",
-                    str(sample).upper(), len(dataset_df.index), elapsed
+                    str(sample).upper(),
+                    len(dataset_df.index),
+                    elapsed,
                 )
             # Step8: Merge peptidoforms across fractions and technical repetitions
             dataset_df = get_peptidoform_normalize_intensities(dataset_df)
             logger.info(
                 "%s: Number of peptides after peptidoform selection: %d",
-                str(sample).upper(), len(dataset_df.index)
+                str(sample).upper(),
+                len(dataset_df.index),
             )
 
             if len(dataset_df[FRACTION].unique().tolist()) > 1:
@@ -814,7 +822,9 @@ def peptide_normalization(
                 elapsed = time.time() - start_time
                 logger.info(
                     "%s: Number of features after merging fractions: %d (completed in %.2f seconds)",
-                    str(sample).upper(), len(dataset_df.index), elapsed
+                    str(sample).upper(),
+                    len(dataset_df.index),
+                    elapsed,
                 )
             # Step9: Normalize the data.
             if not skip_normalization:
@@ -828,7 +838,8 @@ def peptide_normalization(
                 ].reset_index()
                 logger.info(
                     "%s: Peptides after removing low frequency peptides: %d",
-                    str(sample).upper(), len(dataset_df.index)
+                    str(sample).upper(),
+                    len(dataset_df.index),
                 )
 
             # Step11: Assembly peptidoforms to peptides.
@@ -838,7 +849,9 @@ def peptide_normalization(
             elapsed = time.time() - start_time
             logger.info(
                 "%s: Number of peptides after selection: %d (completed in %.2f seconds)",
-                str(sample).upper(), len(dataset_df.index), elapsed
+                str(sample).upper(),
+                len(dataset_df.index),
+                elapsed,
             )
             # Step12: Intensity transformation to log.
             if log2:

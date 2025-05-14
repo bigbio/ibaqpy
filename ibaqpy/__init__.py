@@ -8,8 +8,9 @@ the iBAQ method, which allows for absolute quantification of proteins.
 import warnings
 
 # Suppress numpy matrix deprecation warning
-warnings.filterwarnings("ignore", category=PendingDeprecationWarning,
-                       module="numpy.matrixlib.defmatrix")
+warnings.filterwarnings(
+    "ignore", category=PendingDeprecationWarning, module="numpy.matrixlib.defmatrix"
+)
 
 __version__ = "0.0.5"
 

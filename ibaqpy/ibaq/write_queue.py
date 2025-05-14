@@ -105,7 +105,7 @@ class WriteCSVTask(Thread):
         """
         start_time = time.time()
         rows = len(table)
-        
+
         try:
             table.to_csv(
                 self.path,
@@ -115,10 +115,9 @@ class WriteCSVTask(Thread):
                 **self.write_options,
             )
             self._wrote_header = True
-            
+
             elapsed = time.time() - start_time
-            logger.debug("Wrote %d rows to CSV file %s in %.2f seconds",
-                        rows, self.path, elapsed)
+            logger.debug("Wrote %d rows to CSV file %s in %.2f seconds", rows, self.path, elapsed)
         except Exception as e:
             logger.error("Error writing to CSV file %s: %s", self.path, str(e))
             raise
@@ -193,7 +192,7 @@ class WriteParquetTask(Thread):
     def write(self, table: pd.DataFrame):
         """
         Adds a DataFrame to the queue for writing to the Parquet file.
-        
+
         Parameters:
             table (pd.DataFrame): The DataFrame to be added to the queue.
         """
@@ -216,7 +215,7 @@ class WriteParquetTask(Thread):
     def _write(self, table: pd.DataFrame):
         start_time = time.time()
         rows = len(table)
-        
+
         try:
             if self._schema is None:
                 self._schema = pa.Schema.from_pandas(table, preserve_index=False)
@@ -225,10 +224,11 @@ class WriteParquetTask(Thread):
 
             arrow_table = pa.Table.from_pandas(table, preserve_index=False)
             self._writer.write_table(arrow_table)
-            
+
             elapsed = time.time() - start_time
-            logger.debug("Wrote %d rows to Parquet file %s in %.2f seconds",
-                        rows, self.path, elapsed)
+            logger.debug(
+                "Wrote %d rows to Parquet file %s in %.2f seconds", rows, self.path, elapsed
+            )
         except Exception as e:
             logger.error("Error writing to Parquet file %s: %s", self.path, str(e))
             raise

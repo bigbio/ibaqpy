@@ -5,21 +5,20 @@ name: Python application
 
 on:
   push:
-    branches: [ "main", "dev" ]
+    branches: ["main", "dev"]
   pull_request:
-    branches: [ "main", "dev" ]
+    branches: ["main", "dev"]
 
 permissions:
   contents: read
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: [ "3.9", "3.10", "3.11" ]
+        python-version: ["3.9", "3.10", "3.11"]
 
     steps:
       - uses: actions/checkout@v4

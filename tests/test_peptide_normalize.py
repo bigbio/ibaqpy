@@ -8,6 +8,7 @@ TESTS_DIR = Path(__file__).parent
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+
 def test_feature_assembly():
     """
     Test the peptide normalization process by setting up arguments for the

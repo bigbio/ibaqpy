@@ -42,6 +42,7 @@ AVERAGE_BASE_PAIR_MASS: float = 617.96  # 615.8771
 # Get a logger for this module
 logger = get_logger("ibaqpy.peptides2protein")
 
+
 @log_function_call(logger, level=logging.DEBUG)
 def normalize(group):
     """
@@ -128,7 +129,9 @@ def extract_fasta(fasta: str, enzyme: str, proteins: List, min_aa: int, max_aa: 
                     error_aa, seq = handle_nonstandard_aa(entry.sequence)
                     mw = AASequence().fromString(seq).getMonoWeight()
                     mw_dict[accession] = mw
-                    logger.error("Nonstandard amino acids found in %s: %s, ignored!", accession, error_aa)
+                    logger.error(
+                        "Nonstandard amino acids found in %s: %s, ignored!", accession, error_aa
+                    )
     if not found_proteins:
         raise ValueError(f"None of the {len(proteins)} proteins were found in the FASTA file")
     return uniquepepcounts, mw_dict, found_proteins
