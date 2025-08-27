@@ -223,7 +223,7 @@ Options:
 
 ### Citation
 
-> Zheng P, Audain E, Webel H, Dai C, Klein J, Hitz MP, Sachsenberg T, Bai M, Perez-Riverol Y. ibaqpy: A scalable Python package for baseline quantification in proteomics leveraging SDRF metadata. bioRxiv 2025.02.08.637208; doi: https://doi.org/10.1101/2025.02.08.637208
+> Zheng P, Audain E, Webel H, Dai C, Klein J, Hitz MP, Sachsenberg T, Bai M, Perez-Riverol Y. Ibaqpy: A scalable Python package for baseline quantification in proteomics leveraging SDRF metadata. J Proteomics. 2025 Jun 15;317:105440. doi: https://doi.org/10.1016/j.jprot.2025.105440. Epub 2025 Apr 21. PMID: 40268243.
 
 Other relevant publications:
 
