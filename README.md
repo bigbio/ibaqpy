@@ -154,7 +154,7 @@ E.g. http://ftp.pride.ebi.ac.uk/pub/databases/pride/resources/proteomes/absolute
 #### Features to peptides
 
 ```asciidoc
-ibaqpy features2peptides -p PXD000000.ibaq.parquet -s PXD000000.sdrf.tsv --remove_ids data/contaminants_ids.tsv --remove_decoy_contaminants --remove_low_frequency_peptides --output PXD000000-peptides-norm.csv
+ibaqpyc features2peptides -p PXD000000.ibaq.parquet -s PXD000000.sdrf.tsv --remove_ids data/contaminants_ids.tsv --remove_decoy_contaminants --remove_low_frequency_peptides --output PXD000000-peptides-norm.csv
 ```
 
 ```asciidoc
@@ -192,7 +192,7 @@ Options:
 #### Compute IBAQ/TPA
 
 ```asciidoc
-ibaqpy peptides2protein -f Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta -p PXD017834-peptides.csv -e Trypsin -n -t -r --ploidy 2 --cpc 200 --organism human --output PXD003947.tsv --verbose
+ibaqpyc peptides2protein -f Homo-sapiens-uniprot-reviewed-contaminants-decoy-202210.fasta -p PXD017834-peptides.csv -e Trypsin -n -t -r --ploidy 2 --cpc 200 --organism human --output PXD003947.tsv --verbose
 ```
 
 ```asciidoc
