@@ -285,6 +285,7 @@ def run_batch_correction(
 )
 @click.pass_context
 def correct_batches(
+    ctx,
     folder: str,
     pattern: str,
     comment: str,

@@ -72,6 +72,7 @@ from ibaqpy.model.normalization import FeatureNormalizationMethod, PeptideNormal
 )
 @click.pass_context
 def features2parquet(
+    ctx,
     parquet: str,
     sdrf: str,
     min_aa: int,
