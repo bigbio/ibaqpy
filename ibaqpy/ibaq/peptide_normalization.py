@@ -208,6 +208,18 @@ def apply_initial_filtering(data_df: pd.DataFrame, min_aa: int) -> pd.DataFrame:
 
     data_df = data_df[(data_df["Condition"] != "Empty") | (data_df["Condition"].isnull())]
 
+    # "Run" is NA for reference files not found in the SDRF file.
+    if data_df[RUN].isna().any():
+
+        missing_files = data_df.loc[
+            data_df[RUN].isna(), "Reference"
+        ].drop_duplicates().tolist()
+
+        logger.warning(
+            f"Reference files {missing_files} are not present in the SDRF file. Skipping calculation."
+        )
+        data_df.dropna(subset=[RUN], inplace=True)
+
     # Filter peptides with less amino acids than min_aa (default: 7)
     data_df.loc[:, "len"] = data_df[PEPTIDE_CANONICAL].apply(len)
     data_df = data_df[data_df["len"] >= min_aa]
