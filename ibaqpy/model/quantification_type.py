@@ -66,7 +66,9 @@ class QuantificationCategory(Enum):
         """
         label_scheme = None
 
-        if len(labels) == 1 and any("label free" in s.lower() for s in labels):
+        if len(labels) == 1 and any(
+            keyword in s.lower() for s in labels for keyword in ["lfq", "label free"]
+        ):
             label_category = cls.LFQ
 
         elif any("tmt" in s.lower() for s in labels):
@@ -96,7 +98,7 @@ class QuantificationCategory(Enum):
 
         else:
             raise ValueError(
-                f"Cannot infer labeling scheme from {labels}, only support label free, TMT and ITRAQ experiment!"
+                f"Cannot infer labeling scheme from {labels}, only support label free (or lfq), TMT and ITRAQ experiment!"
             )
         return label_category, label_scheme
 
